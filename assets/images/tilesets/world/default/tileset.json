@@ -1,0 +1,51 @@
+{
+	title: "default",
+	description: "Default world tileset. Created by Kenney Vleugels (www.kenney.nl).",
+	baseWidth: "130",
+	baseHeight: "66",
+	baseOffset: "16",
+	padding: "0",
+	type: "discrete",
+	tiles: [
+		{
+			title: "Grass",
+			id: "grass",
+			file: "landscapeTiles_067.png",
+			corners: [
+				{ ref: "grass", alt: 1 },
+				{ ref: "grass", alt: 1 },
+				{ ref: "grass", alt: 1 },
+				{ ref: "grass", alt: 1 } ]
+		},
+		{
+			title: "Sand",
+			id: "sand",
+			file: "landscapeTiles_059.png",
+			corners: [
+				{ ref: "sand", alt: 1 },
+				{ ref: "sand", alt: 1 },
+				{ ref: "sand", alt: 1 },
+				{ ref: "sand", alt: 1 } ]
+		},
+		{
+			title: "Dirt",
+			id: "dirt",
+			file: "landscapeTiles_073.png",
+			corners: [
+				{ ref: "dirt" },
+				{ ref: "dirt" },
+				{ ref: "dirt" },
+				{ ref: "dirt" } ]
+		},
+		{
+			title: "Water",
+			id: "water",
+			file: "landscapeTiles_066.png",
+			corners: [
+				{ ref: "water" },
+				{ ref: "water" },
+				{ ref: "water" },
+				{ ref: "water" } ]
+		}
+	]
+}
