@@ -28,6 +28,7 @@ import com.badlogic.gdx.utils.IntSet;
 import com.badlogic.gdx.utils.IntSet.IntSetIterator;
 import com.badlogic.gdx.utils.Json;
 import com.badlogic.gdx.utils.JsonWriter.OutputType;
+import com.badlogic.gdx.utils.ObjectMap;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
 import com.github.czyzby.autumn.annotation.Inject;
@@ -52,6 +53,7 @@ public class TilesetService {
 	
 	private Map<TilesetDomain, TilesetDescriptor> tilesetDescriptors = new EnumMap<>(TilesetDomain.class);
 	private Map<TilesetDomain, TiledMapTileSet> tilesets = new EnumMap<>(TilesetDomain.class);
+	private ObjectMap<TiledMapTile, TileDescriptor> tilesToDescriptors = new ObjectMap<>();
 	
 	@Inject
 	private AssetService assets;
@@ -132,11 +134,11 @@ public class TilesetService {
 		
 		//
 		// Finish initializing the TilesetDescriptor.
-		for (TileDescriptor tile : tilesetDescriptor.tiles.values()) {
+		for (TileDescriptor tile : tilesetDescriptor.tilesById.values()) {
 			
 			//
 			// Compute the tile's hash
-			tile.hash = (domain.name() + tilesetName + tile.stringID).hashCode();
+			tile.hash = (domain.name() + tilesetName + tile.id).hashCode();
 			
 			//
 			// Verify tile images can be loaded
@@ -144,12 +146,12 @@ public class TilesetService {
 			if (!(tileImageFile.exists())) {
 				log.error(
 						"The imported tile-set \"{0}\" has a tile (id=\"{1}\") whose assigned image-file (\"{2}\") is unavailable.",
-						tilesetDescriptor.title, tile.stringID, tile.fileName);
+						tilesetDescriptor.title, tile.id, tile.fileName);
 				throw new TilesetException("Selected tile-set has a tile which refers to an unavailable image-file.");
 			}
 			tile.file = tileImageFile;
 			if (!assets.isLoaded(tileImageFile.path())) {
-				log.debug("Initiating load for tile image-file \"{0}\"", tile.fileName);
+				log.debug("Loading tile image-file \"{0}\"", tile.fileName);
 				assets.load(tileImageFile.path(), Texture.class);
 			}
 			
@@ -158,14 +160,14 @@ public class TilesetService {
 			for (TileCorner corner : TileCorner.values()) {
 				final TileCornerDescriptor cornerDescriptor = tile.corners.get(corner);
 				final String referencedTileID = cornerDescriptor.id;
-				if (!tilesetDescriptor.tiles.containsKey(referencedTileID)) {
+				if (!tilesetDescriptor.tilesById.containsKey(referencedTileID)) {
 					log.error(
 							"The imported tile-set \"{0}\" has a tile (id=\"{1}\"), of which the {2}th corner references an unrecognized tile-ID (\"{3}\")",
-							tilesetDescriptor.title, tile.stringID, corner.getIndex(), cornerDescriptor.id);
+							tilesetDescriptor.title, tile.id, corner.getIndex(), cornerDescriptor.id);
 					throw new TilesetException("Selected tile-set has a tile which refers to an unrecognized tile.");
 				}
 				
-				cornerDescriptor.ref = tilesetDescriptor.tiles.get(referencedTileID);
+				cornerDescriptor.ref = tilesetDescriptor.tilesById.get(referencedTileID);
 			}
 		}
 		
@@ -174,13 +176,12 @@ public class TilesetService {
 		//
 		// Keep track of which tile-IDs we *aren't* updating, so we can remove them
 		// later.
-		final IntSet updatedIdHashes = new IntSet(tilesetDescriptor.tiles.size());
+		final IntSet updatedIdHashes = new IntSet(tilesetDescriptor.tilesById.size());
 		tileset.forEach(t -> updatedIdHashes.add(t.getId()));
 		
-		for (TileDescriptor td : tilesetDescriptor.tiles.values()) {
+		for (TileDescriptor td : tilesetDescriptor.tilesById.values()) {
 			
 			assets.finishLoading(td.file.path(), Texture.class);
-			log.debug("Loading tile image-file \"{0}\"", td.fileName);
 			final Texture tileTexture = assets.get(td.file.path(), Texture.class);
 			
 			final int padding = max(tilesetDescriptor.padding, 0);
@@ -195,21 +196,26 @@ public class TilesetService {
 			final int width = min(max(td.width, 0), tileTexture.getWidth() - padding - 1);
 			final int height = min(max(td.height, 0), tileTexture.getHeight() - padding - 1);
 			
+			log.debug("Creating tile \"{0}\" from image-file \"{1}\"", td.id, td.fileName);
 			final TextureRegion tileTextureRegion = new TextureRegion(tileTexture, startX, startY, width, height);
 			
 			final TiledMapTile tile = new StaticTiledMapTile(tileTextureRegion);
 			tileset.putTile(td.hash, tile);
 			updatedIdHashes.remove(td.hash);
+			tilesToDescriptors.put(tile, td);
 		}
 		
-		log.debug("Imported {0} tiles.", tilesetDescriptor.tiles.size());
+		log.debug("Imported {0} tiles.", tilesetDescriptor.tilesById.size());
 		
 		if (!updatedIdHashes.isEmpty()) {
 			log.debug("Removing {0} tiles from the updated tile-set as not contained within the import.",
 					updatedIdHashes.size);
 			final IntSetIterator nonUpdatedIterator = updatedIdHashes.iterator();
-			while (nonUpdatedIterator.hasNext)
-				tileset.removeTile(nonUpdatedIterator.next());
+			while (nonUpdatedIterator.hasNext) {
+				final int removeHash = nonUpdatedIterator.next();
+				tilesToDescriptors.remove(tileset.getTile(removeHash));
+				tileset.removeTile(removeHash);
+			}
 		}
 		
 		log.debug("Tile-set import complete.");
@@ -223,6 +229,21 @@ public class TilesetService {
 	public TilesetDescriptor getDescriptorFor(TilesetDomain domain) {
 		
 		return tilesetDescriptors.computeIfAbsent(domain, (d) -> new TilesetDescriptor());
+	}
+	
+	public TileDescriptor getTileDescriptorFor(TilesetDomain domain, String id) {
+		
+		return tilesetDescriptors.get(domain).tilesById.get(id);
+	}
+	
+	public TileDescriptor getTileDescriptorFor(TilesetDomain domain, int hash) {
+		
+		return tilesetDescriptors.get(domain).tilesByHash.get(hash);
+	}
+	
+	public TileDescriptor getTileDescriptorFor(TiledMapTile tile) {
+		
+		return tilesToDescriptors.get(tile);
 	}
 	
 	/**

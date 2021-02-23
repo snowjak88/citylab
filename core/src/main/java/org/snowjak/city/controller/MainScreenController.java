@@ -56,7 +56,7 @@ public class MainScreenController implements ViewRenderer, ActionContainer {
 		int x = 0, y = 0;
 		for (TiledMapTile tile : tilesets.getTilesetFor(TilesetDomain.WORLD)) {
 			
-			batch.draw(tile.getTextureRegion(), x, y);
+			batch.draw(tile.getTextureRegion(), x, y + tilesets.getTileDescriptorFor(tile).offset);
 			
 			x += tilesets.getDescriptorFor(TilesetDomain.WORLD).baseWidth;
 			if (x >= CityGame.WIDTH) {
