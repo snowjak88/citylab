@@ -3,36 +3,27 @@
  */
 package org.snowjak.city.controller;
 
-import java.util.Arrays;
+import org.snowjak.city.screen.Screen;
+import org.snowjak.city.screen.impl.GreenScreen;
 
-import org.snowjak.city.CityGame;
-import org.snowjak.city.map.tileset.TilesetException;
-import org.snowjak.city.service.TilesetService;
-import org.snowjak.city.service.TilesetService.TilesetDomain;
-
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.maps.tiled.TiledMapTile;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Container;
-import com.github.czyzby.autumn.annotation.Dispose;
 import com.github.czyzby.autumn.annotation.Inject;
 import com.github.czyzby.autumn.mvc.component.ui.InterfaceService;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewRenderer;
+import com.github.czyzby.autumn.mvc.component.ui.controller.ViewResizer;
 import com.github.czyzby.autumn.mvc.stereotype.View;
-import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
-import com.github.czyzby.lml.annotation.LmlAction;
 import com.github.czyzby.lml.annotation.LmlActor;
 import com.github.czyzby.lml.parser.action.ActionContainer;
-import com.github.czyzby.lml.util.LmlUtilities;
 
 /**
  * @author snowjak88
  *
  */
 @View(id = "mainScreen", value = "ui/templates/mainScreen.lml")
-public class MainScreenController implements ViewRenderer, ActionContainer {
+public class MainScreenController implements ViewRenderer, ViewResizer, ActionContainer {
 	
 	@Inject
 	private InterfaceService interfaceService;
@@ -40,51 +31,50 @@ public class MainScreenController implements ViewRenderer, ActionContainer {
 	@LmlActor("mainScreenContainer")
 	private Container<Actor> mainScreenContainer;
 	
-	@Dispose
-	private final SpriteBatch batch = new SpriteBatch();
+	private Screen activeScreen = new GreenScreen();
 	
-	@Inject
-	private TilesetService tilesets;
+	public MainScreenController() {
+		
+		setScreen(new GreenScreen());
+		;
+	}
 	
 	@Override
 	public void render(Stage stage, float delta) {
 		
 		stage.act();
 		
-		batch.begin();
-		
-		int x = 0, y = 0;
-		for (TiledMapTile tile : tilesets.getTilesetFor(TilesetDomain.WORLD)) {
+		if (activeScreen != null) {
 			
-			batch.draw(tile.getTextureRegion(), x, y + tilesets.getTileDescriptorFor(tile).offset);
+			activeScreen.getViewport().apply(true);
 			
-			x += tilesets.getDescriptorFor(TilesetDomain.WORLD).baseWidth;
-			if (x >= CityGame.WIDTH) {
-				x = 0;
-				y += tilesets.getDescriptorFor(TilesetDomain.WORLD).baseHeight;
-			}
+			activeScreen.render(delta);
+			
+			stage.getViewport().apply(true);
 		}
-		
-		batch.end();
 		
 		stage.draw();
 	}
 	
-	@LmlAction
-	public void updateTileset(final Actor actor) {
+	@Override
+	public void resize(Stage stage, int width, int height) {
 		
-		final Logger log = LoggerService.forClass(MainScreenController.class);
-		
-		try {
-			tilesets.rebuildTileset(TilesetDomain.valueOf(LmlUtilities.getActorId(actor)));
-		} catch (TilesetException e) {
-			log.error("Could not load tileset for some reason.", e);
-		}
+		if (activeScreen != null)
+			activeScreen.getViewport().update(width, height, true);
 	}
 	
-	@LmlAction
-	public String[] getDomains() {
+	/**
+	 * Sets up the given screen as the active {@link Screen}. Handles
+	 * {@link InputProcessor} registration and all that.
+	 * 
+	 * @param screen
+	 */
+	public void setScreen(Screen screen) {
 		
-		return Arrays.stream(TilesetDomain.values()).map(d -> d.name()).toArray(len -> new String[len]);
+		this.activeScreen = screen;
+		
+		if (activeScreen != null)
+			this.activeScreen.setScreenTransitionHandler((n) -> setScreen(n));
 	}
+	
 }

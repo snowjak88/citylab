@@ -213,7 +213,9 @@ public class TilesetService {
 			final IntSetIterator nonUpdatedIterator = updatedIdHashes.iterator();
 			while (nonUpdatedIterator.hasNext) {
 				final int removeHash = nonUpdatedIterator.next();
-				tilesToDescriptors.remove(tileset.getTile(removeHash));
+				final TiledMapTile removeTile = tileset.getTile(removeHash);
+				if (removeTile != null)
+					tilesToDescriptors.remove(removeTile);
 				tileset.removeTile(removeHash);
 			}
 		}

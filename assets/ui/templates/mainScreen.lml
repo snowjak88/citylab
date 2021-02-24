@@ -1,8 +1,5 @@
 <table oneColumn="true" defaultPad="2" tableAlign="topLeft"
 	fillParent="true" defaultFillX="true">
 	<:mainScreenMenuBar fileOpen="false" />
-	<:forEach domain="$getDomains">
-		<textButton id="{domain}" onChange="updateTileset">{domain}</textButton>
-	</:forEach>
 	<container id="mainScreenContainer" fillParent="true" />
 </table>

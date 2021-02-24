@@ -11,21 +11,23 @@
 			title: "Grass",
 			id: "grass",
 			file: "landscapeTiles_067.png",
+			offset: -16,
 			corners: [
-				{ ref: "grass", alt: 1 },
-				{ ref: "grass", alt: 1 },
-				{ ref: "grass", alt: 1 },
-				{ ref: "grass", alt: 1 } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Sand",
 			id: "sand",
 			file: "landscapeTiles_059.png",
+			offset: -16,
 			corners: [
-				{ ref: "sand", alt: 1 },
-				{ ref: "sand", alt: 1 },
-				{ ref: "sand", alt: 1 },
-				{ ref: "sand", alt: 1 } ]
+				{ ref: "sand", alt: 0 },
+				{ ref: "sand", alt: 0 },
+				{ ref: "sand", alt: 0 },
+				{ ref: "sand", alt: 0 } ]
 		},
 		{
 			title: "Dirt",
