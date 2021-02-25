@@ -7,15 +7,12 @@ import org.snowjak.city.screen.Screen;
 import org.snowjak.city.screen.impl.GreenScreen;
 
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.github.czyzby.autumn.annotation.Inject;
 import com.github.czyzby.autumn.mvc.component.ui.InterfaceService;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewRenderer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewResizer;
 import com.github.czyzby.autumn.mvc.stereotype.View;
-import com.github.czyzby.lml.annotation.LmlActor;
 import com.github.czyzby.lml.parser.action.ActionContainer;
 
 /**
@@ -28,15 +25,11 @@ public class MainScreenController implements ViewRenderer, ViewResizer, ActionCo
 	@Inject
 	private InterfaceService interfaceService;
 	
-	@LmlActor("mainScreenContainer")
-	private Container<Actor> mainScreenContainer;
-	
 	private Screen activeScreen = new GreenScreen();
 	
 	public MainScreenController() {
 		
 		setScreen(new GreenScreen());
-		;
 	}
 	
 	@Override
@@ -45,8 +38,6 @@ public class MainScreenController implements ViewRenderer, ViewResizer, ActionCo
 		stage.act();
 		
 		if (activeScreen != null) {
-			
-			activeScreen.getViewport().apply(true);
 			
 			activeScreen.render(delta);
 			
@@ -73,8 +64,9 @@ public class MainScreenController implements ViewRenderer, ViewResizer, ActionCo
 		
 		this.activeScreen = screen;
 		
-		if (activeScreen != null)
+		if (activeScreen != null) {
 			this.activeScreen.setScreenTransitionHandler((n) -> setScreen(n));
+		}
 	}
 	
 }

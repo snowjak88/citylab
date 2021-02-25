@@ -1,5 +1,6 @@
 <table oneColumn="true" defaultPad="2" tableAlign="topLeft"
 	fillParent="true" defaultFillX="true">
 	<:mainScreenMenuBar fileOpen="false" />
-	<container id="mainScreenContainer" fillParent="true" />
+	<container id="mainScreenContainer" expandX="true"
+		expandY="true" />
 </table>
