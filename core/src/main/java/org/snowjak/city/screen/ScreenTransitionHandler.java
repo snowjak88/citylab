@@ -4,8 +4,8 @@
 package org.snowjak.city.screen;
 
 /**
- * Describes a callback whereby a {@link Screen} can indicate that it should be
- * replaced with another {@link Screen}.
+ * Describes a callback whereby a {@link AbstractScreen} can indicate that it should be
+ * replaced with another {@link AbstractScreen}.
  * 
  * @author snowjak88
  *
@@ -14,9 +14,9 @@ package org.snowjak.city.screen;
 public interface ScreenTransitionHandler {
 	
 	/**
-	 * Replace the currently-active {@link Screen} with the given Screen instance.
+	 * Replace the currently-active {@link AbstractScreen} with the given Screen instance.
 	 * 
 	 * @param nextScreen
 	 */
-	public void handle(Screen nextScreen);
+	public void handle(AbstractScreen nextScreen);
 }
