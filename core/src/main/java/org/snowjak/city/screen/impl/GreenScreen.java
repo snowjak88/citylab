@@ -10,8 +10,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.kiwi.log.Logger;
 import com.github.czyzby.kiwi.log.LoggerService;
@@ -33,15 +31,7 @@ public class GreenScreen extends AbstractScreen {
 	
 	public GreenScreen() {
 		
-		super(5, 5, new InputListener() {
-			
-			@Override
-			public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-				
-				LOG.info("Touch DOWN @ [{0}, {1}]", x, y);
-				return false;
-			}
-		});
+		super(5, 5);
 	}
 	
 	@Override

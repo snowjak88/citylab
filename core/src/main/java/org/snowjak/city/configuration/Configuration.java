@@ -26,30 +26,8 @@ import com.github.czyzby.lml.vis.parser.impl.VisLmlSyntax;
 import com.kotcrab.vis.ui.VisUI;
 
 /**
- * Thanks to the
- * 
- * mport com.badlogic.gdx.utils.viewport.FitViewport;
- * 
- * port com.badlogic.gdx.utils.viewport.Viewport; i ort
- * com.github.czyzby.autumn.annotation.Component; im rt
- * com.github.czyzby.autumn.annotation.Initiate; import
- * com.github.czyzby.autumn.mvc.component.ui.SkinService; imp t
- * com.github.czyzby.autumn.mvc.stereotype.preference.AvailableLocales; impo
- * com.github.czyzby.autumn.mvc.stereotype.preference.I18nBundle; impor
- * com.github.czyzby.autumn.mvc.stereotype.preference.I18nLocale; import
- * om.github.czyzby.autumn.mvc.stereotype.preference.LmlMacro; import
- * m.github.czyzby.autumn.mvc.stereotype.preference.LmlParserSyntax; import c
- * .github.czyzby.autumn.mvc.stereotype.preference.Preference; import co
- * github.czyzby.autumn.mvc.stereotype.preference.StageViewport; import com
- * ithub.czyzby.autumn.mvc.stereotype.preference.sfx.MusicEnabled; import com.
- * thub.czyzby.autumn.mvc.stereotype.preference.sfx.MusicVolume; import com.g
- * hub.czyzby.autumn.mvc.stereotype.preference.sfx.SoundEnabled; import com.gi
- * ub.czyzby.autumn.mvc.stereotype.preference.sfx.SoundVolume; import com.git
- * b.czyzby.kiwi.util.gdx.asset.lazy.provider.ObjectProvider; import com.gith
- * .czyzby.lml.parser.LmlSyntax; import com.githu czyzby.lml.util.Lml; import
- * com.github zyzby.lml.vis.parser.impl.VisLmlSyntax; import com.kotcrab
- * is.ui.VisUI; import org.snowjak. Component annotation, this class will be
- * automatically found and processed.
+ * Thanks to the Component annotation, this class will be automatically found
+ * and processed.
  *
  * This is a utility class that configures application settings.
  */

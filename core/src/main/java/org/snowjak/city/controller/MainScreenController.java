@@ -103,14 +103,14 @@ public class MainScreenController implements ViewInitializer, ViewRenderer, View
 	
 	private void removeInputListener() {
 		
-		if (stage != null && activeScreen != null && activeScreen.getInputListener() != null)
-			stage.removeListener(activeScreen.getInputListener());
+		if (stage != null && activeScreen != null)
+			stage.removeListener(activeScreen);
 	}
 	
 	private void addInputListener() {
 		
-		if (stage != null && activeScreen != null && activeScreen.getInputListener() != null)
-			stage.addListener(activeScreen.getInputListener());
+		if (stage != null && activeScreen != null)
+			stage.addListener(activeScreen);
 	}
 	
 	@Override

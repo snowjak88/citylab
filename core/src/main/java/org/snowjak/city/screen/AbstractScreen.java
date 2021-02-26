@@ -19,36 +19,31 @@ import com.badlogic.gdx.utils.viewport.Viewport;
  * @author snowjak88
  *
  */
-public abstract class AbstractScreen {
+public abstract class AbstractScreen extends InputListener {
 	
 	private final Viewport viewport;
-	private final InputListener inputListener;
 	private ScreenTransitionHandler handler;
 	
 	/**
-	 * Construct a new Screen, configuring a {@link FitViewport} and the given
-	 * {@link InputListener}.
+	 * Construct a new Screen, configuring a {@link FitViewport}.
 	 * 
 	 * @param worldWidth
 	 * @param worldHeight
-	 * @param inputListener
 	 */
-	public AbstractScreen(float worldWidth, float worldHeight, InputListener inputListener) {
+	public AbstractScreen(float worldWidth, float worldHeight) {
 		
-		this(new FitViewport(worldWidth, worldHeight), inputListener);
+		this(new FitViewport(worldWidth, worldHeight));
 	}
 	
 	/**
-	 * Construct a new Screen, configuring a custom {@link Viewport} and the given
-	 * {@link InputListener}.
+	 * Construct a new Screen, configuring a custom {@link Viewport}.
 	 * 
 	 * @param viewport
 	 * @param inputListener
 	 */
-	public AbstractScreen(Viewport viewport, InputListener inputListener) {
+	public AbstractScreen(Viewport viewport) {
 		
 		this.viewport = viewport;
-		this.inputListener = inputListener;
 	}
 	
 	/**
@@ -110,10 +105,5 @@ public abstract class AbstractScreen {
 		
 		if (handler != null)
 			handler.handle(nextScreen);
-	}
-	
-	public final InputListener getInputListener() {
-		
-		return inputListener;
 	}
 }
