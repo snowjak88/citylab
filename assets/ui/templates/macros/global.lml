@@ -7,17 +7,3 @@
 	{content}
 </tab>
 </:macro>
-
-<!-- Presents the main-screen menu-bar.
-    - fileOpen: show File / Open. Defaults to "true". -->
-<:macro alias="mainScreenMenuBar" replace="content" fileOpen="true">
-<menuBar expandX="true" fillY="true">
-	<menu text="@mainScreen-menu-file">
-		<:if test="{fileOpen}">
-			<menuItem>@mainScreen-menu-file-open</menuItem>
-		</:if>
-		<menuItem>@mainScreen-menu-file-save</menuItem>
-		<menuItem onChange="app:exit">@mainScreen-menu-file-exit</menuItem>
-	</menu>
-</menuBar>
-</:macro>

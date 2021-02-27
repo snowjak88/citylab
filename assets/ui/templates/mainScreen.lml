@@ -1,8 +1,0 @@
-<table oneColumn="true" defaultPad="2" tableAlign="topLeft"
-	fillParent="true" defaultFillX="true">
-	<:mainScreenMenuBar fileOpen="false" />
-	<:forEach screenName="$getScreens">
-		<textButton onChange="setScreen" id="{screenName}">{screenName}
-		</textButton>
-	</:forEach>
-</table>

@@ -1,5 +1,5 @@
 <table oneColumn="true" defaultPad="2" tableAlign="center" fillParent="true" defaultFillX="true">
-	<textButton onChange="goto:mainScreen">@doNothing</textButton>
+	<textButton onChange="goto:cityMapScreen">@doNothing</textButton>
 	<textButton onChange="show:settings">@settings</textButton>
 	<textButton onChange="app:exit">@exit</textButton>
 </table>

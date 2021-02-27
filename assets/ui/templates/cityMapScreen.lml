@@ -1,0 +1,12 @@
+<!-- UI elements associated with the CityMapScreen view -->
+<table oneColumn="true" defaultPad="2" tableAlign="topLeft"
+	fillParent="true" defaultFillX="true">
+	<!-- Top menu-bar -->
+	<menuBar expandX="true" fillY="true">
+		<menu text="@cityMap-menu-file">
+			<menuItem>@cityMap-menu-file-open</menuItem>
+			<menuItem>@cityMap-menu-file-save</menuItem>
+			<menuItem onChange="app:exit">@cityMap-menu-file-exit</menuItem>
+		</menu>
+	</menuBar>
+</table>
