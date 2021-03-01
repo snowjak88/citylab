@@ -3,14 +3,24 @@
  */
 package org.snowjak.city.controller;
 
-import com.badlogic.gdx.assets.AssetManager;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
+import org.snowjak.city.map.TileSet;
+import org.snowjak.city.map.TileSetLoader;
+
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.TiledMapTile;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.maps.tiled.renderers.IsometricTiledMapRenderer;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -50,20 +60,76 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 	private TiledMap map = null;
 	private IsometricTiledMapRenderer renderer;
 	
+	private float cameraOffsetX, cameraOffsetY;
+	
 	@Override
 	public void initialize(Stage stage, ObjectMap<String, Actor> actorMappedByIds) {
 		
-		final TmxMapLoader loader = new TmxMapLoader(new InternalFileHandleResolver());
+		final TileSetLoader tileSetLoader = new TileSetLoader(new InternalFileHandleResolver());
+		assetService.getAssetManager().setLoader(TileSet.class, ".json", tileSetLoader);
+		assetService.getEagerAssetManager().setLoader(TileSet.class, ".json", tileSetLoader);
 		
-		final AssetManager assetManager = assetService.getEagerAssetManager();
+		//
+		//
+		//
 		
-		assetManager.setLoader(TiledMap.class, loader);
+		assetService.load("images/tilesets/terrain/default/tileset.json", TileSet.class);
 		
-		assetManager.load("maps/untitled.tmx", TiledMap.class);
-		assetManager.finishLoadingAsset("maps/untitled.tmx");
-		map = assetManager.get("maps/untitled.tmx", TiledMap.class);
+		assetService.finishLoading("images/tilesets/terrain/default/tileset.json", TileSet.class);
 		
-		renderer = new IsometricTiledMapRenderer(map, 1f / 64f, batch);
+		final TileSet tileset = assetService.get("images/tilesets/terrain/default/tileset.json", TileSet.class);
+		
+		final int worldWidthInTiles = 16, worldHeightInTiles = 16;
+		final TiledMapTileLayer layer = new TiledMapTileLayer(worldWidthInTiles, worldHeightInTiles,
+				tileset.getTileSetDescriptor().getGridWidth(), tileset.getTileSetDescriptor().getGridHeight());
+		layer.setName("base");
+		
+		map = new TiledMap();
+		map.getTileSets().addTileSet(tileset);
+		map.getLayers().add(layer);
+		
+		for (int x = 0; x < layer.getWidth(); x++)
+			for (int y = 0; y < layer.getHeight(); y++) {
+				final TiledMapTile tile = tileset.getRandomTile("Grass");
+				final TiledMapTileLayer.Cell cell = new Cell();
+				cell.setTile(tile);
+				layer.setCell(x, y, cell);
+			}
+		
+		renderer = new IsometricTiledMapRenderer(map, 1f / (float) tileset.getTileSetDescriptor().getWidth(), batch);
+		
+		stage.addListener(new InputListener() {
+			
+			private final Vector2 scratch = new Vector2();
+			private float startX = 0, startY = 0;
+			
+			@Override
+			public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+				
+				scratch.set(x, y);
+				final Vector2 worldCoords = viewport.unproject(scratch);
+				startX = worldCoords.x;
+				startY = worldCoords.y;
+				return true;
+			}
+			
+			@Override
+			public void touchDragged(InputEvent event, float x, float y, int pointer) {
+				
+				scratch.set(x, y);
+				final Vector2 worldCoords = viewport.unproject(scratch);
+				
+				cameraOffsetX += (worldCoords.x - startX) / 2f;
+				cameraOffsetY -= (worldCoords.y - startY) / 2f;
+				
+				startX = worldCoords.x;
+				startY = worldCoords.y;
+				
+				cameraOffsetX = min(max(cameraOffsetX, 0f), worldWidthInTiles);
+				cameraOffsetY = min(max(cameraOffsetY, 0f), worldHeightInTiles);
+			}
+			
+		});
 	}
 	
 	@Override
@@ -74,6 +140,7 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 		if (renderer != null) {
 			viewport.apply();
 			
+			viewport.getCamera().position.set(cameraOffsetX, cameraOffsetY, 0);
 			viewport.getCamera().update();
 			renderer.setView((OrthographicCamera) viewport.getCamera());
 			

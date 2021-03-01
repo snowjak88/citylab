@@ -45,6 +45,7 @@ public class Configuration {
 	/** Parsing macros available in all views. */
 	@LmlMacro
 	private final String globalMacro = "ui/templates/macros/global.lml";
+	
 	/**
 	 * Using a custom viewport provider - Autumn MVC defaults to the ScreenViewport,
 	 * as it is the only viewport that doesn't need to know application's targeted
