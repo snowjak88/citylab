@@ -84,7 +84,7 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 	@Override
 	public TileSet loadSync(AssetManager manager, String fileName, FileHandle file, TileSetLoaderParameters parameter) {
 		
-		final TileSet tileset = new TileSet(tileSetDescriptor);
+		final TileSet tileset = new TileSet(file, tileSetDescriptor);
 		final FileHandle tileSetBaseDirectory = file.parent();
 		
 		for (TileDescriptor tileDescriptor : tileSetDescriptor.getAllTiles()) {

@@ -2,6 +2,7 @@
 eclipse.project.name = appName + '-core'
 
 dependencies {
+	implementation "com.google.guava:guava:$guavaVersion"
 	api "com.badlogicgames.gdx:gdx:$gdxVersion"
 	api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
 	api "com.badlogicgames.ashley:ashley:$ashleyVersion"
@@ -19,4 +20,6 @@ dependencies {
 	api "com.github.czyzby:gdx-autumn:$autumnVersion"
 	api "com.github.czyzby:gdx-lml-vis:$lmlVisVersion"
 	api "com.kotcrab.vis:vis-ui:$visUiVersion"
+	
+	implementation "org.codehaus.groovy:groovy-all:3.0.+"
 }

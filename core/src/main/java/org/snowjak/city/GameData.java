@@ -3,6 +3,8 @@
  */
 package org.snowjak.city;
 
+import org.snowjak.city.map.Map;
+
 /**
  * Encapsulates game data. Is operated on by {@link GameMechanics}.
  * 
@@ -11,4 +13,8 @@ package org.snowjak.city;
  */
 public class GameData {
 	
+	/**
+	 * The current {@link Map}.
+	 */
+	public Map map;
 }

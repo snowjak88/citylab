@@ -9,7 +9,7 @@ package org.snowjak.city.map;
  * @author snowjak88
  *
  */
-public enum MapLayer {
+public enum MapDomain {
 	
 	/**
 	 * First (bottom) layer. Grass, dirt, that kind of thing.
@@ -32,7 +32,7 @@ public enum MapLayer {
 	private final String baseDirectoryName;
 	private final int order;
 	
-	private MapLayer(int order, String baseDirectoryName) {
+	private MapDomain(int order, String baseDirectoryName) {
 		
 		this.order = order;
 		this.baseDirectoryName = baseDirectoryName;

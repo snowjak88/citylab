@@ -25,6 +25,7 @@ public class TileSet extends TiledMapTileSet {
 		JSON.setSerializer(TileSetDescriptor.class, new TileSetDescriptorSerializer());
 	}
 	
+	private final FileHandle descriptorFile;
 	private final TileSetDescriptor descriptor;
 	
 	private final OrderedMap<TileDescriptor, TiledMapTile> tileDescriptorsToTiles = new OrderedMap<>();
@@ -39,7 +40,7 @@ public class TileSet extends TiledMapTileSet {
 	 */
 	public TileSet(FileHandle tilesetDescriptorFile) {
 		
-		this(JSON.fromJson(TileSetDescriptor.class, tilesetDescriptorFile));
+		this(tilesetDescriptorFile, JSON.fromJson(TileSetDescriptor.class, tilesetDescriptorFile));
 	}
 	
 	/**
@@ -52,12 +53,14 @@ public class TileSet extends TiledMapTileSet {
 	 * @param tilesetDescriptor
 	 *            must not be {@code null}
 	 */
-	public TileSet(TileSetDescriptor tilesetDescriptor) {
+	public TileSet(FileHandle descriptorFile, TileSetDescriptor tilesetDescriptor) {
 		
 		super();
 		
+		assert (descriptorFile != null);
 		assert (tilesetDescriptor != null);
 		
+		this.descriptorFile = descriptorFile;
 		this.descriptor = tilesetDescriptor;
 		
 		setName(tilesetDescriptor.getTitle());
@@ -74,6 +77,11 @@ public class TileSet extends TiledMapTileSet {
 		
 		tilesToTileDescriptors.put(tile, tileDescriptor);
 		tileDescriptorsToTiles.put(tileDescriptor, tile);
+	}
+	
+	public FileHandle getDescriptorFile() {
+		
+		return descriptorFile;
 	}
 	
 	public TileSetDescriptor getTileSetDescriptor() {
