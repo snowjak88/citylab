@@ -7,18 +7,15 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 import org.snowjak.city.CityGame;
+import org.snowjak.city.map.Map;
 import org.snowjak.city.map.TileSet;
 import org.snowjak.city.map.generator.MapGenerator;
+import org.snowjak.city.map.renderer.MapRenderer;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TiledMapTile;
-import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
-import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
-import com.badlogic.gdx.maps.tiled.renderers.IsometricTiledMapRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -59,8 +56,8 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 	private Viewport viewport = new FitViewport(8, 8);
 	private SpriteBatch batch = new SpriteBatch();
 	
-	private TiledMap map = null;
-	private IsometricTiledMapRenderer renderer;
+	private Map map = null;
+	private MapRenderer renderer;
 	
 	private float cameraOffsetX, cameraOffsetY;
 	
@@ -78,23 +75,13 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 		final TileSet tileset = assetService.get(CityGame.DEFAULT_TILESET_PATH, TileSet.class);
 		
 		final int worldWidthInTiles = 16, worldHeightInTiles = 16;
-		final TiledMapTileLayer layer = new TiledMapTileLayer(worldWidthInTiles, worldHeightInTiles,
-				tileset.getTileSetDescriptor().getGridWidth(), tileset.getTileSetDescriptor().getGridHeight());
-		layer.setName("base");
 		
-		map = new TiledMap();
-		map.getTileSets().addTileSet(tileset);
-		map.getLayers().add(layer);
+		FileHandle testScript = Gdx.files.local("data/map-generators/rolling-hills.groovy");
+		if (!testScript.exists())
+			testScript = Gdx.files.internal("data/map-generators/rolling-hills.groovy");
+		map = new MapGenerator().generateBounded(worldWidthInTiles, worldHeightInTiles, testScript, assetService);
 		
-		for (int x = 0; x < layer.getWidth(); x++)
-			for (int y = 0; y < layer.getHeight(); y++) {
-				final TiledMapTile tile = tileset.getRandomTile("Grass");
-				final TiledMapTileLayer.Cell cell = new Cell();
-				cell.setTile(tile);
-				layer.setCell(x, y, cell);
-			}
-		
-		renderer = new IsometricTiledMapRenderer(map, 1f / (float) tileset.getTileSetDescriptor().getWidth(), batch);
+		renderer = new MapRenderer(map, batch);
 		
 		stage.addListener(new InputListener() {
 			
@@ -128,11 +115,6 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 			}
 			
 		});
-		
-		FileHandle testScript = Gdx.files.local("data/map-generators/rolling-hills.groovy");
-		if (!testScript.exists())
-			testScript = Gdx.files.internal("data/map-generators/rolling-hills.groovy");
-		new MapGenerator().generateBounded(4, 4, testScript, assetService);
 	}
 	
 	@Override

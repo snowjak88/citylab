@@ -68,6 +68,16 @@ class MapGenerator {
 				map.setCell x, y, org.snowjak.city.map.Map.DIMENSION_ALTITUDE, altitude
 			}
 		
+		println "Generated a new map from ${scriptFile.path()}"
+		for(int y in 0..height-1) {
+			print "[ "
+			for(int x in 0..width-1) {
+				def alt = map.getCellFloat(x, y, org.snowjak.city.map.Map.DIMENSION_ALTITUDE) as int
+				print "$alt "
+			}
+			println "]"
+		}
+		
 		map
 	}
 }

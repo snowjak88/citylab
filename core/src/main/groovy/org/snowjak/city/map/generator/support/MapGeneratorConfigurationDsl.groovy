@@ -26,6 +26,9 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	public Module altitude
 	public Closure tiles
 	
+	private String debugDescription = ""
+	private int debugDepth = 0
+	
 	public MapGeneratorConfigurationDsl() {
 		super()
 	}
@@ -40,10 +43,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public ModuleBasisFunction basis(@DelegatesTo(value=ModuleBasisConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public ModuleBasisFunction basis(@DelegatesTo(value=ModuleBasisConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleBasisConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -53,10 +56,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public ModuleCellular cellular(@DelegatesTo(value=ModuleCellularConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public ModuleCellular cellular(@DelegatesTo(value=ModuleCellularConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleCellularConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -65,10 +68,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public ModuleFractal fractal(@DelegatesTo(value=ModuleFractalConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public ModuleFractal fractal(@DelegatesTo(value=ModuleFractalConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleFractalConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -77,10 +80,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public ModuleGradient gradient(@DelegatesTo(value=ModuleGradientConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public ModuleGradient gradient(@DelegatesTo(value=ModuleGradientConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleGradientConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -89,10 +92,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public ModuleSphere sphere(@DelegatesTo(value=ModuleSphereConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public ModuleSphere sphere(@DelegatesTo(value=ModuleSphereConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleSphereConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -112,10 +115,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module abs(@DelegatesTo(value=ModuleAbsConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module abs(@DelegatesTo(value=ModuleAbsConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleAbsConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -137,10 +140,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module clamp(@DelegatesTo(value=ModuleClampConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module clamp(@DelegatesTo(value=ModuleClampConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleClampConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -160,10 +163,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module cos(@DelegatesTo(value=ModuleCosConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module cos(@DelegatesTo(value=ModuleCosConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleCosConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -183,10 +186,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module sin(@DelegatesTo(value=ModuleSinConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module sin(@DelegatesTo(value=ModuleSinConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleSinConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -206,10 +209,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module floor(@DelegatesTo(value=ModuleFloorConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module floor(@DelegatesTo(value=ModuleFloorConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleFloorConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -229,10 +232,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module invert(@DelegatesTo(value=ModuleInvertConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module invert(@DelegatesTo(value=ModuleInvertConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleInvertConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -267,10 +270,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module pow(@DelegatesTo(value=ModulePowerConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module pow(@DelegatesTo(value=ModulePowerConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModulePowerConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -279,10 +282,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module autoCorrect(@DelegatesTo(value=ModuleAutoCorrectConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module autoCorrect(@DelegatesTo(value=ModuleAutoCorrectConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleAutoCorrectConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -291,10 +294,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module bias(@DelegatesTo(value=ModuleBiasConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module bias(@DelegatesTo(value=ModuleBiasConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleBiasConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -303,10 +306,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module blend(@DelegatesTo(value=ModuleBlendConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module blend(@DelegatesTo(value=ModuleBlendConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleBlendConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -315,10 +318,10 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module combine(@DelegatesTo(value=ModuleCombinerConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module combine(@DelegatesTo(value=ModuleCombinerConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleCombinerConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
@@ -327,38 +330,38 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public Module fnGradient(@DelegatesTo(value=ModuleFnGradientConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module fnGradient(@DelegatesTo(value=ModuleFnGradientConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleFnGradientConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
-	public Module gain(@DelegatesTo(value=ModuleGainConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module gain(@DelegatesTo(value=ModuleGainConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleGainConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
-	public Module translateDomain(@DelegatesTo(value=ModuleTranslateDomainConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module translateDomain(@DelegatesTo(value=ModuleTranslateDomainConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleTranslateDomainConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
-	public Module scaleDomain(@DelegatesTo(value=ModuleScaleDomainConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module scaleDomain(@DelegatesTo(value=ModuleScaleDomainConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleScaleDomainConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 	
-	public Module tiers(@DelegatesTo(value=ModuleTiersConfigurator, strategy=Closure.DELEGATE_FIRST) Closure script) {
+	public Module tiers(@DelegatesTo(value=ModuleTiersConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleTiersConfigurator()
 		script.delegate = config
-		script()
+		config.with script
 		config.build()
 	}
 }

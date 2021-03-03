@@ -11,6 +11,7 @@ import com.sudoplay.joise.module.ScalarParameter
  *
  */
 trait ModuleConfigurator<T extends Module> {
+	
 	abstract T build()
 	
 	public Module scalar(double scalar) {

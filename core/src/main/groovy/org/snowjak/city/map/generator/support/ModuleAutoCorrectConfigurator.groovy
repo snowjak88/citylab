@@ -24,6 +24,7 @@ class ModuleAutoCorrectConfigurator implements ModuleConfigurator<ModuleAutoCorr
 		module.setLow low
 		module.setHigh high
 		module.setSamples samples
+		module.calculateAll()
 		module
 	}
 }
