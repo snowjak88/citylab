@@ -3,6 +3,7 @@
  */
 package org.snowjak.city.map;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 
 /**
@@ -14,7 +15,7 @@ import java.util.HashMap;
 public class BoundedMap extends Map {
 	
 	private final int width, height;
-	
+	private final EnumMap<MapDomain, Integer>[][] tiles;
 	private final java.util.Map<String, Integer>[][] intValues;
 	private final java.util.Map<String, Float>[][] floatValues;
 	private final java.util.Map<String, String>[][] stringValues;
@@ -27,6 +28,7 @@ public class BoundedMap extends Map {
 		this.width = width;
 		this.height = height;
 		
+		tiles = new EnumMap[width][height];
 		intValues = new HashMap[width][height];
 		floatValues = new HashMap[width][height];
 		stringValues = new HashMap[width][height];
@@ -35,6 +37,7 @@ public class BoundedMap extends Map {
 		
 		for (int x = 0; x < width; x++)
 			for (int y = 0; y < height; y++) {
+				tiles[x][y] = new EnumMap<>(MapDomain.class);
 				intValues[x][y] = new HashMap<>();
 				floatValues[x][y] = new HashMap<>();
 				stringValues[x][y] = new HashMap<>();
@@ -51,6 +54,28 @@ public class BoundedMap extends Map {
 		if (x >= width || y >= height)
 			return false;
 		return true;
+	}
+	
+	@Override
+	public void setCell(int x, int y, MapDomain domain, int hashcode) {
+		
+		if (!isLocationInBounds(x, y))
+			throw new IndexOutOfBoundsException();
+		if (domain == null)
+			throw new NullPointerException();
+		if (getTileSetFor(domain).getTile(hashcode) == null)
+			throw new IllegalArgumentException();
+		tiles[x][y].put(domain, Integer.valueOf(hashcode));
+	}
+	
+	@Override
+	public int getCellTile(int x, int y, MapDomain domain) {
+		
+		if (!isLocationInBounds(x, y))
+			throw new IndexOutOfBoundsException();
+		if (domain == null)
+			throw new NullPointerException();
+		return tiles[x][y].get(domain).intValue();
 	}
 	
 	@Override

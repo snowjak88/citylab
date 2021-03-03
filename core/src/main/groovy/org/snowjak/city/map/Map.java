@@ -11,6 +11,8 @@ import java.util.EnumMap;
  */
 public abstract class Map {
 	
+	public static final String DIMENSION_ALTITUDE = "terrain.altitude";
+	
 	private EnumMap<MapDomain, TileSet> tilesets = new EnumMap<>(MapDomain.class);
 	
 	public TileSet getTileSetFor(MapDomain domain) {
@@ -24,6 +26,37 @@ public abstract class Map {
 	}
 	
 	public abstract boolean isLocationInBounds(int x, int y);
+	
+	/**
+	 * Sets the given Map cell to contain the given tile (by hashcode).
+	 * 
+	 * @param x
+	 * @param y
+	 * @param domain
+	 * @param hashcode
+	 * @throws IndexOutOfBoundsException
+	 *             if the given location is not within the map's bounds
+	 * @throws NullPointerException
+	 *             if {@code domain} is {@code null}
+	 * @throws IllegalArgumentException
+	 *             if {@code hashcode} is not a valid tile within the configured
+	 *             {@link TileSet} for the given {@link MapDomain}
+	 */
+	public abstract void setCell(int x, int y, MapDomain domain, int hashcode);
+	
+	/**
+	 * Get the configured tile (by hashcode) at the given Cell.
+	 * 
+	 * @param x
+	 * @param y
+	 * @param domain
+	 * @return
+	 * @throws IndexOutOfBoundsException
+	 *             if the given location is not within the map's bounds
+	 * @throws NullPointerException
+	 *             if {@code domain} is {@code null}
+	 */
+	public abstract int getCellTile(int x, int y, MapDomain domain);
 	
 	/**
 	 * Assign the given value to the given dimension at the given location.

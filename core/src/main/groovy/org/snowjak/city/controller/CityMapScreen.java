@@ -6,10 +6,12 @@ package org.snowjak.city.controller;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+import org.snowjak.city.CityGame;
 import org.snowjak.city.map.TileSet;
-import org.snowjak.city.map.TileSetLoader;
+import org.snowjak.city.map.generator.MapGenerator;
 
-import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.tiled.TiledMap;
@@ -65,19 +67,15 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 	@Override
 	public void initialize(Stage stage, ObjectMap<String, Actor> actorMappedByIds) {
 		
-		final TileSetLoader tileSetLoader = new TileSetLoader(new InternalFileHandleResolver());
-		assetService.getAssetManager().setLoader(TileSet.class, ".json", tileSetLoader);
-		assetService.getEagerAssetManager().setLoader(TileSet.class, ".json", tileSetLoader);
-		
 		//
 		//
 		//
 		
-		assetService.load("images/tilesets/terrain/default/tileset.json", TileSet.class);
+		assetService.load(CityGame.DEFAULT_TILESET_PATH, TileSet.class);
 		
-		assetService.finishLoading("images/tilesets/terrain/default/tileset.json", TileSet.class);
+		assetService.finishLoading(CityGame.DEFAULT_TILESET_PATH, TileSet.class);
 		
-		final TileSet tileset = assetService.get("images/tilesets/terrain/default/tileset.json", TileSet.class);
+		final TileSet tileset = assetService.get(CityGame.DEFAULT_TILESET_PATH, TileSet.class);
 		
 		final int worldWidthInTiles = 16, worldHeightInTiles = 16;
 		final TiledMapTileLayer layer = new TiledMapTileLayer(worldWidthInTiles, worldHeightInTiles,
@@ -130,6 +128,11 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 			}
 			
 		});
+		
+		FileHandle testScript = Gdx.files.local("data/map-generators/rolling-hills.groovy");
+		if (!testScript.exists())
+			testScript = Gdx.files.internal("data/map-generators/rolling-hills.groovy");
+		new MapGenerator().generateBounded(4, 4, testScript, assetService);
 	}
 	
 	@Override

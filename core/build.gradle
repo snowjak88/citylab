@@ -20,6 +20,4 @@ dependencies {
 	api "com.github.czyzby:gdx-autumn:$autumnVersion"
 	api "com.github.czyzby:gdx-lml-vis:$lmlVisVersion"
 	api "com.kotcrab.vis:vis-ui:$visUiVersion"
-	
-	implementation "org.codehaus.groovy:groovy-all:3.0.+"
 }

@@ -1,12 +1,19 @@
 package org.snowjak.city.configuration;
 
 import org.snowjak.city.CityGame;
+import org.snowjak.city.map.TileSet;
+import org.snowjak.city.map.TileSetLoader;
 import org.snowjak.city.service.ScaleService;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
+import com.github.czyzby.autumn.mvc.component.asset.AssetService;
+import com.github.czyzby.autumn.mvc.component.ui.InterfaceService;
 import com.github.czyzby.autumn.mvc.component.ui.SkinService;
 import com.github.czyzby.autumn.mvc.stereotype.preference.AvailableLocales;
 import com.github.czyzby.autumn.mvc.stereotype.preference.I18nBundle;
@@ -19,6 +26,8 @@ import com.github.czyzby.autumn.mvc.stereotype.preference.sfx.MusicEnabled;
 import com.github.czyzby.autumn.mvc.stereotype.preference.sfx.MusicVolume;
 import com.github.czyzby.autumn.mvc.stereotype.preference.sfx.SoundEnabled;
 import com.github.czyzby.autumn.mvc.stereotype.preference.sfx.SoundVolume;
+import com.github.czyzby.kiwi.log.Logger;
+import com.github.czyzby.kiwi.log.LoggerService;
 import com.github.czyzby.kiwi.util.gdx.asset.lazy.provider.ObjectProvider;
 import com.github.czyzby.lml.parser.LmlSyntax;
 import com.github.czyzby.lml.util.Lml;
@@ -33,6 +42,8 @@ import com.kotcrab.vis.ui.VisUI;
  */
 @Component
 public class Configuration {
+	
+	private static final Logger LOG = LoggerService.forClass(Configuration.class);
 	
 	/** Name of the application's preferences file. */
 	public static final String PREFERENCES = "jCity";
@@ -103,16 +114,60 @@ public class Configuration {
 	 *            contains GUI skin.
 	 */
 	@Initiate
-	public void initiateConfiguration(final ScaleService scaleService, final SkinService skinService) {
+	public void initiateConfiguration(final InterfaceService interfaceService, final ScaleService scaleService,
+			final SkinService skinService, final AssetService assetService) {
 		
 		// Loading default VisUI skin with the selected scale:
 		VisUI.load(scaleService.getScale());
+		
 		// Registering VisUI skin with "default" name - this skin will be the default
 		// one for all LML widgets:
 		skinService.addSkin("default", VisUI.getSkin());
+		
 		// Thanks to this setting, only methods annotated with @LmlAction will be
 		// available in views, significantly
 		// speeding up method look-up:
 		Lml.EXTRACT_UNANNOTATED_METHODS = false;
+		
+		addExternalBundles(interfaceService);
+		addCustomAssetLoaders(assetService);
+	}
+	
+	private void addExternalBundles(InterfaceService interfaceService) {
+		
+		LOG.debug("Scanning for external bundles ...");
+		
+		//
+		// Does the "data" directory exist in the application root?
+		final FileHandle dataRoot = Gdx.files.local("data/");
+		if (!dataRoot.exists())
+			dataRoot.mkdirs();
+		
+		final FileHandle bundleRoot = dataRoot.child("bundles/");
+		if (!bundleRoot.exists())
+			bundleRoot.mkdirs();
+			
+		//
+		// Now: scan for subdirectories.
+		for (FileHandle bundleDirectory : bundleRoot.list((f) -> f.isDirectory())) {
+			final String bundleName = bundleDirectory.name();
+			LOG.debug("Loading external bundle [{0}]", bundleName);
+			try {
+				interfaceService.addBundleFile(bundleName, bundleDirectory.child(bundleName));
+			} catch (Throwable t) {
+				LOG.error(t,
+						"Unable to load external bundle [{0}] -- your bundles are not named the same as their containing directory!",
+						bundleDirectory.path());
+			}
+		}
+		
+		LOG.debug("Finished scanning for external bundles.");
+	}
+	
+	private void addCustomAssetLoaders(AssetService assetService) {
+		
+		final TileSetLoader tileSetLoader = new TileSetLoader(new InternalFileHandleResolver());
+		assetService.getAssetManager().setLoader(TileSet.class, "tileset.json", tileSetLoader);
+		assetService.getEagerAssetManager().setLoader(TileSet.class, "tileset.json", tileSetLoader);
 	}
 }

@@ -14,20 +14,27 @@ buildscript {
 allprojects {
 	apply plugin: 'eclipse'
 	apply plugin: 'idea'
+	
+	version = '0.0.1'
+	ext.appName = 'jCity'
 }
 
 configure(subprojects) {
 
+	apply plugin: 'groovy'
 	apply plugin: 'java-library'
+	
 	sourceCompatibility = 8.0
 	compileJava {
 		options.incremental = true
 	}
+	
+	dependencies {
+		implementation "org.codehaus.groovy:groovy-all:3.0.+"
+	}
 }
 
 subprojects {
-	version = '0.0.1'
-	ext.appName = 'jCity'
 	repositories {
 		mavenLocal()
 		mavenCentral()

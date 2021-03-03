@@ -32,8 +32,19 @@ jar {
 	manifest {
 		attributes 'Main-Class': project.mainClassName
 	}
+	excludes [ "assets/data/" ]
 	doLast {
 		file(archivePath).setExecutable(true, false)
 	}
 }
 
+distributions {
+	main {
+		distributionBaseName = appName
+		contents {
+			from (rootProject.file('assets/data/')) {
+				into 'data'
+			}
+		}
+	}
+}
