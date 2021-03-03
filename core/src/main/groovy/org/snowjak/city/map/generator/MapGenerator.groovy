@@ -6,6 +6,7 @@ package org.snowjak.city.map.generator
 import static org.snowjak.city.map.MapDomain.TERRAIN
 
 import org.codehaus.groovy.control.CompilerConfiguration
+import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.snowjak.city.CityGame
 import org.snowjak.city.map.BoundedMap
 import org.snowjak.city.map.MapDomain
@@ -15,6 +16,10 @@ import org.snowjak.city.map.generator.support.MapGeneratorConfigurationDsl
 import com.badlogic.gdx.files.FileHandle
 import com.github.czyzby.autumn.mvc.component.asset.AssetService
 import com.sudoplay.joise.module.Module
+import com.sudoplay.joise.module.ModuleBasisFunction.BasisType
+import com.sudoplay.joise.module.ModuleBasisFunction.InterpolationType
+import com.sudoplay.joise.module.ModuleFractal.FractalType
+import com.sudoplay.joise.module.ModuleFunctionGradient.FunctionGradientAxis
 
 /**
  * @author snowjak88
@@ -29,8 +34,12 @@ class MapGenerator {
 		if(!scriptFile.exists())
 			throw new FileNotFoundException()
 		
+		def customImports = new ImportCustomizer()
+		customImports.addStaticStars( BasisType.class.name, InterpolationType.class.name, FractalType.class.name, FunctionGradientAxis.class.name )
+			
 		def config = new CompilerConfiguration()
 		config.scriptBaseClass = MapGeneratorConfigurationDsl.class.name
+		config.addCompilationCustomizers(customImports)
 		
 		def shell = new GroovyShell(this.class.classLoader, new Binding(), config)
 		def script = shell.parse(scriptFile.file()) as MapGeneratorConfigurationDsl
