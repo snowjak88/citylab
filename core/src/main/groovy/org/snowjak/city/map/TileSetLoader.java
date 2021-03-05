@@ -84,10 +84,18 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 	@Override
 	public TileSet loadSync(AssetManager manager, String fileName, FileHandle file, TileSetLoaderParameters parameter) {
 		
+		LOG.info("Loading tile-set [{0}] ...", fileName);
+		
 		final TileSet tileset = new TileSet(file, tileSetDescriptor);
 		final FileHandle tileSetBaseDirectory = file.parent();
 		
+		int index = 0;
 		for (TileDescriptor tileDescriptor : tileSetDescriptor.getAllTiles()) {
+			
+			index++;
+			LOG.info("Loading tile #{0}: {1}/\"{2}\" ...", index, tileDescriptor.getHashcode(),
+					tileDescriptor.getTitle());
+			
 			final FileHandle textureFile = tileSetBaseDirectory.child(tileDescriptor.getFilename());
 			final Texture tileTexture = manager.get(textureFile.path(), Texture.class);
 			
@@ -114,6 +122,8 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 		tileset.getProperties().put(PROPERTIES_TILESET_TITLE, tileSetDescriptor.getTitle());
 		tileset.getProperties().put(PROPERTIES_TILESET_FILENAME, file.path());
 		
+		LOG.info("Loaded tile-set [{0}].", fileName);
+		
 		return tileset;
 	}
 	
@@ -121,7 +131,7 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 	@Override
 	public Array<AssetDescriptor> getDependencies(String fileName, FileHandle file, TileSetLoaderParameters parameter) {
 		
-		LOG.debug("Identifying dependencies for {0}", fileName);
+		LOG.info("Identifying dependencies for tile-set [{0}] ...", fileName);
 		
 		tileSetDescriptor = JSON.fromJson(TileSetDescriptor.class, file);
 		
@@ -132,7 +142,7 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 		final Array<AssetDescriptor> requiredImages = new Array<>();
 		imageFilenames.stream().map(f -> new AssetDescriptor<>(f, Texture.class)).forEach(requiredImages::add);
 		
-		LOG.debug("Listed dependencies: {0}", imageFilenames.stream().collect(Collectors.joining(", ")));
+		LOG.info("Listed tile-set dependencies: [{0}]", imageFilenames.stream().collect(Collectors.joining(", ")));
 		
 		return requiredImages;
 	}

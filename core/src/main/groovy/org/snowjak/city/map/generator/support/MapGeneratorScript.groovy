@@ -3,6 +3,28 @@
  */
 package org.snowjak.city.map.generator.support
 
+import org.snowjak.city.map.generator.support.joise.ModuleAbsConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleAutoCorrectConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleBasisConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleBiasConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleBlendConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleCellularConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleClampConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleCombinerConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleCosConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleFloorConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleFnGradientConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleFractalConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleGainConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleGradientConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleInvertConfigurator
+import org.snowjak.city.map.generator.support.joise.ModulePowerConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleScaleDomainConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleSinConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleSphereConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleTiersConfigurator
+import org.snowjak.city.map.generator.support.joise.ModuleTranslateDomainConfigurator
+
 import com.sudoplay.joise.module.Module
 import com.sudoplay.joise.module.ModuleAbs
 import com.sudoplay.joise.module.ModuleBasisFunction
@@ -21,20 +43,16 @@ import com.sudoplay.joise.module.ModuleSphere
  * @author snowjak88
  *
  */
-abstract class MapGeneratorConfigurationDsl extends Script {
+abstract class MapGeneratorScript extends Script {
 	
-	public Module altitude
-	public Closure tiles
+	private static final Random RND = new Random(System.currentTimeMillis())
 	
-	private String debugDescription = ""
-	private int debugDepth = 0
-	
-	public MapGeneratorConfigurationDsl() {
+	public MapGeneratorScript() {
 		super()
 	}
-	
-	public Module scalar(double scalar) {
-		new ScalarModule(scalar)
+
+	public double rnd() {
+		RND.nextDouble()
 	}
 	
 	/**
@@ -43,7 +61,7 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public ModuleBasisFunction basis(@DelegatesTo(value=ModuleBasisConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
+	public Module basis(@DelegatesTo(value=ModuleBasisConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleBasisConfigurator()
 		script.delegate = config
 		config.with script
@@ -56,7 +74,7 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public ModuleCellular cellular(@DelegatesTo(value=ModuleCellularConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
+	public Module cellular(@DelegatesTo(value=ModuleCellularConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleCellularConfigurator()
 		script.delegate = config
 		config.with script
@@ -68,7 +86,7 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public ModuleFractal fractal(@DelegatesTo(value=ModuleFractalConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
+	public Module fractal(@DelegatesTo(value=ModuleFractalConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleFractalConfigurator()
 		script.delegate = config
 		config.with script
@@ -80,7 +98,7 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public ModuleGradient gradient(@DelegatesTo(value=ModuleGradientConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
+	public Module gradient(@DelegatesTo(value=ModuleGradientConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleGradientConfigurator()
 		script.delegate = config
 		config.with script
@@ -92,7 +110,7 @@ abstract class MapGeneratorConfigurationDsl extends Script {
 	 * @param script
 	 * @return
 	 */
-	public ModuleSphere sphere(@DelegatesTo(value=ModuleSphereConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
+	public Module sphere(@DelegatesTo(value=ModuleSphereConfigurator, strategy=Closure.DELEGATE_ONLY) Closure script) {
 		def config = new ModuleSphereConfigurator()
 		script.delegate = config
 		config.with script

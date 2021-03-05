@@ -10,10 +10,10 @@ import org.snowjak.city.CityGame;
 import org.snowjak.city.map.Map;
 import org.snowjak.city.map.TileSet;
 import org.snowjak.city.map.generator.MapGenerator;
+import org.snowjak.city.map.generator.support.MapGeneratorScript;
 import org.snowjak.city.map.renderer.MapRenderer;
+import org.snowjak.city.service.MapGeneratorService;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
@@ -53,6 +53,9 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 	@Inject
 	private InterfaceService interfaceService;
 	
+	@Inject
+	private MapGeneratorService mapGeneratorService;
+	
 	private Viewport viewport = new FitViewport(8, 8);
 	private SpriteBatch batch = new SpriteBatch();
 	
@@ -69,17 +72,13 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 		//
 		
 		assetService.load(CityGame.DEFAULT_TILESET_PATH, TileSet.class);
-		
 		assetService.finishLoading(CityGame.DEFAULT_TILESET_PATH, TileSet.class);
-		
 		final TileSet tileset = assetService.get(CityGame.DEFAULT_TILESET_PATH, TileSet.class);
 		
-		final int worldWidthInTiles = 16, worldHeightInTiles = 16;
+		final int worldWidthInTiles = 64, worldHeightInTiles = 64;
 		
-		FileHandle testScript = Gdx.files.local("data/map-generators/rolling-hills.groovy");
-		if (!testScript.exists())
-			testScript = Gdx.files.internal("data/map-generators/rolling-hills.groovy");
-		map = new MapGenerator().generateBounded(worldWidthInTiles, worldHeightInTiles, testScript, assetService);
+		final MapGeneratorScript script = mapGeneratorService.getScript("rolling-hills");
+		map = new MapGenerator().generateBounded(worldWidthInTiles, worldHeightInTiles, script, tileset, false, false);
 		
 		renderer = new MapRenderer(map, batch);
 		
@@ -95,6 +94,9 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 				final Vector2 worldCoords = viewport.unproject(scratch);
 				startX = worldCoords.x;
 				startY = worldCoords.y;
+				
+				LOG.info("Mouse @ {0},{1}", worldCoords.x, worldCoords.y);
+				
 				return true;
 			}
 			
@@ -105,7 +107,7 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 				final Vector2 worldCoords = viewport.unproject(scratch);
 				
 				cameraOffsetX += (worldCoords.x - startX) / 2f;
-				cameraOffsetY -= (worldCoords.y - startY) / 2f;
+				cameraOffsetY -= (worldCoords.y - startY);
 				
 				startX = worldCoords.x;
 				startY = worldCoords.y;

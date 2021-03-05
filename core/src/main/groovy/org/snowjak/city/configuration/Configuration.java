@@ -3,10 +3,11 @@ package org.snowjak.city.configuration;
 import org.snowjak.city.CityGame;
 import org.snowjak.city.map.TileSet;
 import org.snowjak.city.map.TileSetLoader;
+import org.snowjak.city.map.generator.JavaMapGeneratorLoader;
+import org.snowjak.city.map.generator.support.MapGeneratorScript;
 import org.snowjak.city.service.ScaleService;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -135,7 +136,7 @@ public class Configuration {
 	
 	private void addExternalBundles(InterfaceService interfaceService) {
 		
-		LOG.debug("Scanning for external bundles ...");
+		LOG.info("Scanning for external bundles ...");
 		
 		//
 		// Does the "data" directory exist in the application root?
@@ -151,7 +152,7 @@ public class Configuration {
 		// Now: scan for subdirectories.
 		for (FileHandle bundleDirectory : bundleRoot.list((f) -> f.isDirectory())) {
 			final String bundleName = bundleDirectory.name();
-			LOG.debug("Loading external bundle [{0}]", bundleName);
+			LOG.info("Loading external bundle [{0}]", bundleName);
 			try {
 				interfaceService.addBundleFile(bundleName, bundleDirectory.child(bundleName));
 			} catch (Throwable t) {
@@ -161,13 +162,17 @@ public class Configuration {
 			}
 		}
 		
-		LOG.debug("Finished scanning for external bundles.");
+		LOG.info("Finished scanning for external bundles.");
 	}
 	
 	private void addCustomAssetLoaders(AssetService assetService) {
 		
-		final TileSetLoader tileSetLoader = new TileSetLoader(new InternalFileHandleResolver());
+		final TileSetLoader tileSetLoader = new TileSetLoader(CityGame.RESOLVER);
 		assetService.getAssetManager().setLoader(TileSet.class, "tileset.json", tileSetLoader);
 		assetService.getEagerAssetManager().setLoader(TileSet.class, "tileset.json", tileSetLoader);
+		
+		final JavaMapGeneratorLoader mapGeneratorLoader = new JavaMapGeneratorLoader(CityGame.RESOLVER);
+		assetService.getAssetManager().setLoader(MapGeneratorScript.class, ".groovy", mapGeneratorLoader);
+		assetService.getEagerAssetManager().setLoader(MapGeneratorScript.class, ".groovy", mapGeneratorLoader);
 	}
 }

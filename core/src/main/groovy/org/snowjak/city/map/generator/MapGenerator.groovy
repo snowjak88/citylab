@@ -5,21 +5,13 @@ package org.snowjak.city.map.generator
 
 import static org.snowjak.city.map.MapDomain.TERRAIN
 
-import org.codehaus.groovy.control.CompilerConfiguration
-import org.codehaus.groovy.control.customizers.ImportCustomizer
-import org.snowjak.city.CityGame
 import org.snowjak.city.map.BoundedMap
 import org.snowjak.city.map.MapDomain
+import org.snowjak.city.map.TileDescriptor
 import org.snowjak.city.map.TileSet
-import org.snowjak.city.map.generator.support.MapGeneratorConfigurationDsl
+import org.snowjak.city.map.generator.support.MapGeneratorScript
 
-import com.badlogic.gdx.files.FileHandle
-import com.github.czyzby.autumn.mvc.component.asset.AssetService
 import com.sudoplay.joise.module.Module
-import com.sudoplay.joise.module.ModuleBasisFunction.BasisType
-import com.sudoplay.joise.module.ModuleBasisFunction.InterpolationType
-import com.sudoplay.joise.module.ModuleFractal.FractalType
-import com.sudoplay.joise.module.ModuleFunctionGradient.FunctionGradientAxis
 
 /**
  * @author snowjak88
@@ -27,66 +19,99 @@ import com.sudoplay.joise.module.ModuleFunctionGradient.FunctionGradientAxis
  */
 class MapGenerator {
 	
-	public org.snowjak.city.map.Map generateBounded(int width, int height, FileHandle scriptFile, AssetService assetService) {
-		if(scriptFile == null)
+	private static final Random RND = new Random(System.currentTimeMillis());
+	
+	public org.snowjak.city.map.Map generateBounded(int width, int height, MapGeneratorScript script, TileSet terrainTileset, boolean wrapX = false, boolean wrapY = false) {
+		
+		if(script == null || terrainTileset == null)
 			throw new NullPointerException()
 		
-		if(!scriptFile.exists())
-			throw new FileNotFoundException()
-		
-		def customImports = new ImportCustomizer()
-		customImports.addStaticStars( BasisType.class.name, InterpolationType.class.name, FractalType.class.name, FunctionGradientAxis.class.name )
-			
-		def config = new CompilerConfiguration()
-		config.scriptBaseClass = MapGeneratorConfigurationDsl.class.name
-		config.addCompilationCustomizers(customImports)
-		
-		def shell = new GroovyShell(this.class.classLoader, new Binding(), config)
-		def script = shell.parse(scriptFile.file()) as MapGeneratorConfigurationDsl
-		
-		try {
-			script.run()
-		} catch(Throwable t) {
-			throw new RuntimeException("Cannot execute map-generation script \"" + scriptFile.path() + "\" -- unexpected exception.", t)
-		}
-		
-		if(script.altitude == null)
-			throw new RuntimeException("Map-generation script \"" + scriptFile.path() + "\" is incomplete: does not set \"altitude\".")
-		if(script.tiles == null)
-			throw new RuntimeException("Map-generation script \"" + scriptFile.path() + "\" is incomplete: does not set \"tiles\".")
-		
-		final Module altitudeProducer = script.altitude
-		def tilesProducer = script.tiles
-		
-		assetService.load CityGame.DEFAULT_TILESET_PATH, TileSet.class
-		assetService.finishLoading CityGame.DEFAULT_TILESET_PATH, TileSet.class
-		final TileSet terrainTileset = assetService.get(CityGame.DEFAULT_TILESET_PATH, TileSet.class)
+		final Module altitudeProducer = script.binding["altitude"]
 		
 		final org.snowjak.city.map.Map map = new BoundedMap(width, height)
 		map.setTileSetFor MapDomain.TERRAIN, terrainTileset
 		
-		for(int x in 0..width-1)
-			for(int y in 0..height-1) {
-				
-				def tileName = tilesProducer.doCall(x, y)
-				
-				final float altitude = altitudeProducer.get(x, y)
-				
-				def tileHashcode = terrainTileset.getTile(tileName).id
-				map.setCell x, y, TERRAIN, tileHashcode
-				map.setCell x, y, org.snowjak.city.map.Map.DIMENSION_ALTITUDE, altitude
-			}
+		def altitudes = new int[width+1][height+1]
 		
-		println "Generated a new map from ${scriptFile.path()}"
-		for(int y in 0..height-1) {
+		for(int x in 0..width)
+			for(int y in 0..height)
+				altitudes[x][y] = altitudeProducer.get(x, y)
+		
+		
+		def tileDescriptors = new TileDescriptor[width][height]
+		for(int y in 0..height) {
 			print "[ "
-			for(int x in 0..width-1) {
-				def alt = map.getCellFloat(x, y, org.snowjak.city.map.Map.DIMENSION_ALTITUDE) as int
-				print "$alt "
-			}
+			for(int x in 0..width)
+				print "${altitudes[x][y]} "
 			println "]"
 		}
 		
+		for(int x in 0..width-1)
+			for(int y in 0..height-1) {
+				//tileHashcodes[x][y] = matchTile(x, y, altitudes, tileNames, tileHashcodes, terrainTileset, wrapX, wrapY)
+				def possibilities = terrainTileset.findDescriptorsThatFit(altitudes, x, y, wrapX, wrapY, null)
+				tileDescriptors[x][y] = possibilities[RND.nextInt(possibilities.size())]
+			}
+		
+		mixUpTileAssignments altitudes, tileDescriptors, terrainTileset, wrapX, wrapY
+		
+		
+		//		if(!pickTileFor(0, 0, altitudes, tileDescriptors, terrainTileset, wrapX, wrapY) )
+		//			throw new RuntimeException("Couldn't build a map for some reason ...")
+		
+		for(int y in 0..height-1) {
+			for(int x in 0..width-1) {
+				def tileHashcode = tileDescriptors[x][y].hashcode
+				map.setCell x, y, TERRAIN, tileHashcode
+				
+				def minAltitude = altitudes[x][y]
+				minAltitude = min(altitudes[x][y], altitudes[x+1][y], altitudes[x][y+1], altitudes[x+1][y+1])
+				map.setCell x, y, org.snowjak.city.map.Map.DIMENSION_ALTITUDE, minAltitude
+			}
+		}
+		
 		map
+	}
+	
+	private int min(int...values) {
+		def minValue = Integer.MAX_VALUE
+		for(int v : values)
+			minValue = (minValue > v) ? v : minValue;
+		minValue
+	}
+	
+	private void mixUpTileAssignments(int[][] altitudes, TileDescriptor[][] descriptors, TileSet tileset, boolean wrapX, boolean wrapY) {
+		def width = descriptors.length
+		def height = descriptors[0].length
+		
+		for(int x in (0..width-1))
+			for(int y in (0..height-1)) {
+				
+				def possibilities = []
+				possibilities.addAll tileset.findDescriptorsThatFit(altitudes, x, y, wrapX, wrapY, null)
+				
+				def validities = []
+				
+				def oldAssignment = descriptors[x][y]
+				for(TileDescriptor possibility : possibilities) {
+					
+					descriptors[x][y] = possibility
+					
+					if(tileset.isTileFitting(x, y, descriptors, altitudes, wrapX, wrapY))
+						validities << descriptors[x][y]
+					
+					descriptors[x][y] = oldAssignment
+				}
+				
+				if(!validities.isEmpty())
+					descriptors[x][y] = validities[RND.nextInt(validities.size())]
+			}
+	}
+	
+	private int wrap(int v, int min, int max) {
+		final int range = (max+1) - min
+		while (v < min) v += range
+		while (v > max) v -= range
+		v
 	}
 }

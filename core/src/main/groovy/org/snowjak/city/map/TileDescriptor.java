@@ -151,10 +151,22 @@ public class TileDescriptor {
 	
 	public static enum Corner {
 		
-		NORTHWEST(-1, +1, 2),
-		NORTHEAST(+1, +1, 3),
-		SOUTHEAST(+1, -1, 0),
-		SOUTHWEST(-1, -1, 1);
+		/**
+		 * Top of tile-diamond.
+		 */
+		NORTHEAST(-1, +1, 3),
+		/**
+		 * Right of tile-diamond.
+		 */
+		SOUTHEAST(+1, +1, 0),
+		/**
+		 * Bottom of tile-diamond.
+		 */
+		SOUTHWEST(+1, -1, 1),
+		/**
+		 * Left of tile-diamond.
+		 */
+		NORTHWEST(-1, -1, 2);
 		
 		private final int dx, dy, oppositeIndex;
 		

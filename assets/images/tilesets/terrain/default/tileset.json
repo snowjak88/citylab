@@ -14,11 +14,19 @@
 			file: "terrain_0.png",
 			startX: 64,
 			startY: 0,
+			//
+			// Each tile must declare its corner-affinity
+			// ref = an arbitrary string, must match exactly with another ref to be placed
+			// alt = altitude-delta relative to other corners' altitudes
+			//
+			// Any can be blank (signifying "no opinion")
+			//
+			// Order is important. Order is clockwise from top.
 			corners: [
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -26,10 +34,10 @@
 			startX: 128,
 			startY: 0,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -37,10 +45,10 @@
 			startX: 192,
 			startY: 0,
 			corners: [
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" } ]
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -48,10 +56,10 @@
 			startX: 256,
 			startY: 0,
 			corners: [
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" } ]
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -59,10 +67,10 @@
 			startX: 320,
 			startY: 0,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "grass" },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -70,10 +78,10 @@
 			startX: 384,
 			startY: 0,
 			corners: [
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" } ]
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -81,10 +89,10 @@
 			startX: 448,
 			startY: 0,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -92,10 +100,10 @@
 			startX: 448,
 			startY: 0,
 			corners: [
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "grass" },
-				{ ref: "grass" } ]
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -103,10 +111,10 @@
 			startX: 448,
 			startY: 0,
 			corners: [
-				{ ref: "dirty-grass" },
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "dirty-grass" } ]
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		// row 2
 		{
@@ -115,10 +123,10 @@
 			startX: 0,
 			startY: 64,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -126,10 +134,10 @@
 			startX: 64,
 			startY: 64,
 			corners: [
-				{ ref: "dirty-grass" },
-				{ ref: "grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" } ]
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -137,10 +145,10 @@
 			startX: 128,
 			startY: 64,
 			corners: [
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "grass" },
-				{ ref: "dirty-grass" } ]
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -148,10 +156,10 @@
 			startX: 192,
 			startY: 64,
 			corners: [
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "grass" } ]
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -159,10 +167,10 @@
 			startX: 256,
 			startY: 64,
 			corners: [
-				{ ref: "dirty-grass" },
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "grass" } ]
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -170,10 +178,10 @@
 			startX: 320,
 			startY: 64,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "grass" },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -181,10 +189,10 @@
 			startX: 384,
 			startY: 64,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -192,10 +200,10 @@
 			startX: 448,
 			startY: 64,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "dirty-grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -203,10 +211,10 @@
 			startX: 512,
 			startY: 64,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
@@ -214,10 +222,10 @@
 			startX: 512,
 			startY: 64,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		//row 3 unused
 		// row 4
@@ -227,31 +235,33 @@
 			startX: 256,
 			startY: 192,
 			corners: [
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" },
-				{ ref: "dirty-grass" } ]
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 },
+				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 320,
 			startY: 192,
+			offset: 32,
 			corners: [
 				{ ref: "grass", alt: -1 },
 				{ ref: "grass", alt: -1 },
 				{ ref: "grass", alt: -1 },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 384,
 			startY: 192,
+			offset: 32,
 			corners: [
 				{ ref: "grass", alt: -1 },
-				{ ref: "grass" },
-				{ ref: "grass" },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
 				{ ref: "grass", alt: -1 } ]
 		},
 		{
@@ -259,21 +269,23 @@
 			file: "terrain_0.png",
 			startX: 448,
 			startY: 192,
+			offset: 32,
 			corners: [
 				{ ref: "grass", alt: -1 },
 				{ ref: "grass", alt: -1 },
-				{ ref: "grass" },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 512,
 			startY: 192,
+			offset: 32,
 			corners: [
 				{ ref: "grass", alt: -1 },
 				{ ref: "grass", alt: -1 },
-				{ ref: "grass" },
+				{ ref: "grass", alt: 0 },
 				{ ref: "grass", alt: -1 } ]
 		},
 		//row 5
@@ -282,43 +294,47 @@
 			file: "terrain_0.png",
 			startX: 0,
 			startY: 256,
+			offset: 32,
 			corners: [
 				{ ref: "grass", alt: -1 },
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 64,
-			startY: 256
+			startY: 256,
+			offset: 32,
 			corners: [
-				{ ref: "grass" },
+				{ ref: "grass", alt: 0 },
 				{ ref: "grass", alt: -1 },
-				{ ref: "grass" },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 128,
 			startY: 256,
+			offset: 32,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "grass" },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
 				{ ref: "grass", alt: -1 },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 192,
 			startY: 256,
+			offset: 32,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "grass" },
-				{ ref: "grass" },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
 				{ ref: "grass", alt: -1 } ]
 		},
 		{
@@ -326,8 +342,9 @@
 			file: "terrain_0.png",
 			startX: 256,
 			startY: 256,
+			offset: 32,
 			corners: [
-				{ ref: "grass" },
+				{ ref: "grass", alt: 0 },
 				{ ref: "grass", alt: -1 },
 				{ ref: "grass", alt: -1 },
 				{ ref: "grass", alt: -1 } ]
@@ -337,9 +354,10 @@
 			file: "terrain_0.png",
 			startX: 320,
 			startY: 256,
+			offset: 32,
 			corners: [
-				{ ref: "grass" },
-				{ ref: "grass" },
+				{ ref: "grass", alt: 0 },
+				{ ref: "grass", alt: 0 },
 				{ ref: "grass", alt: -1 },
 				{ ref: "grass", alt: -1 } ]
 		},
@@ -348,20 +366,22 @@
 			file: "terrain_0.png",
 			startX: 384,
 			startY: 256,
+			offset: 32,
 			corners: [
-				{ ref: "grass" },
+				{ ref: "grass", alt: 0 },
 				{ ref: "grass", alt: -1 },
 				{ ref: "grass", alt: -1 },
-				{ ref: "grass" } ]
+				{ ref: "grass", alt: 0 } ]
 		},
 		{
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 448,
 			startY: 256,
+			offset: 32,
 			corners: [
 				{ ref: "grass", alt: -1 },
-				{ ref: "grass" },
+				{ ref: "grass", alt: 0 },
 				{ ref: "grass", alt: -1 },
 				{ ref: "grass", alt: -1 } ]
 		}

@@ -1,9 +1,7 @@
 /**
  * 
  */
-package org.snowjak.city.map.generator.support
-
-import static com.sudoplay.joise.module.ModuleBasisFunction.BasisType.allSourceBasisTypes
+package org.snowjak.city.map.generator.support.joise
 
 import com.sudoplay.joise.module.ModuleFractal
 import com.sudoplay.joise.module.ModuleBasisFunction.BasisType

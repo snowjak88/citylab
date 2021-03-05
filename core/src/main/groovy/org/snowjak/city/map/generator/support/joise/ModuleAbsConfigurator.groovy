@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.snowjak.city.map.generator.support
+package org.snowjak.city.map.generator.support.joise
 
 import com.sudoplay.joise.module.Module
 import com.sudoplay.joise.module.ModuleAbs
@@ -12,8 +12,22 @@ import com.sudoplay.joise.module.ModuleAbs
  */
 class ModuleAbsConfigurator implements ModuleConfigurator<ModuleAbs> {
 	
-	public Module source = scalar(0)
-
+	public Module source
+	
+	ModuleAbsConfigurator() {
+		super()
+		setSource(0)
+	}
+	
+	void setSource(Module source) {
+		
+		this.source = source
+	}
+	
+	void setSource(double source) {
+		this.source = new ScalarModule(source)
+	}
+	
 	@Override
 	public ModuleAbs build() {
 		

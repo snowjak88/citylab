@@ -1,7 +1,9 @@
 /**
  * 
  */
-package org.snowjak.city.map.generator.support
+package org.snowjak.city.map.generator.support.joise
+
+import java.math.BigDecimal
 
 import com.sudoplay.joise.module.Module
 import com.sudoplay.joise.module.ModuleInvert
@@ -12,8 +14,21 @@ import com.sudoplay.joise.module.ModuleInvert
  */
 class ModuleInvertConfigurator implements ModuleConfigurator<ModuleInvert> {
 	
-	Module source = scalar(0)
+	Module source
 	
+	ModuleInvertConfigurator() {
+		super()
+		setSource(0)
+	}
+	
+	void setSource(double source) {
+		this.source = new ScalarModule(source)
+	}
+	
+	void setSource(Module source) {
+		this.source = source
+	}
+
 	@Override
 	public ModuleInvert build() {
 		

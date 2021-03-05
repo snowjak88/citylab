@@ -224,7 +224,7 @@ public class MapRenderer {
 				if (tile == null)
 					continue;
 				
-				final int altitude = (int) map.getCellFloat(col, row, Map.DIMENSION_ALTITUDE);
+				final int altitude = map.getCellInt(col, row, Map.DIMENSION_ALTITUDE);
 				
 				final float x = (col * halfTileWidth) + (row * halfTileWidth);
 				final float y = (row * halfTileHeight) - (col * halfTileHeight) + ((float) altitude * tileHeight);

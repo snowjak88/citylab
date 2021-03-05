@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.snowjak.city.map.generator.support
+package org.snowjak.city.map.generator.support.joise
 
 import com.sudoplay.joise.ModuleInstanceMap
 import com.sudoplay.joise.ModuleMap
