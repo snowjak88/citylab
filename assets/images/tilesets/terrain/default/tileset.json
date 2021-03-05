@@ -10,6 +10,8 @@
 	tiles: [
 		// row 1
 		{
+			// "A" in key
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 64,
@@ -29,6 +31,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "B"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 128,
@@ -40,6 +44,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "C"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 192,
@@ -51,6 +57,8 @@
 				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
+			// "D"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 256,
@@ -62,6 +70,8 @@
 				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
+			// "E"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 320,
@@ -73,6 +83,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "F"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 384,
@@ -84,6 +96,8 @@
 				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
+			// "G"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 448,
@@ -95,6 +109,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "H"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 448,
@@ -106,6 +122,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "I"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 448,
@@ -118,6 +136,8 @@
 		},
 		// row 2
 		{
+			// "J"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 0,
@@ -129,6 +149,8 @@
 				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
+			// "K"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 64,
@@ -140,6 +162,8 @@
 				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
+			// "L"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 128,
@@ -151,6 +175,8 @@
 				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
+			//
+			// "M"
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 192,
@@ -162,6 +188,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "N"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 256,
@@ -173,6 +201,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "O"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 320,
@@ -184,6 +214,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "P"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 384,
@@ -195,6 +227,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "Q"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 448,
@@ -206,6 +240,8 @@
 				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
+			// "R"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 512,
@@ -217,6 +253,8 @@
 				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
+			// "S"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 512,
@@ -230,6 +268,8 @@
 		//row 3 unused
 		// row 4
 		{
+			// "AG"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 256,
@@ -241,6 +281,8 @@
 				{ ref: "dirty-grass", alt: 0 } ]
 		},
 		{
+			// "AH"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 320,
@@ -253,6 +295,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "AI"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 384,
@@ -265,6 +309,8 @@
 				{ ref: "grass", alt: -1 } ]
 		},
 		{
+			// "AJ"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 448,
@@ -277,6 +323,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "AK"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 512,
@@ -290,6 +338,8 @@
 		},
 		//row 5
 		{
+			// "AL"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 0,
@@ -302,6 +352,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "AM"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 64,
@@ -314,6 +366,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "AN"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 128,
@@ -326,6 +380,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "AO"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 192,
@@ -338,6 +394,8 @@
 				{ ref: "grass", alt: -1 } ]
 		},
 		{
+			// "AP"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 256,
@@ -350,6 +408,8 @@
 				{ ref: "grass", alt: -1 } ]
 		},
 		{
+			// "AQ"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 320,
@@ -362,6 +422,8 @@
 				{ ref: "grass", alt: -1 } ]
 		},
 		{
+			// "AR"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 384,
@@ -374,6 +436,8 @@
 				{ ref: "grass", alt: 0 } ]
 		},
 		{
+			// "AS"
+			//
 			title: "Grass",
 			file: "terrain_0.png",
 			startX: 448,

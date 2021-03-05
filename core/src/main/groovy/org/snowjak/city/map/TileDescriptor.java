@@ -154,19 +154,19 @@ public class TileDescriptor {
 		/**
 		 * Top of tile-diamond.
 		 */
-		NORTHEAST(-1, +1, 3),
+		TOP(-1, +1, 2),
 		/**
 		 * Right of tile-diamond.
 		 */
-		SOUTHEAST(+1, +1, 0),
+		RIGHT(+1, +1, 3),
 		/**
 		 * Bottom of tile-diamond.
 		 */
-		SOUTHWEST(+1, -1, 1),
+		BOTTOM(+1, -1, 0),
 		/**
 		 * Left of tile-diamond.
 		 */
-		NORTHWEST(-1, -1, 2);
+		LEFT(-1, -1, 1);
 		
 		private final int dx, dy, oppositeIndex;
 		
@@ -192,8 +192,8 @@ public class TileDescriptor {
 			return Corner.values()[oppositeIndex];
 		}
 		
-		private static final Corner[][] forDelta = new Corner[][] { { Corner.SOUTHWEST, Corner.NORTHWEST },
-				{ Corner.SOUTHEAST, Corner.NORTHEAST } };
+		private static final Corner[][] forDelta = new Corner[][] { { Corner.BOTTOM, Corner.LEFT },
+				{ Corner.RIGHT, Corner.TOP } };
 		
 		/**
 		 * Which corner of a tile corresponds to the given delta from that tile's

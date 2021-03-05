@@ -5,7 +5,6 @@ package org.snowjak.city.map.generator
 
 import static org.snowjak.city.map.MapDomain.TERRAIN
 import static org.snowjak.city.util.Util.min
-import static org.snowjak.city.util.Util.wrap
 
 import org.snowjak.city.map.BoundedMap
 import org.snowjak.city.map.MapDomain
@@ -50,16 +49,11 @@ class MapGenerator {
 		
 		for(int x in 0..width-1)
 			for(int y in 0..height-1) {
-				//tileHashcodes[x][y] = matchTile(x, y, altitudes, tileNames, tileHashcodes, terrainTileset, wrapX, wrapY)
 				def possibilities = terrainTileset.findDescriptorsThatFit(altitudes, x, y, wrapX, wrapY, null)
 				tileDescriptors[x][y] = possibilities[RND.nextInt(possibilities.size())]
 			}
 		
 		mixUpTileAssignments altitudes, tileDescriptors, terrainTileset, wrapX, wrapY
-		
-		
-		//		if(!pickTileFor(0, 0, altitudes, tileDescriptors, terrainTileset, wrapX, wrapY) )
-		//			throw new RuntimeException("Couldn't build a map for some reason ...")
 		
 		for(int y in 0..height-1) {
 			for(int x in 0..width-1) {
