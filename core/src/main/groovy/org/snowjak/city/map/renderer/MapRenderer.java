@@ -139,8 +139,10 @@ public class MapRenderer {
 		
 		//
 		// the viewport's width and height scale per camera's zoom-level
-		float width = camera.viewportWidth * camera.zoom;
-		float height = camera.viewportHeight * camera.zoom;
+		//
+		// We'll pad this width and height just a bit (with that constant multiplier)
+		float width = camera.viewportWidth * camera.zoom * 1.25f;
+		float height = camera.viewportHeight * camera.zoom * 1.25f;
 		//
 		// Project the width- and height-vectors onto the camera's up vector
 		float w = width * Math.abs(camera.up.y) + height * Math.abs(camera.up.x);
@@ -338,7 +340,14 @@ public class MapRenderer {
 		}
 	}
 	
-	private Vector3 translateScreenToIso(Vector2 vec) {
+	public Vector3 translateIsoToScreen(Vector2 iso) {
+		scratchV3.set(iso.x, iso.y, 0);
+		scratchV3.mul(isoTransform);
+		
+		return scratchV3;
+	}
+	
+	public Vector3 translateScreenToIso(Vector2 vec) {
 		
 		scratchV3.set(vec.x, vec.y, 0);
 		scratchV3.mul(invIsotransform);

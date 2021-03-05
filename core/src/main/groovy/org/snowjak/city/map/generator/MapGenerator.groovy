@@ -4,6 +4,8 @@
 package org.snowjak.city.map.generator
 
 import static org.snowjak.city.map.MapDomain.TERRAIN
+import static org.snowjak.city.util.Util.min
+import static org.snowjak.city.util.Util.wrap
 
 import org.snowjak.city.map.BoundedMap
 import org.snowjak.city.map.MapDomain
@@ -73,13 +75,6 @@ class MapGenerator {
 		map
 	}
 	
-	private int min(int...values) {
-		def minValue = Integer.MAX_VALUE
-		for(int v : values)
-			minValue = (minValue > v) ? v : minValue;
-		minValue
-	}
-	
 	private void mixUpTileAssignments(int[][] altitudes, TileDescriptor[][] descriptors, TileSet tileset, boolean wrapX, boolean wrapY) {
 		def width = descriptors.length
 		def height = descriptors[0].length
@@ -106,12 +101,5 @@ class MapGenerator {
 				if(!validities.isEmpty())
 					descriptors[x][y] = validities[RND.nextInt(validities.size())]
 			}
-	}
-	
-	private int wrap(int v, int min, int max) {
-		final int range = (max+1) - min
-		while (v < min) v += range
-		while (v > max) v -= range
-		v
 	}
 }

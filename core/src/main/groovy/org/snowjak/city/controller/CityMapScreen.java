@@ -3,8 +3,8 @@
  */
 package org.snowjak.city.controller;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import static org.snowjak.city.util.Util.max;
+import static org.snowjak.city.util.Util.min;
 
 import org.snowjak.city.CityGame;
 import org.snowjak.city.map.Map;
@@ -14,9 +14,11 @@ import org.snowjak.city.map.generator.support.MapGeneratorScript;
 import org.snowjak.city.map.renderer.MapRenderer;
 import org.snowjak.city.service.MapGeneratorService;
 
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
@@ -82,20 +84,50 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 		
 		renderer = new MapRenderer(map, batch);
 		
+		final Vector2 scratch = new Vector2();
+		scratch.set(0, 0);
+		final Vector3 worldBound1 = renderer.translateIsoToScreen(scratch).cpy();
+		
+		scratch.set(0, worldHeightInTiles);
+		final Vector3 worldBound2 = renderer.translateIsoToScreen(scratch).cpy();
+		
+		scratch.set(worldWidthInTiles, 0);
+		final Vector3 worldBound3 = renderer.translateIsoToScreen(scratch).cpy();
+		
+		scratch.set(worldWidthInTiles, worldHeightInTiles);
+		final Vector3 worldBound4 = renderer.translateIsoToScreen(scratch).cpy();
+		
+		final float minWorldX = min(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
+		final float minWorldY = min(worldBound1.y, worldBound2.y, worldBound3.y, worldBound4.y);
+		final float maxWorldX = max(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
+		final float maxWorldY = max(worldBound1.y, worldBound2.y, worldBound3.y, worldBound4.y);
+		
 		stage.addListener(new InputListener() {
 			
 			private final Vector2 scratch = new Vector2();
-			private float startX = 0, startY = 0;
+			private float startDragX = 0, startDragY = 0;
+			private float currentScrollY = 0;
+			
+			@Override
+			public boolean scrolled(InputEvent event, float x, float y, float amountX, float amountY) {
+				
+				currentScrollY += amountY;
+				((OrthographicCamera) viewport.getCamera()).zoom = (float) Math.pow(2f, currentScrollY);
+				
+				return true;
+			}
 			
 			@Override
 			public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
 				
-				scratch.set(x, y);
-				final Vector2 worldCoords = viewport.unproject(scratch);
-				startX = worldCoords.x;
-				startY = worldCoords.y;
-				
-				LOG.info("Mouse @ {0},{1}", worldCoords.x, worldCoords.y);
+				if (button == Input.Buttons.LEFT) {
+					//
+					// Start drag-scroll
+					scratch.set(x, y);
+					final Vector2 worldCoords = viewport.unproject(scratch);
+					startDragX = worldCoords.x;
+					startDragY = worldCoords.y;
+				}
 				
 				return true;
 			}
@@ -106,16 +138,15 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 				scratch.set(x, y);
 				final Vector2 worldCoords = viewport.unproject(scratch);
 				
-				cameraOffsetX += (worldCoords.x - startX) / 2f;
-				cameraOffsetY -= (worldCoords.y - startY);
+				cameraOffsetX += (worldCoords.x - startDragX) / 2f;
+				cameraOffsetY -= (worldCoords.y - startDragY);
 				
-				startX = worldCoords.x;
-				startY = worldCoords.y;
+				startDragX = worldCoords.x;
+				startDragY = worldCoords.y;
 				
-				cameraOffsetX = min(max(cameraOffsetX, 0f), worldWidthInTiles);
-				cameraOffsetY = min(max(cameraOffsetY, 0f), worldHeightInTiles);
+				cameraOffsetX = min(max(cameraOffsetX, minWorldX), maxWorldX);
+				cameraOffsetY = min(max(cameraOffsetY, minWorldY), maxWorldY);
 			}
-			
 		});
 	}
 	
