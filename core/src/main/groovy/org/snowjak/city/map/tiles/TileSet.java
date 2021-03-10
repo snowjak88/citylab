@@ -193,11 +193,12 @@ public class TileSet extends TiledMapTileSet {
 		x = wrap(x, 0, descriptors.length - 1);
 		y = wrap(y, 0, descriptors[0].length - 1);
 		
+		final int[][] normalizedDeltas = new int[2][2];
 		if (altitude != null) {
 			//
 			// Normalize altitude-deltas from [x,y] to [x+1,y+1]
 			
-			final int[][] normalizedDeltas = new int[2][2];
+//			final int[][] normalizedDeltas = new int[2][2];
 			int minAlt = Integer.MAX_VALUE;
 			for (int dx = 0; dx < 2; dx++) {
 				if ((x + dx < 0 || x + dx >= altitude.length) && !wrapX)
@@ -299,7 +300,7 @@ public class TileSet extends TiledMapTileSet {
 		}
 		
 		//
-		// Compare material-IDs across adjoining TileDescriptors
+		// Compare material- and flavor-IDs across adjoining TileDescriptors
 		for (Corner thisCorner : Corner.values()) {
 			final CornerFilter thisCornerFilter = descriptors[x][y].getCornerFilter(thisCorner);
 			

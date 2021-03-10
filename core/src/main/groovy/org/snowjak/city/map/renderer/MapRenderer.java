@@ -222,7 +222,10 @@ public class MapRenderer {
 				if (!map.isLocationInBounds(col, row))
 					continue;
 				
-				final TiledMapTile tile = tileset.getTile(map.getCellTile(col, row, domain));
+				final int tileHashcode = map.getCellTile(col, row, domain);
+				if (tileHashcode == 0)
+					continue;
+				final TiledMapTile tile = tileset.getTile(tileHashcode);
 				if (tile == null)
 					continue;
 				
@@ -341,6 +344,7 @@ public class MapRenderer {
 	}
 	
 	public Vector3 translateIsoToScreen(Vector2 iso) {
+		
 		scratchV3.set(iso.x, iso.y, 0);
 		scratchV3.mul(isoTransform);
 		

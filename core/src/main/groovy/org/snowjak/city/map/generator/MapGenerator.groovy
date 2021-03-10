@@ -2,7 +2,7 @@
  * 
  */
 package org.snowjak.city.map.generator
-
+import static org.snowjak.city.map.Map.DIMENSION_ALTITUDE
 import static org.snowjak.city.map.MapDomain.TERRAIN
 import static org.snowjak.city.util.Util.min
 
@@ -55,19 +55,29 @@ class MapGenerator {
 		for(int x in 0..width-1)
 			for(int y in 0..height-1) {
 				def possibilities = terrainTileset.findDescriptorsThatFit(altitudes, x, y, wrapX, wrapY, materials)
-				tileDescriptors[x][y] = possibilities[RND.nextInt(possibilities.size())]
+				
+				if(possibilities.isEmpty())
+					println """ERROR: Cannot find tile to fit:
+Altitude: ${altitudes[x][y]} ${altitudes[x+1][y]}
+          ${altitudes[x+1][y]} ${altitudes[x+1][y+1]}
+Material: ${materials[x][y]} ${materials[x+1][y]}
+          ${materials[x+1][y]} ${materials[x+1][y+1]}"""
+				else
+					tileDescriptors[x][y] = possibilities[RND.nextInt(possibilities.size())]
 			}
 		
-		mixUpTileAssignments altitudes, materials, tileDescriptors, terrainTileset, wrapX, wrapY
+		//mixUpTileAssignments altitudes, materials, tileDescriptors, terrainTileset, wrapX, wrapY
 		
 		for(int y in 0..height-1) {
 			for(int x in 0..width-1) {
-				def tileHashcode = tileDescriptors[x][y].hashcode
-				map.setCell x, y, TERRAIN, tileHashcode
+				if(tileDescriptors[x][y] == null)
+					continue
 				
-				def minAltitude = altitudes[x][y]
-				minAltitude = min(altitudes[x][y], altitudes[x+1][y], altitudes[x][y+1], altitudes[x+1][y+1])
-				map.setCell x, y, org.snowjak.city.map.Map.DIMENSION_ALTITUDE, minAltitude
+				def tileHashcode = tileDescriptors[x][y].hashcode
+				def minAltitude = min(altitudes[x][y], altitudes[x+1][y], altitudes[x][y+1], altitudes[x+1][y+1])
+				
+				map.setCell x, y, TERRAIN, tileHashcode
+				map.setCell x, y, DIMENSION_ALTITUDE, minAltitude
 			}
 		}
 		

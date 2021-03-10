@@ -5,7 +5,7 @@ package org.snowjak.city.map.tiles.support
 
 import org.snowjak.city.map.tiles.TileDescriptor
 import org.snowjak.city.map.tiles.TileSetDescriptor
-import org.snowjak.city.map.tiles.support.TileSetDescriptorSpec
+import org.snowjak.city.map.tiles.TileDescriptor.Corner
 import org.snowjak.city.map.tiles.TileDescriptor.CornerFilter
 
 /**
@@ -36,7 +36,7 @@ class TileDescriptorSpec {
 	
 	public TileDescriptor build(TileSetDescriptor tileSetDescriptor) {
 		
-		def cornerFilters = []
+		def cornerFilters = new ArrayList<CornerFilter>()
 		
 		this.corners.forEach { cfs ->
 			//
@@ -66,7 +66,7 @@ class TileDescriptorSpec {
 				else
 					//
 					// Add the computed material-name and its alias to the CornerFilter materials map
-					materials.computeIfAbsent(material, {
+					materials.computeIfAbsent(material.material, {
 						new LinkedHashSet<>()
 					}).add f
 				
@@ -77,14 +77,20 @@ class TileDescriptorSpec {
 			cornerFilters << new CornerFilter((cfs.altitudeDelta == null) ? OptionalInt.empty() : OptionalInt.of(cfs.altitudeDelta.intValue()), materials)
 		}
 		
+//		if(!cornerFilters.isEmpty()) {
+//			final OptionalInt rootAltitude = cornerFilters[Corner.getForDelta(-1, -1).ordinal()].altitudeDelta
+//			if(rootAltitude.isPresent())
+//				for(def i in 1..cornerFilters.size()-1)
+//					if(cornerFilters[i].altitudeDelta.isPresent()) {
+//						def newAltitudeDelta = OptionalInt.of( cornerFilters[i].altitudeDelta.getAsInt() - rootAltitude.getAsInt() )
+//						cornerFilters[i] = new CornerFilter(newAltitudeDelta, cornerFilters[i].flavors)
+//					}
+//		}
+		
 		def td = new TileDescriptor(tileSetDescriptor, id, filename, x, y, width, height, padding, offset, cornerFilters.toArray(new CornerFilter[0]));
 	}
 	
-	public void corner(List<String> flavors, Integer altitudeDelta = null) {
-		corner(flavors, (altitudeDelta == null) ? OptionalInt.empty() : OptionalInt.of(altitudeDelta.intValue()))
-	}
-	
-	public void corner(List<String> flavors, OptionalInt altitudeDelta) {
+	public void corner(List<String> flavors, Integer altitudeDelta) {
 		corners << ( [flavors: flavors, altitudeDelta: altitudeDelta] as CornerFilterSpec )
 	}
 }

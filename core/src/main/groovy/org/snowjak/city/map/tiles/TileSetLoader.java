@@ -118,6 +118,7 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 			
 			final TextureRegion imageRegion = new TextureRegion(imageTexture, startX, startY, width, height);
 			final TiledMapTile tile = new StaticTiledMapTile(imageRegion);
+			tile.setOffsetY(td.getOffset());
 			tileSet.putTile(td.getHashcode(), tile);
 			
 		}

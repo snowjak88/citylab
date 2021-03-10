@@ -75,7 +75,8 @@ public class BoundedMap extends Map {
 			throw new IndexOutOfBoundsException();
 		if (domain == null)
 			throw new NullPointerException();
-		return tiles[x][y].get(domain).intValue();
+		final Integer tileHashcode = tiles[x][y].get(domain);
+		return (tileHashcode == null) ? 0 : tileHashcode.intValue();
 	}
 	
 	@Override
