@@ -61,7 +61,7 @@ public class TileSetDescriptor {
 	 * @param other
 	 * @return
 	 */
-	public TileSetDescriptor merge(TileSetDescriptor other) {
+	public TileSetDescriptor merge(TileSetDescriptor other) throws IllegalArgumentException {
 		
 		final TileSetDescriptor copy = new TileSetDescriptor(this);
 		if (other == null)

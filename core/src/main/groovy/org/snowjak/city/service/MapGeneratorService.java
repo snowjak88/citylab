@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.snowjak.city.CityGame;
-import org.snowjak.city.map.generator.support.MapGeneratorScript;
+import org.snowjak.city.map.generator.support.MapGeneratorSpec;
 
 import com.badlogic.gdx.files.FileHandle;
 import com.github.czyzby.autumn.annotation.Component;
@@ -21,7 +21,7 @@ import com.github.czyzby.kiwi.log.Logger;
 import com.github.czyzby.kiwi.log.LoggerService;
 
 /**
- * Provides access by name to {@link MapGeneratorScript map-generator scripts}.
+ * Provides access by name to {@link MapGeneratorSpec map-generator scripts}.
  * 
  * @author snowjak88
  *
@@ -32,7 +32,7 @@ public class MapGeneratorService {
 	private static final Logger LOG = LoggerService.forClass(MapGeneratorService.class);
 	
 	private final Map<String, FileHandle> scriptFiles = new LinkedHashMap<>();
-	private final Map<String, MapGeneratorScript> scripts = Collections.synchronizedMap(new LinkedHashMap<>());
+	private final Map<String, MapGeneratorSpec> scripts = Collections.synchronizedMap(new LinkedHashMap<>());
 	
 	@Inject
 	private AssetService assetService;
@@ -62,7 +62,7 @@ public class MapGeneratorService {
 	}
 	
 	/**
-	 * Get the {@link MapGeneratorScript} associated with the given name. If
+	 * Get the {@link MapGeneratorSpec} associated with the given name. If
 	 * necessary, blocks until the named script has finished loading. If no such
 	 * script associated with the given name has been successfully loaded, returns
 	 * {@code null}.
@@ -70,19 +70,19 @@ public class MapGeneratorService {
 	 * @param name
 	 * @return
 	 */
-	public MapGeneratorScript getScript(String name) {
+	public MapGeneratorSpec getScript(String name) {
 		
 		if (!scriptFiles.containsKey(name))
 			return null;
 		
 		return scripts.computeIfAbsent(name, (n) -> {
-			assetService.finishLoading(scriptFiles.get(n).path(), MapGeneratorScript.class);
-			return assetService.get(scriptFiles.get(n).path(), MapGeneratorScript.class);
+			assetService.finishLoading(scriptFiles.get(n).path(), MapGeneratorSpec.class);
+			return assetService.get(scriptFiles.get(n).path(), MapGeneratorSpec.class);
 		});
 	}
 	
 	/**
-	 * Register a {@link MapGeneratorScript} (identified by {@code scriptFile}), and
+	 * Register a {@link MapGeneratorSpec} (identified by {@code scriptFile}), and
 	 * schedule it for loading with the application's {@link AssetService}. The
 	 * script will be registered under the name of
 	 * {@link FileHandle#nameWithoutExtension() its name without its extension}.
@@ -95,7 +95,7 @@ public class MapGeneratorService {
 	}
 	
 	/**
-	 * Register a {@link MapGeneratorScript} (identified by {@code scriptFile})
+	 * Register a {@link MapGeneratorSpec} (identified by {@code scriptFile})
 	 * under the given {@code scriptName}, and schedule it for loading with the
 	 * application's {@link AssetService}.
 	 * 
@@ -107,13 +107,13 @@ public class MapGeneratorService {
 		final String scriptFilePath = scriptFiles.get(scriptName).path();
 		
 		LOG.info("Scheduling load for script-file \"{0}\" <=> [{1}]", scriptName, scriptFilePath);
-		assetService.load(scriptFilePath, MapGeneratorScript.class);
+		assetService.load(scriptFilePath, MapGeneratorSpec.class);
 	}
 	
 	@Initiate(priority = AutumnActionPriority.LOW_PRIORITY)
 	public void init() {
 		
-		LOG.debug("Initializing ...");
+		LOG.info("Initializing ...");
 		final FileHandle mapGeneratorRoot = CityGame.RESOLVER.resolve(CityGame.EXTERNAL_ROOT_MAP_GENERATORS);
 		
 		if (!mapGeneratorRoot.exists())

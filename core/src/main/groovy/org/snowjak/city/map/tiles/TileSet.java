@@ -4,7 +4,9 @@
 package org.snowjak.city.map.tiles;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Set;
 
@@ -53,6 +55,31 @@ public class TileSet extends TiledMapTileSet {
 		this.descriptor = tilesetDescriptor;
 		
 		setName(tilesetDescriptor.getTitle());
+	}
+	
+	/**
+	 * Attempt to merge the given TileSet with this TileSet, producing a third
+	 * TileSet.
+	 * <p>
+	 * If the merge is unsuccessful, throws an {@link IllegalArgumentException}.
+	 * </p>
+	 * 
+	 * @param toMerge
+	 * @return
+	 * @see TileSetDescriptor#merge(TileSetDescriptor)
+	 */
+	public TileSet merge(TileSet toMerge) throws IllegalArgumentException {
+		
+		final TileSetDescriptor mergedDescriptor = this.descriptor.merge(toMerge.descriptor);
+		final Map<Integer, TiledMapTile> tiles = new LinkedHashMap<>();
+		
+		this.tilesToTileDescriptors.forEach(e -> tiles.put(e.value.getHashcode(), e.key));
+		toMerge.tilesToTileDescriptors.forEach(e -> tiles.put(e.value.getHashcode(), e.key));
+		
+		final TileSet mergedTileSet = new TileSet(null, mergedDescriptor);
+		tiles.forEach((i, t) -> mergedTileSet.putTile(i, t));
+		
+		return mergedTileSet;
 	}
 	
 	@Override
@@ -198,7 +225,7 @@ public class TileSet extends TiledMapTileSet {
 			//
 			// Normalize altitude-deltas from [x,y] to [x+1,y+1]
 			
-//			final int[][] normalizedDeltas = new int[2][2];
+			// final int[][] normalizedDeltas = new int[2][2];
 			int minAlt = Integer.MAX_VALUE;
 			for (int dx = 0; dx < 2; dx++) {
 				if ((x + dx < 0 || x + dx >= altitude.length) && !wrapX)

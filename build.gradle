@@ -21,7 +21,9 @@ allprojects {
 
 configure(subprojects) {
 
-	apply plugin: 'groovy'
+	if(it.name == "core")
+		apply plugin: 'groovy'
+	
 	apply plugin: 'java-library'
 	
 	sourceCompatibility = 8.0

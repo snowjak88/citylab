@@ -1,4 +1,4 @@
-{
+
 	id = "grass"
 	title = "Grass"
 	
@@ -9,4 +9,3 @@
 //		on << "dirt"
 //		time << days(30)
 //	}
-}

@@ -15,14 +15,14 @@ public abstract class Map {
 	
 	public static final String DIMENSION_ALTITUDE = "terrain.altitude";
 	
-	private EnumMap<MapDomain, TileSet> tilesets = new EnumMap<>(MapDomain.class);
+	private EnumMap<MapLayer, TileSet> tilesets = new EnumMap<>(MapLayer.class);
 	
-	public TileSet getTileSetFor(MapDomain domain) {
+	public TileSet getTileSetFor(MapLayer domain) {
 		
 		return tilesets.get(domain);
 	}
 	
-	public void setTileSetFor(MapDomain domain, TileSet tileset) {
+	public void setTileSetFor(MapLayer domain, TileSet tileset) {
 		
 		tilesets.put(domain, tileset);
 	}
@@ -42,9 +42,9 @@ public abstract class Map {
 	 *             if {@code domain} is {@code null}
 	 * @throws IllegalArgumentException
 	 *             if {@code hashcode} is not a valid tile within the configured
-	 *             {@link TileSet} for the given {@link MapDomain}
+	 *             {@link TileSet} for the given {@link MapLayer}
 	 */
-	public abstract void setCell(int x, int y, MapDomain domain, int hashcode);
+	public abstract void setCell(int x, int y, MapLayer domain, int hashcode);
 	
 	/**
 	 * Get the configured tile (by hashcode) at the given Cell.
@@ -58,7 +58,7 @@ public abstract class Map {
 	 * @throws NullPointerException
 	 *             if {@code domain} is {@code null}
 	 */
-	public abstract int getCellTile(int x, int y, MapDomain domain);
+	public abstract int getCellTile(int x, int y, MapLayer domain);
 	
 	/**
 	 * Assign the given value to the given dimension at the given location.

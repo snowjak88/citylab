@@ -3,12 +3,12 @@
  */
 package org.snowjak.city.map.generator
 import static org.snowjak.city.map.Map.DIMENSION_ALTITUDE
-import static org.snowjak.city.map.MapDomain.TERRAIN
+import static org.snowjak.city.map.MapLayer.TERRAIN
 import static org.snowjak.city.util.Util.min
 
 import org.snowjak.city.map.BoundedMap
-import org.snowjak.city.map.MapDomain
-import org.snowjak.city.map.generator.support.MapGeneratorScript
+import org.snowjak.city.map.MapLayer
+import org.snowjak.city.map.generator.support.MapGeneratorSpec
 import org.snowjak.city.map.generator.support.MaterialProducer
 import org.snowjak.city.map.tiles.TileDescriptor
 import org.snowjak.city.map.tiles.TileSet
@@ -23,16 +23,16 @@ class MapGenerator {
 	
 	private static final Random RND = new Random(System.currentTimeMillis());
 	
-	public org.snowjak.city.map.Map generateBounded(int width, int height, MapGeneratorScript script, TileSet terrainTileset, boolean wrapX = false, boolean wrapY = false) {
+	public org.snowjak.city.map.Map generateBounded(int width, int height, MapGeneratorSpec gen, TileSet terrainTileset, boolean wrapX = false, boolean wrapY = false) {
 		
-		if(script == null || terrainTileset == null)
+		if(gen == null || terrainTileset == null)
 			throw new NullPointerException()
 		
-		final Module altitudeProducer = script.binding["altitude"]
-		final MaterialProducer materialProducer = script.binding["material"]
+		final Module altitudeProducer = gen.altitude;
+		final MaterialProducer materialProducer = gen.material
 		
 		final org.snowjak.city.map.Map map = new BoundedMap(width, height)
-		map.setTileSetFor MapDomain.TERRAIN, terrainTileset
+		map.setTileSetFor MapLayer.TERRAIN, terrainTileset
 		
 		def altitudes = new int[width+1][height+1]
 		def materials = new String[width+1][height+1]
@@ -66,7 +66,7 @@ Material: ${materials[x][y]} ${materials[x+1][y]}
 					tileDescriptors[x][y] = possibilities[RND.nextInt(possibilities.size())]
 			}
 		
-		//mixUpTileAssignments altitudes, materials, tileDescriptors, terrainTileset, wrapX, wrapY
+		mixUpTileAssignments altitudes, materials, tileDescriptors, terrainTileset, wrapX, wrapY
 		
 		for(int y in 0..height-1) {
 			for(int x in 0..width-1) {

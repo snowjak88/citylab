@@ -15,7 +15,7 @@ import java.util.HashMap;
 public class BoundedMap extends Map {
 	
 	private final int width, height;
-	private final EnumMap<MapDomain, Integer>[][] tiles;
+	private final EnumMap<MapLayer, Integer>[][] tiles;
 	private final java.util.Map<String, Integer>[][] intValues;
 	private final java.util.Map<String, Float>[][] floatValues;
 	private final java.util.Map<String, String>[][] stringValues;
@@ -37,7 +37,7 @@ public class BoundedMap extends Map {
 		
 		for (int x = 0; x < width; x++)
 			for (int y = 0; y < height; y++) {
-				tiles[x][y] = new EnumMap<>(MapDomain.class);
+				tiles[x][y] = new EnumMap<>(MapLayer.class);
 				intValues[x][y] = new HashMap<>();
 				floatValues[x][y] = new HashMap<>();
 				stringValues[x][y] = new HashMap<>();
@@ -57,7 +57,7 @@ public class BoundedMap extends Map {
 	}
 	
 	@Override
-	public void setCell(int x, int y, MapDomain domain, int hashcode) {
+	public void setCell(int x, int y, MapLayer domain, int hashcode) {
 		
 		if (!isLocationInBounds(x, y))
 			throw new IndexOutOfBoundsException();
@@ -69,7 +69,7 @@ public class BoundedMap extends Map {
 	}
 	
 	@Override
-	public int getCellTile(int x, int y, MapDomain domain) {
+	public int getCellTile(int x, int y, MapLayer domain) {
 		
 		if (!isLocationInBounds(x, y))
 			throw new IndexOutOfBoundsException();

@@ -26,7 +26,7 @@ import static com.badlogic.gdx.graphics.g2d.Batch.Y4;
 import static java.lang.Math.max;
 
 import org.snowjak.city.map.Map;
-import org.snowjak.city.map.MapDomain;
+import org.snowjak.city.map.MapLayer;
 import org.snowjak.city.map.tiles.TileSet;
 
 import com.badlogic.gdx.graphics.Color;
@@ -117,7 +117,7 @@ public class MapRenderer {
 			return;
 		
 		int maxTileWidth = 1;
-		for (MapDomain domain : MapDomain.values()) {
+		for (MapLayer domain : MapLayer.values()) {
 			final TileSet tileset = map.getTileSetFor(domain);
 			if (tileset == null)
 				continue;
@@ -162,20 +162,20 @@ public class MapRenderer {
 	
 	public void render() {
 		
-		render(MapDomain.values());
+		render(MapLayer.values());
 	}
 	
-	public void render(MapDomain... domains) {
+	public void render(MapLayer... domains) {
 		
 		batch.begin();
 		
-		for (MapDomain domain : domains)
+		for (MapLayer domain : domains)
 			renderLayer(domain);
 		
 		batch.end();
 	}
 	
-	private void renderLayer(MapDomain domain) {
+	private void renderLayer(MapLayer domain) {
 		
 		if (map == null)
 			return;

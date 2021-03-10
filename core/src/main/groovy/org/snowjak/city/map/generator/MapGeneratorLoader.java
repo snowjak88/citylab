@@ -9,7 +9,7 @@ import java.io.IOException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.snowjak.city.map.generator.MapGeneratorLoader.MapGeneratorLoaderParameters;
-import org.snowjak.city.map.generator.support.MapGeneratorScript;
+import org.snowjak.city.map.generator.support.MapGeneratorSpec;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetLoaderParameters;
@@ -27,19 +27,19 @@ import com.sudoplay.joise.module.ModuleFunctionGradient.FunctionGradientAxis;
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import groovy.util.DelegatingScript;
 
 /**
  * @author snowjak88
  *
  */
-public class MapGeneratorLoader
-		extends AsynchronousAssetLoader<MapGeneratorScript, MapGeneratorLoaderParameters> {
+public class MapGeneratorLoader extends AsynchronousAssetLoader<MapGeneratorSpec, MapGeneratorLoaderParameters> {
 	
 	private static final Logger LOG = LoggerService.forClass(MapGeneratorLoader.class);
 	
 	final CompilerConfiguration config;
 	
-	private MapGeneratorScript script;
+	private MapGeneratorSpec spec;
 	
 	public MapGeneratorLoader(FileHandleResolver fileHandleResolver) {
 		
@@ -50,7 +50,7 @@ public class MapGeneratorLoader
 				FractalType.class.getName(), FunctionGradientAxis.class.getName());
 		
 		config = new CompilerConfiguration();
-		config.setScriptBaseClass(MapGeneratorScript.class.getName());
+		config.setScriptBaseClass(DelegatingScript.class.getName());
 		config.addCompilationCustomizers(customImports);
 		
 	}
@@ -65,9 +65,13 @@ public class MapGeneratorLoader
 		if (!file.exists())
 			throw new RuntimeException(new FileNotFoundException());
 		
+		final DelegatingScript script;
 		try {
 			final GroovyShell shell = new GroovyShell(this.getClass().getClassLoader(), new Binding(), config);
-			script = (MapGeneratorScript) shell.parse(file.file());
+			script = (DelegatingScript) shell.parse(file.file());
+			
+			spec = new MapGeneratorSpec();
+			script.setDelegate(spec);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -82,13 +86,13 @@ public class MapGeneratorLoader
 					"Cannot load map-generation script \"" + file.path() + "\" -- unexpected exception.", e);
 		}
 		
-		if (script.getBinding().getVariable("altitude") == null) {
+		if (spec.getAltitude() == null) {
 			LOG.error("Cannot load map-generation script \"{0}\" -- does not set [altitude].", file.path());
 			throw new RuntimeException(
 					"Map-generation script \"" + file.path() + "\" is incomplete: does not set \"altitude\".");
 		}
 		
-		if (script.getBinding().getVariable("material") == null) {
+		if (spec.getMaterial() == null) {
 			LOG.error("Cannot load map-generation script \"{0}\" -- does not set [material].", file.path());
 			throw new RuntimeException(
 					"Map-generation script \"" + file.path() + "\" is incomplete: does not set \"material\".");
@@ -97,10 +101,10 @@ public class MapGeneratorLoader
 	}
 	
 	@Override
-	public MapGeneratorScript loadSync(AssetManager manager, String fileName, FileHandle file,
+	public MapGeneratorSpec loadSync(AssetManager manager, String fileName, FileHandle file,
 			MapGeneratorLoaderParameters parameter) {
 		
-		return script;
+		return spec;
 	}
 	
 	@SuppressWarnings("rawtypes")
@@ -111,7 +115,7 @@ public class MapGeneratorLoader
 		return null;
 	}
 	
-	public static class MapGeneratorLoaderParameters extends AssetLoaderParameters<MapGeneratorScript> {
+	public static class MapGeneratorLoaderParameters extends AssetLoaderParameters<MapGeneratorSpec> {
 		
 	}
 }

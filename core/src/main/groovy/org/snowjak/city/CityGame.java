@@ -23,15 +23,9 @@ public class CityGame {
 	/** Default application size. */
 	public static final int WIDTH = 800, HEIGHT = 600;
 	
-	/**
-	 * The default tile-set descriptor is located here. It can be loaded using
-	 * {@link AssetManager#get(String, Class) AssetManager.get(DEFAULT_TILESET_PATH,
-	 * TileSet.class)}
-	 */
-	public static final String DEFAULT_TILESET_PATH = "data/tilesets/default.groovy";
-	
 	public static final String EXTERNAL_ROOT_BUNDLES = "data/bundles/";
 	public static final String EXTERNAL_ROOT_MAP_GENERATORS = "data/map-generators/";
+	public static final String EXTERNAL_ROOT_TILESETS = "data/tilesets/";
 	
 	/**
 	 * Application-specific {@link FileHandleResolver}, configured to handle

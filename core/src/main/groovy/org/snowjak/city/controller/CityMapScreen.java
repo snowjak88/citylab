@@ -6,13 +6,12 @@ package org.snowjak.city.controller;
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
-import org.snowjak.city.CityGame;
 import org.snowjak.city.map.Map;
 import org.snowjak.city.map.generator.MapGenerator;
-import org.snowjak.city.map.generator.support.MapGeneratorScript;
+import org.snowjak.city.map.generator.support.MapGeneratorSpec;
 import org.snowjak.city.map.renderer.MapRenderer;
-import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.service.MapGeneratorService;
+import org.snowjak.city.service.TileSetService;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -58,6 +57,9 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 	@Inject
 	private MapGeneratorService mapGeneratorService;
 	
+	@Inject
+	private TileSetService tileSetService;
+	
 	private Viewport viewport = new FitViewport(8, 8);
 	private SpriteBatch batch = new SpriteBatch();
 	
@@ -73,14 +75,11 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 		//
 		//
 		
-		assetService.load(CityGame.DEFAULT_TILESET_PATH, TileSet.class);
-		assetService.finishLoading(CityGame.DEFAULT_TILESET_PATH, TileSet.class);
-		final TileSet tileset = assetService.get(CityGame.DEFAULT_TILESET_PATH, TileSet.class);
-		
 		final int worldWidthInTiles = 64, worldHeightInTiles = 64;
 		
-		final MapGeneratorScript script = mapGeneratorService.getScript("rolling-hills");
-		map = new MapGenerator().generateBounded(worldWidthInTiles, worldHeightInTiles, script, tileset, false, false);
+		final MapGeneratorSpec script = mapGeneratorService.getScript("rolling-hills");
+		map = new MapGenerator().generateBounded(worldWidthInTiles, worldHeightInTiles, script,
+				tileSetService.getTileSet(), false, false);
 		
 		renderer = new MapRenderer(map, batch);
 		
