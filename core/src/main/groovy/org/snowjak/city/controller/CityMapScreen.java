@@ -8,10 +8,10 @@ import static org.snowjak.city.util.Util.min;
 
 import org.snowjak.city.CityGame;
 import org.snowjak.city.map.Map;
-import org.snowjak.city.map.TileSet;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.generator.support.MapGeneratorScript;
 import org.snowjak.city.map.renderer.MapRenderer;
+import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.service.MapGeneratorService;
 
 import com.badlogic.gdx.Input;

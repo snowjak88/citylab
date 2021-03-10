@@ -1,14 +1,12 @@
 /**
  * 
  */
-package org.snowjak.city.map;
+package org.snowjak.city.map.tiles;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Random;
 
 import com.badlogic.gdx.utils.IntMap;
@@ -27,7 +25,6 @@ public class TileSetDescriptor {
 	private final String title, description;
 	private final int width, height, gridWidth, gridHeight, offset, padding;
 	private final Collection<TileDescriptor> allTiles = new LinkedList<>();
-	private final Map<String, ArrayList<TileDescriptor>> tilesByTitle = new HashMap<>();
 	private final IntMap<TileDescriptor> tilesByHash = new IntMap<>();
 	
 	public TileSetDescriptor(String title, String description, int width, int height, int gridWidth, int gridHeight,
@@ -43,6 +40,41 @@ public class TileSetDescriptor {
 		this.padding = padding;
 	}
 	
+	public TileSetDescriptor(TileSetDescriptor toCopy) {
+		
+		this(toCopy.title, toCopy.description, toCopy.width, toCopy.height, toCopy.gridWidth, toCopy.gridHeight,
+				toCopy.offset, toCopy.padding);
+		toCopy.allTiles.forEach(this::addTile);
+	}
+	
+	/**
+	 * Attempt to merge this TileSetDescriptor with another, producing a third
+	 * TileSetDescriptor.
+	 * <p>
+	 * This method will fail (producing an {@link IllegalArgumentException}) if:
+	 * <ul>
+	 * <li>Grid-sizes are not identical
+	 * ({@link #getGridWidth()}/{@link #getGridHeight()}</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @param other
+	 * @return
+	 */
+	public TileSetDescriptor merge(TileSetDescriptor other) {
+		
+		final TileSetDescriptor copy = new TileSetDescriptor(this);
+		if (other == null)
+			return copy;
+		
+		if (this.getGridWidth() != other.getGridWidth() || this.getGridHeight() != other.getGridHeight())
+			throw new IllegalArgumentException("Cannot merge TileSetDescriptors with mismatched grid dimensions.");
+		
+		other.allTiles.forEach(copy::addTile);
+		
+		return copy;
+	}
+	
 	public String getTitle() {
 		
 		return title;
@@ -53,12 +85,12 @@ public class TileSetDescriptor {
 		return description;
 	}
 	
-	public int getWidth() {
+	int getWidth() {
 		
 		return width;
 	}
 	
-	public int getHeight() {
+	int getHeight() {
 		
 		return height;
 	}
@@ -73,12 +105,12 @@ public class TileSetDescriptor {
 		return gridHeight;
 	}
 	
-	public int getOffset() {
+	int getOffset() {
 		
 		return offset;
 	}
 	
-	public int getPadding() {
+	int getPadding() {
 		
 		return padding;
 	}
@@ -88,15 +120,7 @@ public class TileSetDescriptor {
 		assert (tile != null);
 		
 		allTiles.add(tile);
-		tile.getTitle();
-		tilesByTitle.computeIfAbsent(tile.getTitle(), (t) -> new ArrayList<>()).add(tile);
-		
 		tilesByHash.put(tile.getHashcode(), tile);
-	}
-	
-	public Collection<TileDescriptor> getAllTilesByTitle(String tileTitle) {
-		
-		return Collections.unmodifiableCollection(tilesByTitle.getOrDefault(tileTitle, EMPTY_LIST));
 	}
 	
 	public Collection<TileDescriptor> getAllTiles() {
@@ -116,46 +140,5 @@ public class TileSetDescriptor {
 	public TileDescriptor getTileByHashcode(int hashcode) {
 		
 		return tilesByHash.get(hashcode);
-	}
-	
-	/**
-	 * Get a {@link TileDescriptor} associated with the given ID, or {@code null} if
-	 * none so registered. If more than one {@link TileDescriptor} is registered
-	 * under this ID, selects the first one from the list.
-	 * 
-	 * @param tileTitle
-	 * @return
-	 */
-	public TileDescriptor getTileByTitle(String tileTitle) {
-		
-		if (!tilesByTitle.containsKey(tileTitle))
-			return null;
-		
-		final ArrayList<TileDescriptor> availableTiles = tilesByTitle.get(tileTitle);
-		if (availableTiles.isEmpty())
-			return null;
-		return availableTiles.get(0);
-	}
-	
-	/**
-	 * Get a {@link TileDescriptor} associated with the given ID, or {@code null} if
-	 * none so registered. If more than one {@link TileDescriptor} is registered
-	 * under this ID, selects one at random.
-	 * 
-	 * @param tileTitle
-	 * @return
-	 */
-	public TileDescriptor getRandomTileByTitle(String tileTitle) {
-		
-		if (!tilesByTitle.containsKey(tileTitle))
-			return null;
-		
-		final ArrayList<TileDescriptor> availableTiles = tilesByTitle.get(tileTitle);
-		if (availableTiles.isEmpty())
-			return null;
-		if (availableTiles.size() == 1)
-			return availableTiles.get(0);
-		
-		return availableTiles.get(RND.nextInt(availableTiles.size()));
 	}
 }

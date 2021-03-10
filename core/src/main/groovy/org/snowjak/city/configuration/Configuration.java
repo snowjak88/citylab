@@ -1,10 +1,10 @@
 package org.snowjak.city.configuration;
 
 import org.snowjak.city.CityGame;
-import org.snowjak.city.map.TileSet;
-import org.snowjak.city.map.TileSetLoader;
-import org.snowjak.city.map.generator.JavaMapGeneratorLoader;
+import org.snowjak.city.map.generator.MapGeneratorLoader;
 import org.snowjak.city.map.generator.support.MapGeneratorScript;
+import org.snowjak.city.map.tiles.TileSet;
+import org.snowjak.city.map.tiles.TileSetLoader;
 import org.snowjak.city.service.ScaleService;
 
 import com.badlogic.gdx.Gdx;
@@ -168,10 +168,10 @@ public class Configuration {
 	private void addCustomAssetLoaders(AssetService assetService) {
 		
 		final TileSetLoader tileSetLoader = new TileSetLoader(CityGame.RESOLVER);
-		assetService.getAssetManager().setLoader(TileSet.class, "tileset.json", tileSetLoader);
-		assetService.getEagerAssetManager().setLoader(TileSet.class, "tileset.json", tileSetLoader);
+		assetService.getAssetManager().setLoader(TileSet.class, ".groovy", tileSetLoader);
+		assetService.getEagerAssetManager().setLoader(TileSet.class, ".groovy", tileSetLoader);
 		
-		final JavaMapGeneratorLoader mapGeneratorLoader = new JavaMapGeneratorLoader(CityGame.RESOLVER);
+		final MapGeneratorLoader mapGeneratorLoader = new MapGeneratorLoader(CityGame.RESOLVER);
 		assetService.getAssetManager().setLoader(MapGeneratorScript.class, ".groovy", mapGeneratorLoader);
 		assetService.getEagerAssetManager().setLoader(MapGeneratorScript.class, ".groovy", mapGeneratorLoader);
 	}

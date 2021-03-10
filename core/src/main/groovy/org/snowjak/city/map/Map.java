@@ -5,6 +5,8 @@ package org.snowjak.city.map;
 
 import java.util.EnumMap;
 
+import org.snowjak.city.map.tiles.TileSet;
+
 /**
  * @author snowjak88
  *

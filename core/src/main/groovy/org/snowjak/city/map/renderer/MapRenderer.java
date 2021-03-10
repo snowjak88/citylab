@@ -27,7 +27,7 @@ import static java.lang.Math.max;
 
 import org.snowjak.city.map.Map;
 import org.snowjak.city.map.MapDomain;
-import org.snowjak.city.map.TileSet;
+import org.snowjak.city.map.tiles.TileSet;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;

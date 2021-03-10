@@ -28,7 +28,7 @@ public class CityGame {
 	 * {@link AssetManager#get(String, Class) AssetManager.get(DEFAULT_TILESET_PATH,
 	 * TileSet.class)}
 	 */
-	public static final String DEFAULT_TILESET_PATH = "images/tilesets/terrain/default/tileset.json";
+	public static final String DEFAULT_TILESET_PATH = "data/tilesets/default.groovy";
 	
 	public static final String EXTERNAL_ROOT_BUNDLES = "data/bundles/";
 	public static final String EXTERNAL_ROOT_MAP_GENERATORS = "data/map-generators/";

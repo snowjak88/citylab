@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
-import org.snowjak.city.map.generator.JavaMapGeneratorLoader.JavaMapGeneratorLoaderParameters;
+import org.snowjak.city.map.generator.MapGeneratorLoader.MapGeneratorLoaderParameters;
 import org.snowjak.city.map.generator.support.MapGeneratorScript;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
@@ -32,16 +32,16 @@ import groovy.lang.GroovyShell;
  * @author snowjak88
  *
  */
-public class JavaMapGeneratorLoader
-		extends AsynchronousAssetLoader<MapGeneratorScript, JavaMapGeneratorLoaderParameters> {
+public class MapGeneratorLoader
+		extends AsynchronousAssetLoader<MapGeneratorScript, MapGeneratorLoaderParameters> {
 	
-	private static final Logger LOG = LoggerService.forClass(JavaMapGeneratorLoader.class);
+	private static final Logger LOG = LoggerService.forClass(MapGeneratorLoader.class);
 	
 	final CompilerConfiguration config;
 	
 	private MapGeneratorScript script;
 	
-	public JavaMapGeneratorLoader(FileHandleResolver fileHandleResolver) {
+	public MapGeneratorLoader(FileHandleResolver fileHandleResolver) {
 		
 		super(fileHandleResolver);
 		
@@ -57,7 +57,7 @@ public class JavaMapGeneratorLoader
 	
 	@Override
 	public void loadAsync(AssetManager manager, String fileName, FileHandle file,
-			JavaMapGeneratorLoaderParameters parameter) {
+			MapGeneratorLoaderParameters parameter) {
 		
 		if (file == null)
 			throw new NullPointerException();
@@ -88,11 +88,17 @@ public class JavaMapGeneratorLoader
 					"Map-generation script \"" + file.path() + "\" is incomplete: does not set \"altitude\".");
 		}
 		
+		if (script.getBinding().getVariable("material") == null) {
+			LOG.error("Cannot load map-generation script \"{0}\" -- does not set [material].", file.path());
+			throw new RuntimeException(
+					"Map-generation script \"" + file.path() + "\" is incomplete: does not set \"material\".");
+		}
+		
 	}
 	
 	@Override
 	public MapGeneratorScript loadSync(AssetManager manager, String fileName, FileHandle file,
-			JavaMapGeneratorLoaderParameters parameter) {
+			MapGeneratorLoaderParameters parameter) {
 		
 		return script;
 	}
@@ -100,12 +106,12 @@ public class JavaMapGeneratorLoader
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Array<AssetDescriptor> getDependencies(String fileName, FileHandle file,
-			JavaMapGeneratorLoaderParameters parameter) {
+			MapGeneratorLoaderParameters parameter) {
 		
 		return null;
 	}
 	
-	public static class JavaMapGeneratorLoaderParameters extends AssetLoaderParameters<MapGeneratorScript> {
+	public static class MapGeneratorLoaderParameters extends AssetLoaderParameters<MapGeneratorScript> {
 		
 	}
 }

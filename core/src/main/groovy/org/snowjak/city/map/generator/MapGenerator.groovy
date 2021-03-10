@@ -8,9 +8,10 @@ import static org.snowjak.city.util.Util.min
 
 import org.snowjak.city.map.BoundedMap
 import org.snowjak.city.map.MapDomain
-import org.snowjak.city.map.TileDescriptor
-import org.snowjak.city.map.TileSet
 import org.snowjak.city.map.generator.support.MapGeneratorScript
+import org.snowjak.city.map.generator.support.MaterialProducer
+import org.snowjak.city.map.tiles.TileDescriptor
+import org.snowjak.city.map.tiles.TileSet
 
 import com.sudoplay.joise.module.Module
 
@@ -28,15 +29,19 @@ class MapGenerator {
 			throw new NullPointerException()
 		
 		final Module altitudeProducer = script.binding["altitude"]
+		final MaterialProducer materialProducer = script.binding["material"]
 		
 		final org.snowjak.city.map.Map map = new BoundedMap(width, height)
 		map.setTileSetFor MapDomain.TERRAIN, terrainTileset
 		
 		def altitudes = new int[width+1][height+1]
+		def materials = new String[width+1][height+1]
 		
 		for(int x in 0..width)
-			for(int y in 0..height)
+			for(int y in 0..height) {
 				altitudes[x][y] = altitudeProducer.get(x, y)
+				materials[x][y] = materialProducer.get(x, y)
+			}
 		
 		
 		def tileDescriptors = new TileDescriptor[width][height]
@@ -49,11 +54,11 @@ class MapGenerator {
 		
 		for(int x in 0..width-1)
 			for(int y in 0..height-1) {
-				def possibilities = terrainTileset.findDescriptorsThatFit(altitudes, x, y, wrapX, wrapY, null)
+				def possibilities = terrainTileset.findDescriptorsThatFit(altitudes, x, y, wrapX, wrapY, materials)
 				tileDescriptors[x][y] = possibilities[RND.nextInt(possibilities.size())]
 			}
 		
-		mixUpTileAssignments altitudes, tileDescriptors, terrainTileset, wrapX, wrapY
+		mixUpTileAssignments altitudes, materials, tileDescriptors, terrainTileset, wrapX, wrapY
 		
 		for(int y in 0..height-1) {
 			for(int x in 0..width-1) {
@@ -69,7 +74,7 @@ class MapGenerator {
 		map
 	}
 	
-	private void mixUpTileAssignments(int[][] altitudes, TileDescriptor[][] descriptors, TileSet tileset, boolean wrapX, boolean wrapY) {
+	private void mixUpTileAssignments(int[][] altitudes, String[][] materials, TileDescriptor[][] descriptors, TileSet tileset, boolean wrapX, boolean wrapY) {
 		def width = descriptors.length
 		def height = descriptors[0].length
 		
@@ -77,7 +82,7 @@ class MapGenerator {
 			for(int y in (0..height-1)) {
 				
 				def possibilities = []
-				possibilities.addAll tileset.findDescriptorsThatFit(altitudes, x, y, wrapX, wrapY, null)
+				possibilities.addAll tileset.findDescriptorsThatFit(altitudes, x, y, wrapX, wrapY, materials)
 				
 				def validities = []
 				
@@ -86,7 +91,7 @@ class MapGenerator {
 					
 					descriptors[x][y] = possibility
 					
-					if(tileset.isTileFitting(x, y, descriptors, altitudes, wrapX, wrapY))
+					if(tileset.isTileFitting(x, y, descriptors, altitudes, materials, wrapX, wrapY))
 						validities << descriptors[x][y]
 					
 					descriptors[x][y] = oldAssignment
