@@ -12,7 +12,7 @@ import java.io.IOException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.snowjak.city.map.tiles.TileSetLoader.TileSetLoaderParameters;
-import org.snowjak.city.map.tiles.support.TileSetDescriptorSpec;
+import org.snowjak.city.map.tiles.support.TileSetDsl;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetLoaderParameters;
@@ -23,9 +23,7 @@ import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.maps.tiled.TiledMapTile;
 import com.badlogic.gdx.maps.tiled.TiledMapTileSet;
-import com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
 import com.badlogic.gdx.utils.Array;
 import com.github.czyzby.kiwi.log.Logger;
 import com.github.czyzby.kiwi.log.LoggerService;
@@ -63,8 +61,6 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 	
 	final CompilerConfiguration config;
 	
-	private TileSetDescriptor tileSetDescriptor;
-	
 	private TileSet tileSet;
 	
 	/**
@@ -77,7 +73,7 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 		super(resolver);
 		
 		final ImportCustomizer customImports = new ImportCustomizer();
-		customImports.addStaticStars();
+		customImports.addStaticStars(TileCorner.class.getName());
 		
 		config = new CompilerConfiguration();
 		config.setScriptBaseClass(DelegatingScript.class.getName());
@@ -87,19 +83,14 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 	@Override
 	public void loadAsync(AssetManager manager, String fileName, FileHandle file, TileSetLoaderParameters parameter) {
 		
-	}
-	
-	@Override
-	public TileSet loadSync(AssetManager manager, String fileName, FileHandle file, TileSetLoaderParameters parameter) {
-		
 		//
 		// Load the specified image for each tile-descriptor,
 		// create the resulting TiledMapTile instance,
 		// and insert it into the TileSet.
 		//
-		for (TileDescriptor td : tileSet.getTileSetDescriptor().getAllTiles()) {
+		for (Tile t : tileSet.getAllTiles()) {
 			
-			final FileHandle imageFile = file.parent().child(td.getFilename());
+			final FileHandle imageFile = file.parent().child(t.getFilename());
 			if (!imageFile.exists())
 				throw new RuntimeException(new FileNotFoundException("Cannot load tile-set \"" + file.path()
 						+ "\" -- referenced image-file \"" + imageFile.path() + "\" does not exist."));
@@ -111,17 +102,19 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 			//
 			// Calculate safe texture-region dimensions, clamping the specified to the
 			// actual texture-dimensions.
-			final int startX = min(max(0, td.getX() + td.getPadding()), imageTexture.getWidth() - 1);
-			final int startY = min(max(0, td.getY() + td.getPadding()), imageTexture.getHeight() - 1);
-			final int width = max(min(td.getWidth(), imageTexture.getWidth() - td.getPadding()), 0);
-			final int height = max(min(td.getHeight(), imageTexture.getHeight() - td.getPadding()), 0);
+			final int startX = min(max(0, t.getX() + t.getPadding()), imageTexture.getWidth() - 1);
+			final int startY = min(max(0, t.getY() + t.getPadding()), imageTexture.getHeight() - 1);
+			final int width = max(min(t.getWidth(), imageTexture.getWidth() - t.getPadding()), 0);
+			final int height = max(min(t.getHeight(), imageTexture.getHeight() - t.getPadding()), 0);
 			
 			final TextureRegion imageRegion = new TextureRegion(imageTexture, startX, startY, width, height);
-			final TiledMapTile tile = new StaticTiledMapTile(imageRegion);
-			tile.setOffsetY(td.getOffset());
-			tileSet.putTile(td.getHashcode(), tile);
+			t.setSprite(imageRegion);
 			
 		}
+	}
+	
+	@Override
+	public TileSet loadSync(AssetManager manager, String fileName, FileHandle file, TileSetLoaderParameters parameter) {
 		
 		return tileSet;
 	}
@@ -138,13 +131,13 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 		if (!file.exists())
 			throw new RuntimeException(new FileNotFoundException());
 		
-		final TileSetDescriptorSpec spec = new TileSetDescriptorSpec();
+		final TileSetDsl dsl = new TileSetDsl();
 		final DelegatingScript script;
 		try {
 			
 			final GroovyShell shell = new GroovyShell(this.getClass().getClassLoader(), new Binding(), config);
 			script = (DelegatingScript) shell.parse(file.file());
-			script.setDelegate(spec);
+			script.setDelegate(dsl);
 			
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -153,9 +146,9 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 		try {
 			
 			script.run();
-			tileSet = new TileSet(file, spec.build());
+			tileSet = dsl.build();
 			
-			for (TileDescriptor td : tileSet.getTileSetDescriptor().getAllTiles()) {
+			for (Tile td : tileSet.getAllTiles()) {
 				dependencies.add(new AssetDescriptor<>(file.parent().child(td.getFilename()), Texture.class));
 			}
 			

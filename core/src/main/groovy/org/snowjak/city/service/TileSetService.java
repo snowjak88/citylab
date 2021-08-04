@@ -20,6 +20,17 @@ import com.github.czyzby.kiwi.log.Logger;
 import com.github.czyzby.kiwi.log.LoggerService;
 
 /**
+ * Provides Tileset-related application-level services.
+ * <p>
+ * Handles:
+ * <ul>
+ * <li>Detecting all tile-sets available at boot-time</li>
+ * <li>Loading each detected tile-set at boot-time</li>
+ * <li>Merging all loaded tile-sets into a single TileSet instance</li>
+ * <li>Making that single TileSet instance available</li>
+ * </ul>
+ * </p>
+ * 
  * @author snowjak88
  *
  */
@@ -58,11 +69,9 @@ public class TileSetService {
 			return;
 		
 		try {
-			if (this.tileSet == null) {
-				newTileSet = new TileSet(toMerge.getDescriptorFile(), toMerge.getTileSetDescriptor());
-				toMerge.getTileSetDescriptor().getAllTiles()
-						.forEach(td -> newTileSet.putTile(td.getHashcode(), toMerge.getTile(td.getHashcode())));
-			} else
+			if (this.tileSet == null)
+				newTileSet = new TileSet(toMerge);
+			else
 				newTileSet = this.tileSet.merge(toMerge);
 		} catch (IllegalArgumentException e) {
 			return;

@@ -43,14 +43,14 @@ import com.sudoplay.joise.module.ModuleSphere
  * @author snowjak88
  *
  */
-class MapGeneratorSpec {
+class MapGeneratorDsl {
 	
 	private static final Random RND = new Random(System.currentTimeMillis())
 	
 	Module altitude
-	MaterialProducer material
+	FlavorsProducer flavors
 	
-	public MapGeneratorSpec() {
+	public MapGeneratorDsl() {
 		super()
 	}
 

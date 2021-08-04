@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.snowjak.city.CityGame;
-import org.snowjak.city.map.generator.support.MapGeneratorSpec;
+import org.snowjak.city.map.generator.MapGenerator;
 
 import com.badlogic.gdx.files.FileHandle;
 import com.github.czyzby.autumn.annotation.Component;
@@ -21,7 +21,7 @@ import com.github.czyzby.kiwi.log.Logger;
 import com.github.czyzby.kiwi.log.LoggerService;
 
 /**
- * Provides access by name to {@link MapGeneratorSpec map-generator scripts}.
+ * Provides access by name to {@link MapGeneratorDsl map-generator scripts}.
  * 
  * @author snowjak88
  *
@@ -32,7 +32,7 @@ public class MapGeneratorService {
 	private static final Logger LOG = LoggerService.forClass(MapGeneratorService.class);
 	
 	private final Map<String, FileHandle> scriptFiles = new LinkedHashMap<>();
-	private final Map<String, MapGeneratorSpec> scripts = Collections.synchronizedMap(new LinkedHashMap<>());
+	private final Map<String, MapGenerator> generators = Collections.synchronizedMap(new LinkedHashMap<>());
 	
 	@Inject
 	private AssetService assetService;
@@ -57,57 +57,57 @@ public class MapGeneratorService {
 	public Set<String> getScriptNames(boolean onlyLoaded) {
 		
 		if (onlyLoaded)
-			return scripts.keySet();
+			return generators.keySet();
 		return scriptFiles.keySet();
 	}
 	
 	/**
-	 * Get the {@link MapGeneratorSpec} associated with the given name. If
-	 * necessary, blocks until the named script has finished loading. If no such
-	 * script associated with the given name has been successfully loaded, returns
+	 * Get the {@link MapGenerator} associated with the given name. If necessary,
+	 * blocks until the named script has finished loading. If no such script
+	 * associated with the given name has been successfully loaded, returns
 	 * {@code null}.
 	 * 
 	 * @param name
 	 * @return
 	 */
-	public MapGeneratorSpec getScript(String name) {
+	public MapGenerator getGenerator(String name) {
 		
 		if (!scriptFiles.containsKey(name))
 			return null;
 		
-		return scripts.computeIfAbsent(name, (n) -> {
-			assetService.finishLoading(scriptFiles.get(n).path(), MapGeneratorSpec.class);
-			return assetService.get(scriptFiles.get(n).path(), MapGeneratorSpec.class);
+		return generators.computeIfAbsent(name, (n) -> {
+			assetService.finishLoading(scriptFiles.get(n).path(), MapGenerator.class);
+			return assetService.get(scriptFiles.get(n).path(), MapGenerator.class);
 		});
 	}
 	
 	/**
-	 * Register a {@link MapGeneratorSpec} (identified by {@code scriptFile}), and
+	 * Register a {@link MapGenerator} (identified by {@code scriptFile}), and
 	 * schedule it for loading with the application's {@link AssetService}. The
 	 * script will be registered under the name of
 	 * {@link FileHandle#nameWithoutExtension() its name without its extension}.
 	 * 
 	 * @param scriptFile
 	 */
-	public void registerScript(FileHandle scriptFile) {
+	public void registerGenerator(FileHandle scriptFile) {
 		
-		registerScript(scriptFile.nameWithoutExtension(), scriptFile);
+		registerGenerator(scriptFile.nameWithoutExtension(), scriptFile);
 	}
 	
 	/**
-	 * Register a {@link MapGeneratorSpec} (identified by {@code scriptFile})
-	 * under the given {@code scriptName}, and schedule it for loading with the
-	 * application's {@link AssetService}.
+	 * Register a {@link MapGenerator} (identified by {@code scriptFile}) under the
+	 * given {@code scriptName}, and schedule it for loading with the application's
+	 * {@link AssetService}.
 	 * 
 	 * @param scriptName
 	 * @param scriptFile
 	 */
-	public void registerScript(String scriptName, FileHandle scriptFile) {
+	public void registerGenerator(String scriptName, FileHandle scriptFile) {
 		
 		final String scriptFilePath = scriptFiles.get(scriptName).path();
 		
 		LOG.info("Scheduling load for script-file \"{0}\" <=> [{1}]", scriptName, scriptFilePath);
-		assetService.load(scriptFilePath, MapGeneratorSpec.class);
+		assetService.load(scriptFilePath, MapGenerator.class);
 	}
 	
 	@Initiate(priority = AutumnActionPriority.LOW_PRIORITY)
@@ -123,7 +123,7 @@ public class MapGeneratorService {
 		scanDirectoryForScripts(mapGeneratorRoot);
 		LOG.debug("Finished scanning for scripts.");
 		
-		scriptFiles.forEach(this::registerScript);
+		scriptFiles.forEach(this::registerGenerator);
 		
 		LOG.info("Finished initializing.");
 	}

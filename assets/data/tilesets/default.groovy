@@ -1,359 +1,308 @@
 
-	id = "default"
-	title = "Default tileset"
-	description = "Default world tileset. Created by darkrose (https://opengameart.org/users/darkrose)."
-	
-	//
-	// The grid-dimensions for which this tileset can be made to work
-	//
-	// (Default: 32 / 16)
-	gridWidth = 64
-	gridHeight = 32
-	
-	//
-	// Default width/height for all tiles
-	//
-	// (Default: 32 / 32)
-	width = 64
-	height = 64
-	
-	//
-	// Default file-name for all tiles
-	// Must be in the same directory as this descriptor
-	filename = "terrain_0.png"
-	
-	//
-	// Starting x/y
-	//
-	// (Default: 0 / 0)
-	x = 0
-	y = 0
-	
-	//
-	// Drawing offset (along Y axis, from the tile's bottom edge)
-	// i.e., how far should the tile be offset so its visual "bottom" corner
-	// is aligned with the grid-cell's "bottom" corner
-	//
-	// (Default: 0)
-	offset = 0
-	
-	//
-	// Each tile's image has so much padding (empty space surrounding
-	// the "meat" of the tile, and which should be ignored)
-	//
-	// (Default: 0)
-	padding = 0
-	
-	//
-	// Correlate material-IDs with "flavors" -- i.e.,
-	// multiple aliases for a single material that should
-	// only be matched with themselves
-	//
-	// Allows you to supply multiple "styles" for a single material,
-	// ensuring your tiles are matched only with appropriate neighbors
-	flavor "grass", [ "grass", "dirty-grass" ]
-	
-	//
-	// "Auto-advance" x/y for every subsequent tile
-	// Because [filename] is not loaded right when the script is executed,
-	// you need to supply the image dimensions here
-	//
-	// Once set up, the "cursor" will iterate to the next tile-slot with every
-	// tile definition
-	//
-	// You can also control the cursor by calling one of:
-	//  - next()     -- skip next tile (assumed to be the same dimensions as the
-	//                  previous tile, or the globally-configured width/height
-	//  - nextRow()  -- skip to the beginning of the next row
-	autoAdvance 640, 1024
-	
-	//
-	// As it happens, we need to skip the very first tile-cell
-	next()
-	
-	//
-	// Define a tile
-	// Inherits fields from its enclosing tile-set:
-	//  - x/y
-	//  - width/height
-	//  - offset
-	//  - padding
-	//  - filename
-	//
-	// You may certainly override them here, if you need them to be specific
-	tile {
-		id = "A"
-		//
-		// Corner-filters clockwise from the top
-		// If you have fewer than 4, the missing entries are auto-populated with "wildcard" entries
-		// If you have more than 4, the excess entries are ignored
-		//
-		// Ordinarily, each material-ID here is assumed to be a "flavor" (i.e., one of
-		// the aliases defined above)
-		// You may also refer to a material-ID directly here, so long as that ID has not
-		// already been defined as a flavor
-		corner [ "grass" ], 0 
-		corner [ "grass" ], 0 
-		corner [ "grass" ], 0 
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "B"
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "C"
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-	}
-	
-	tile {
-		id = "D"
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-	}
-	
-	tile {
-		id = "E"
-		corner [ "grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "F"
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-	}
-	
-	tile {
-		id = "G"
-		corner [ "grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "H"
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "I"
-		corner [ "dirty-grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "dirty-grass" ], 0
-	}
-	
-	tile {
-		id = "J"
-		corner [ "grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-	}
-	
-	tile {
-		id = "K"
-		corner [ "dirty-grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-	}
-	
-	tile {
-		id = "L"
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "dirty-grass" ], 0
-	}
-	
-	tile {
-		id = "M"
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "N"
-		corner [ "dirty-grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "O"
-		corner [ "grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "P"
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "Q"
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "dirty-grass" ], 0
-	}
-	
-	tile {
-		id = "R"
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-	}
-	
-	tile {
-		id = "S"
-		corner [ "grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	nextRow()
-	next()
-	next()
-	next()
-	next()
-	
-	tile {
-		id = "AG"
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-		corner [ "dirty-grass" ], 0
-	}
-	
+id = "default"
+title = "Default tileset"
+description = "Default world tileset. Created by darkrose (https://opengameart.org/users/darkrose)."
+
+//
+// The grid-dimensions for which this tileset can be made to work
+//
+// (Default: 32 / 16)
+gridWidth = 64
+gridHeight = 32
+
+//
+// Default width/height for all tiles. (Visible width/height, as distinct from grid width/height.)
+//
+// (Default: 32 / 32)
+width = 64
+height = 64
+
+//
+// Default file-name for all tiles
+// Must be in the same directory as this descriptor
+filename = "default.png"
+
+//
+// Starting x/y
+//
+// (Default: 0 / 0)
+x = 0
+y = 0
+
+//
+// Drawing offset (along Y axis, from the tile's bottom edge)
+// i.e., how far should the tile be offset so its visual "bottom" corner
+// is aligned with the grid-cell's "bottom" corner
+//
+// Useful if your tiles contain some "subsurface" detail that you want
+// to be positioned "below" the grid.
+//
+// (Default: 0)
+offset = 32
+
+//
+// Each tile needs to be drawn with a vertical offset depending on its altitude.
+// The tile-renderer should consult this corner of each tile to determine which
+// of that tile's vertices should contribute its altitude to that vertical offset.
+base = TOP
+
+//
+// Each tile's image has so much padding (empty space surrounding
+// the "meat" of the tile, and which should be ignored)
+//
+// (Default: 0)
+padding = 0
+
+//
+// "Auto-advance" x/y for every subsequent tile
+// Because [filename] is not loaded right when the script is executed,
+// you need to supply the image dimensions here
+//
+// Once set up, the "cursor" will iterate to the next tile-slot with every
+// tile definition
+//
+// You can also control the cursor by calling one of:
+//  - next()     -- skip next tile (assumed to be the same dimensions as the
+//                  previous tile, or the globally-configured width/height
+//  - nextRow()  -- skip to the beginning of the next row
+autoAdvance 640, 1024
+
+//
+// As it happens, we need to skip the very first tile-cell
+next()
+
+//
+// Define a tile
+// Inherits fields from its enclosing tile-set:
+//  - x/y
+//  - width/height
+//  - offset
+//  - padding
+//  - filename
+//
+// You may certainly override them here, if you need them to be specific
+tile {
+	id = "A"
+	provides 'grass', 'water'
+	rule { isFlat() }
+}
+
+tile {
+	id = "B"
+	provides 'grass', 'water'
+	rule { isFlat() }
+}
+
+tile {
+	id = "C"
+	provides 'grass'
+	rule { isFlat() }
+}
+
+tile {
+	id = "D"
+	provides 'grass'
+	rule { isFlat() }
+}
+
+tile {
+	id = "E"
+	provides [RIGHT], ['grass', 'water']
+	provides [TOP, BOTTOM, LEFT], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "F"
+	provides 'grass'
+	rule { isFlat() }
+}
+
+tile {
+	id = "G"
+	provides [TOP, LEFT], ['grass', 'water']
+	provides [RIGHT, BOTTOM], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "H"
+	provides [BOTTOM, LEFT], ['grass', 'water']
+	provides [TOP, RIGHT], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "I"
+	provides [BOTTOM, RIGHT], ['grass', 'water']
+	provides [TOP, LEFT], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "J"
+	provides [TOP], ['grass', 'water']
+	provides [RIGHT, BOTTOM, LEFT], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "K"
+	provides [RIGHT], ['grass', 'water']
+	provides [TOP, BOTTOM, LEFT], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "L"
+	provides [BOTTOM], ['grass', 'water']
+	provides [TOP, RIGHT, LEFT], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "M"
+	provides [LEFT], ['grass', 'water']
+	provides [TOP, BOTTOM, RIGHT], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "N"
+	provides [RIGHT, BOTTOM, LEFT], ['grass', 'water']
+	provides [TOP], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "O"
+	provides [TOP, BOTTOM, LEFT], ['grass', 'water']
+	provides [RIGHT], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "P"
+	provides [TOP, RIGHT, LEFT], ['grass', 'water']
+	provides [BOTTOM], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "Q"
+	provides [TOP, RIGHT, BOTTOM], ['grass', 'water']
+	provides [LEFT], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "R"
+	provides [TOP, RIGHT], ['grass', 'water']
+	provides [BOTTOM, LEFT], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = "S"
+	provides [TOP, LEFT], ['grass', 'water']
+	provides [RIGHT, BOTTOM], ['grass']
+	rule { isFlat() }
+}
+
+nextRow()
+next()
+next()
+next()
+next()
+
+tile {
+	id = "AG"
+	provides 'grass'
+	rule { isFlat() }
+}
+
+offset = 0
+
+tile {
+	id = "AH"
+	provides 'grass'
+	rule { isFlat([TOP,RIGHT,BOTTOM]) && altDelta(TOP, [LEFT], +1) }
+}
+
+tile {
+	id = "AI"
+	provides 'grass'
+	rule { isFlat([TOP,LEFT]) && altDelta(TOP, [RIGHT, BOTTOM], +1) }
+}
+
+tile {
+	id = "AJ"
+	provides 'grass'
+	rule { isFlat([TOP,RIGHT]) && altDelta(TOP, [LEFT, BOTTOM], +1) }
+}
+
+tile {
+	id = "AK"
+	provides 'grass'
+	rule { isFlat([TOP,RIGHT, LEFT]) && altDelta(TOP, [BOTTOM], +1) }
+}
+
+nextRow()
+
+tile {
+	id = "AL"
+	provides 'grass'
 	offset = 32
-	
-	tile {
-		id = "AH"
-		corner [ "grass" ], -1
-		corner [ "grass" ], -1
-		corner [ "grass" ], -1
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "AI"
-		corner [ "grass" ], -1
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], -1
-	}
-	
-	tile {
-		id = "AJ"
-		corner [ "grass" ], -1
-		corner [ "grass" ], -1
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "AK"
-		corner [ "grass" ], -1
-		corner [ "grass" ], -1
-		corner [ "grass" ], 0
-		corner [ "grass" ], -1
-	}
-	
-	nextRow()
-	
-	tile {
-		id = "AL"
-		corner [ "grass" ], -1
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "AM"
-		corner [ "grass" ], 0
-		corner [ "grass" ], -1
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "AN"
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], -1
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "AO"
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], -1
-	}
-	
-	tile {
-		id = "AP"
-		corner [ "grass" ], 0
-		corner [ "grass" ], -1
-		corner [ "grass" ], -1
-		corner [ "grass" ], -1
-	}
-	
-	tile {
-		id = "AQ"
-		corner [ "grass" ], 0
-		corner [ "grass" ], 0
-		corner [ "grass" ], -1
-		corner [ "grass" ], -1
-	}
-	
-	tile {
-		id = "AR"
-		corner [ "grass" ], 0
-		corner [ "grass" ], -1
-		corner [ "grass" ], -1
-		corner [ "grass" ], 0
-	}
-	
-	tile {
-		id = "AS"
-		corner [ "grass" ], -1
-		corner [ "grass" ], 0
-		corner [ "grass" ], -1
-		corner [ "grass" ], -1
-	}
-	
-	nextRow()
+	base = RIGHT
+	rule { isFlat([RIGHT, LEFT, BOTTOM]) && altDelta(RIGHT, [TOP], -1) }
+}
+
+tile {
+	id = "AM"
+	provides 'grass'
+	offset = 32
+	rule { isFlat([TOP, LEFT, BOTTOM]) && altDelta(TOP, [RIGHT], -1) }
+}
+
+tile {
+	id = "AN"
+	provides 'grass'
+	offset = 32
+	rule { isFlat([TOP, RIGHT, LEFT]) && altDelta(TOP, [BOTTOM], -1) }
+}
+
+tile {
+	id = "AO"
+	provides 'grass'
+	offset = 32
+	rule { isFlat([TOP, RIGHT, BOTTOM]) && altDelta(TOP, [LEFT], -1) }
+}
+
+tile {
+	id = "AP"
+	provides 'grass'
+	offset = 32
+	rule { altDelta(TOP, [RIGHT, LEFT, BOTTOM], -1) }
+}
+
+tile {
+	id = "AQ"
+	provides 'grass'
+	offset = 32
+	rule { isFlat([TOP, RIGHT]) && altDelta(TOP, [LEFT, BOTTOM], -1) }
+}
+
+tile {
+	id = "AR"
+	provides 'grass'
+	offset = 32
+	rule { isFlat([TOP, LEFT]) && altDelta(TOP, [RIGHT, BOTTOM], -1) }
+}
+
+tile {
+	id = "AS"
+	provides 'grass'
+	rule { altDelta(RIGHT, [TOP, LEFT, BOTTOM], -1) }
+}
+
+nextRow()

@@ -15,6 +15,6 @@ def heightmap = scaleDomain {
 }
 
 altitude = heightmap
-material = { x,y ->
-	"grass"
+flavors = { x,y ->
+	['grass']
 }

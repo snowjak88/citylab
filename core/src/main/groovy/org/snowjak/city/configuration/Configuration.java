@@ -1,8 +1,8 @@
 package org.snowjak.city.configuration;
 
 import org.snowjak.city.CityGame;
+import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.generator.MapGeneratorLoader;
-import org.snowjak.city.map.generator.support.MapGeneratorSpec;
 import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.map.tiles.TileSetLoader;
 import org.snowjak.city.service.ScaleService;
@@ -172,7 +172,7 @@ public class Configuration {
 		assetService.getEagerAssetManager().setLoader(TileSet.class, ".groovy", tileSetLoader);
 		
 		final MapGeneratorLoader mapGeneratorLoader = new MapGeneratorLoader(CityGame.RESOLVER);
-		assetService.getAssetManager().setLoader(MapGeneratorSpec.class, ".groovy", mapGeneratorLoader);
-		assetService.getEagerAssetManager().setLoader(MapGeneratorSpec.class, ".groovy", mapGeneratorLoader);
+		assetService.getAssetManager().setLoader(MapGenerator.class, ".groovy", mapGeneratorLoader);
+		assetService.getEagerAssetManager().setLoader(MapGenerator.class, ".groovy", mapGeneratorLoader);
 	}
 }

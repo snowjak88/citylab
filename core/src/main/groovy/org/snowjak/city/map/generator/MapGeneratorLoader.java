@@ -9,7 +9,7 @@ import java.io.IOException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.snowjak.city.map.generator.MapGeneratorLoader.MapGeneratorLoaderParameters;
-import org.snowjak.city.map.generator.support.MapGeneratorSpec;
+import org.snowjak.city.map.generator.support.MapGeneratorDsl;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetLoaderParameters;
@@ -33,13 +33,13 @@ import groovy.util.DelegatingScript;
  * @author snowjak88
  *
  */
-public class MapGeneratorLoader extends AsynchronousAssetLoader<MapGeneratorSpec, MapGeneratorLoaderParameters> {
+public class MapGeneratorLoader extends AsynchronousAssetLoader<MapGenerator, MapGeneratorLoaderParameters> {
 	
 	private static final Logger LOG = LoggerService.forClass(MapGeneratorLoader.class);
 	
 	final CompilerConfiguration config;
 	
-	private MapGeneratorSpec spec;
+	private MapGeneratorDsl dsl;
 	
 	public MapGeneratorLoader(FileHandleResolver fileHandleResolver) {
 		
@@ -70,8 +70,8 @@ public class MapGeneratorLoader extends AsynchronousAssetLoader<MapGeneratorSpec
 			final GroovyShell shell = new GroovyShell(this.getClass().getClassLoader(), new Binding(), config);
 			script = (DelegatingScript) shell.parse(file.file());
 			
-			spec = new MapGeneratorSpec();
-			script.setDelegate(spec);
+			dsl = new MapGeneratorDsl();
+			script.setDelegate(dsl);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -86,13 +86,13 @@ public class MapGeneratorLoader extends AsynchronousAssetLoader<MapGeneratorSpec
 					"Cannot load map-generation script \"" + file.path() + "\" -- unexpected exception.", e);
 		}
 		
-		if (spec.getAltitude() == null) {
+		if (dsl.getAltitude() == null) {
 			LOG.error("Cannot load map-generation script \"{0}\" -- does not set [altitude].", file.path());
 			throw new RuntimeException(
 					"Map-generation script \"" + file.path() + "\" is incomplete: does not set \"altitude\".");
 		}
 		
-		if (spec.getMaterial() == null) {
+		if (dsl.getFlavors() == null) {
 			LOG.error("Cannot load map-generation script \"{0}\" -- does not set [material].", file.path());
 			throw new RuntimeException(
 					"Map-generation script \"" + file.path() + "\" is incomplete: does not set \"material\".");
@@ -101,10 +101,10 @@ public class MapGeneratorLoader extends AsynchronousAssetLoader<MapGeneratorSpec
 	}
 	
 	@Override
-	public MapGeneratorSpec loadSync(AssetManager manager, String fileName, FileHandle file,
+	public MapGenerator loadSync(AssetManager manager, String fileName, FileHandle file,
 			MapGeneratorLoaderParameters parameter) {
 		
-		return spec;
+		return new MapGenerator(dsl);
 	}
 	
 	@SuppressWarnings("rawtypes")
@@ -115,7 +115,7 @@ public class MapGeneratorLoader extends AsynchronousAssetLoader<MapGeneratorSpec
 		return null;
 	}
 	
-	public static class MapGeneratorLoaderParameters extends AssetLoaderParameters<MapGeneratorSpec> {
+	public static class MapGeneratorLoaderParameters extends AssetLoaderParameters<MapGenerator> {
 		
 	}
 }

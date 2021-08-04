@@ -6,9 +6,8 @@ package org.snowjak.city.controller;
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
-import org.snowjak.city.map.Map;
+import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.generator.MapGenerator;
-import org.snowjak.city.map.generator.support.MapGeneratorSpec;
 import org.snowjak.city.map.renderer.MapRenderer;
 import org.snowjak.city.service.MapGeneratorService;
 import org.snowjak.city.service.TileSetService;
@@ -63,7 +62,7 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 	private Viewport viewport = new FitViewport(8, 8);
 	private SpriteBatch batch = new SpriteBatch();
 	
-	private Map map = null;
+	private CityMap map = null;
 	private MapRenderer renderer;
 	
 	private float cameraOffsetX, cameraOffsetY;
@@ -77,9 +76,8 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 		
 		final int worldWidthInTiles = 64, worldHeightInTiles = 64;
 		
-		final MapGeneratorSpec script = mapGeneratorService.getScript("rolling-hills");
-		map = new MapGenerator().generateBounded(worldWidthInTiles, worldHeightInTiles, script,
-				tileSetService.getTileSet(), false, false);
+		final MapGenerator mapGenerator = mapGeneratorService.getGenerator("rolling-hills");
+		map = mapGenerator.generate(worldWidthInTiles, worldHeightInTiles, tileSetService.getTileSet(), false, false);
 		
 		renderer = new MapRenderer(map, batch);
 		
