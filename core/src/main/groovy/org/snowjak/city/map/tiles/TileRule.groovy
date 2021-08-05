@@ -4,7 +4,7 @@
 package org.snowjak.city.map.tiles
 
 import org.snowjak.city.map.CityMap
-import org.snowjak.city.map.tiles.support.TileRuleSupport
+import org.snowjak.city.map.tiles.support.TileSupport
 
 /**
  * @author snowjak88
@@ -13,14 +13,18 @@ import org.snowjak.city.map.tiles.support.TileRuleSupport
 class TileRule {
 	
 	private Closure ruleSpec
-	private TileRuleSupport support
+	private TileSupport support
 
-	public TileRule(Closure ruleSpec, TileRuleSupport support) {
+	public TileRule(Closure ruleSpec, Map<String,Closure> ruleHelpers, TileSupport support) {
 		
 		this.ruleSpec = ruleSpec.rehydrate(support, this, this)
 		this.ruleSpec.resolveStrategy = Closure.DELEGATE_FIRST
 		
 		this.support = support
+		ruleHelpers.each { name, helper ->
+			helper = helper.rehydrate(this.support, this.ruleSpec, this.ruleSpec)
+			this.support.metaClass."$name" = helper
+		}
 	}
 	
 	/**

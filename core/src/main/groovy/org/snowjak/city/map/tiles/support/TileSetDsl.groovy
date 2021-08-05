@@ -12,7 +12,7 @@ import org.snowjak.city.map.tiles.TileSet
  * @author snowjak88
  *
  */
-class TileSetDsl  {
+class TileSetDsl {
 	
 	String title = "(untitled)"
 	String description = "(no description)"
@@ -26,6 +26,8 @@ class TileSetDsl  {
 	String filename = ""
 	boolean decoration = false
 	TileCorner base = TileCorner.TOP
+	
+	Map<String,Closure> ruleHelpers = [:]
 	
 	private int autoAdvanceLimitX = 0, autoAdvanceLimitY = 0
 	private boolean autoAdvance = false
@@ -44,15 +46,12 @@ class TileSetDsl  {
 			padding: padding, offset: offset,
 			base: base,
 			decoration: decoration,
-			filename: filename
+			filename: filename,
+			ruleHelpers: new HashMap(ruleHelpers)
 		] as TileDsl
 		
 		script.resolveStrategy = Closure.DELEGATE_FIRST
 		script = script.rehydrate(tileDsl, this, this)
-		//		script.delegate = tileDsl
-		//		script.owner = this
-		//		script.thisObject = this
-		
 		script()
 		
 		tiles << tileDsl
@@ -110,8 +109,13 @@ class TileSetDsl  {
 	TileSet build() {
 		def tsd = new TileSet(title, description, width, height, gridWidth, gridHeight, offset, padding)
 		tiles.each { dsl ->
-			def rules = dsl.rules.collect { r -> new TileRule(r, new TileRuleSupport()) }
-			tsd.addTile new Tile(tsd, dsl.id, dsl.filename, dsl.x, dsl.y, dsl.width, dsl.height, dsl.gridWidth, dsl.gridHeight, dsl.padding, dsl.offset, dsl.decoration, dsl.base, dsl.provision, rules)
+			def rules = new LinkedList<>()
+			dsl.rules.each { r -> rules << new TileRule(r, dsl.ruleHelpers, new TileSupport()) }
+			def tile = new Tile(tsd, dsl.id, dsl.filename, dsl.x, dsl.y, dsl.width, dsl.height, dsl.gridWidth, dsl.gridHeight, dsl.padding, dsl.offset, dsl.decoration, dsl.base, dsl.provision, rules)
+			for(TileCorner c : TileCorner.values())
+				tile.provision.computeIfAbsent c, { k -> new LinkedList<>() }
+			
+			tsd.addTile tile
 		}
 		tsd
 	}

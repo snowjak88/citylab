@@ -4,6 +4,7 @@
 package org.snowjak.city.map.tiles.support
 
 import org.snowjak.city.map.tiles.TileCorner
+import org.snowjak.city.map.tiles.TileRule
 
 /**
  * @author snowjak88
@@ -24,6 +25,7 @@ class TileDsl {
 	
 	Map<TileCorner,List<String>> provision = [:]
 	List<Closure> rules = []
+	Map<String,Closure> ruleHelpers = [:]
 	
 	/**
 	 * Denotes that this tile provides the given flavors to all corners.
@@ -59,7 +61,7 @@ class TileDsl {
 	 * Define a rule for this tile. For a tile to be considered for placement on the map, every one of its defined rules must be met.
 	 * @param rule
 	 */
-	public void rule(@DelegatesTo(TileRuleSupport) Closure rule) {
+	public void rule(@DelegatesTo(TileSupport) Closure rule) {
 		rules << rule
 	}
 }

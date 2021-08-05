@@ -12,7 +12,7 @@ import org.snowjak.city.map.tiles.TileCorner
  * @author snowjak88
  *
  */
-class TileRuleSupport {
+class TileSupport {
 	
 	CityMap map
 	int cellX, cellY
@@ -87,6 +87,9 @@ class TileRuleSupport {
 	 * @return
 	 */
 	public int alt(int dx, int dy, TileCorner corner) {
+		if(!map.isValidCell(cellX + dx, cellY + dy))
+			return map.getTileAltitude(cellX, cellY, corner)
+			
 		map.getTileAltitude(cellX + dx, cellY + dy, corner)
 	}
 }

@@ -161,7 +161,7 @@ public class TileSet implements Disposable {
 	}
 	
 	private List<Tile> searchMinimalTilesFor(CityMap map, int cellX, int cellY,
-			EnumMap<TileCorner, List<String>> remainingFlavors, Set<Tile> currentTiles, boolean allowNonDecorative) {
+			EnumMap<TileCorner, List<String>> remainingFlavors, Set<Tile> currentTiles, boolean nonDecorative) {
 		
 		boolean allDone = true;
 		for (TileCorner corner : remainingFlavors.keySet()) {
@@ -184,7 +184,7 @@ public class TileSet implements Disposable {
 			
 			//
 			// If the tile is non-transparent and we're not allowing that -- skip it.
-			if (!allowNonDecorative && !tile.isDecoration())
+			if (nonDecorative == tile.isDecoration())
 				continue;
 				
 			//
@@ -212,9 +212,11 @@ public class TileSet implements Disposable {
 			// The "new remaining" list of flavors is the old list, minus the
 			// currently-selected tile's flavors
 			final EnumMap<TileCorner, List<String>> newRemaining = new EnumMap<>(TileCorner.class);
-			for (TileCorner corner : newRemaining.keySet())
-				newRemaining.put(corner, new LinkedList<String>(remainingFlavors.get(corner)));
-			newRemaining.forEach((c, l) -> l.removeAll(tile.getProvision().get(c)));
+			for (TileCorner corner : remainingFlavors.keySet()) {
+				final List<String> remaining = new LinkedList<String>(remainingFlavors.get(corner));
+				remaining.removeAll(tile.getProvision().get(corner));
+				newRemaining.put(corner, remaining);
+			}
 			
 			//
 			// We don't want to select the current tile again in our search.
@@ -222,7 +224,9 @@ public class TileSet implements Disposable {
 			
 			//
 			// Do the search and capture the results in the list.
-			currentTileList.addAll(searchMinimalTilesFor(map, cellX, cellY, newRemaining, currentTiles, false));
+			final List<Tile> searchResult = searchMinimalTilesFor(map, cellX, cellY, newRemaining, currentTiles, false);
+			if (searchResult != null)
+				currentTileList.addAll(searchResult);
 			
 			currentTiles.remove(tile);
 			
