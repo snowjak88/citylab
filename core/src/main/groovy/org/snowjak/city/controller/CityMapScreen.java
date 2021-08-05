@@ -3,25 +3,26 @@
  */
 package org.snowjak.city.controller;
 
-import static java.lang.Math.pow;
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
+import org.snowjak.city.input.GameInputProcessor;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.renderer.MapRenderer;
 import org.snowjak.city.service.MapGeneratorService;
 import org.snowjak.city.service.TileSetService;
 
-import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -32,6 +33,7 @@ import com.github.czyzby.autumn.mvc.component.ui.controller.ViewController;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewInitializer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewRenderer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewResizer;
+import com.github.czyzby.autumn.mvc.component.ui.controller.ViewShower;
 import com.github.czyzby.autumn.mvc.stereotype.View;
 import com.github.czyzby.kiwi.log.Logger;
 import com.github.czyzby.kiwi.log.LoggerService;
@@ -44,7 +46,7 @@ import com.github.czyzby.lml.parser.action.ActionContainer;
  *
  */
 @View(id = "cityMapScreen", value = "ui/templates/cityMapScreen.lml")
-public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer, ActionContainer {
+public class CityMapScreen implements ViewInitializer, ViewShower, ViewRenderer, ViewResizer, ActionContainer {
 	
 	private static final Logger LOG = LoggerService.forClass(CityMapScreen.class);
 	
@@ -67,6 +69,8 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 	private MapRenderer renderer;
 	
 	private float cameraOffsetX, cameraOffsetY;
+	
+	float minWorldX, minWorldY, maxWorldX, maxWorldY;
 	
 	@Override
 	public void initialize(Stage stage, ObjectMap<String, Actor> actorMappedByIds) {
@@ -95,58 +99,51 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 		scratch.set(worldWidthInTiles, worldHeightInTiles);
 		final Vector3 worldBound4 = renderer.translateIsoToScreen(scratch).cpy();
 		
-		final float minWorldX = min(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
-		final float minWorldY = min(worldBound1.y, worldBound2.y, worldBound3.y, worldBound4.y);
-		final float maxWorldX = max(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
-		final float maxWorldY = max(worldBound1.y, worldBound2.y, worldBound3.y, worldBound4.y);
+		minWorldX = min(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
+		minWorldY = min(worldBound1.y, worldBound2.y, worldBound3.y, worldBound4.y);
+		maxWorldX = max(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
+		maxWorldY = max(worldBound1.y, worldBound2.y, worldBound3.y, worldBound4.y);
+	}
+	
+	@Override
+	public void show(Stage stage, Action action) {
 		
-		stage.addListener(new InputListener() {
-			
-			private final Vector2 scratch = new Vector2();
-			private float startDragX = 0, startDragY = 0;
-			private float currentScrollY = 0;
-			
-			@Override
-			public boolean scrolled(InputEvent event, float x, float y, float amountX, float amountY) {
+		stage.addAction(Actions.sequence(action, Actions.run(() -> {
+			Gdx.input.setInputProcessor(new InputMultiplexer(stage, new GameInputProcessor(new ZoomControl() {
 				
-				currentScrollY += amountY;
-				final float newZoom = max(min((float) pow(2f, currentScrollY), 4f), 1f / 8f);
-				((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
-				
-				return true;
-			}
-			
-			@Override
-			public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-				
-				if (button == Input.Buttons.LEFT) {
-					//
-					// Start drag-scroll
-					scratch.set(x, y);
-					final Vector2 worldCoords = viewport.unproject(scratch);
-					startDragX = worldCoords.x;
-					startDragY = worldCoords.y;
+				@Override
+				public void zoomOut() {
+					
+					final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom / 2f, 4f), 1f / 8f);
+					((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
 				}
 				
-				return true;
-			}
-			
-			@Override
-			public void touchDragged(InputEvent event, float x, float y, int pointer) {
+				@Override
+				public void zoomIn() {
+					
+					final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom * 2f, 4f), 1f / 8f);
+					((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
+				}
+			}, new MapScrollControl() {
 				
-				scratch.set(x, y);
-				final Vector2 worldCoords = viewport.unproject(scratch);
+				Vector2 scratch = new Vector2();
 				
-				cameraOffsetX += (worldCoords.x - startDragX) / 2f;
-				cameraOffsetY -= (worldCoords.y - startDragY);
-				
-				startDragX = worldCoords.x;
-				startDragY = worldCoords.y;
-				
-				cameraOffsetX = min(max(cameraOffsetX, minWorldX), maxWorldX);
-				cameraOffsetY = min(max(cameraOffsetY, minWorldY), maxWorldY);
-			}
-		});
+				@Override
+				public void scrollBy(int startX, int startY, int endX, int endY) {
+					
+					scratch.set(startX, startY);
+					scratch = viewport.unproject(scratch);
+					final float worldStartX = scratch.x, worldStartY = scratch.y;
+					
+					scratch.set(endX, endY);
+					scratch = viewport.unproject(scratch);
+					final float worldEndX = scratch.x, worldEndY = scratch.y;
+					
+					cameraOffsetX = min(max(cameraOffsetX + (worldEndX - worldStartX) / 2f, minWorldX), maxWorldX);
+					cameraOffsetY = min(max(cameraOffsetY + (worldEndY - worldStartY), minWorldY), maxWorldY);
+				}
+			})));
+		})));
 	}
 	
 	@Override
@@ -173,10 +170,29 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 	public void resize(Stage stage, int width, int height) {
 		
 		viewport.update(width, height);
+		stage.getViewport().update(width, height, true);
+	}
+	
+	@Override
+	public void hide(Stage stage, Action action) {
+		
+		stage.addAction(action);
 	}
 	
 	@Override
 	public void destroy(ViewController viewController) {
 		
+	}
+	
+	public interface ZoomControl {
+		
+		public void zoomIn();
+		
+		public void zoomOut();
+	}
+	
+	public interface MapScrollControl {
+		
+		public void scrollBy(int startX, int startY, int endX, int endY);
 	}
 }
