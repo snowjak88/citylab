@@ -48,15 +48,13 @@ class MapGenerator {
 		final CityMap map = new CityMap(width, height)
 		
 		for(int y in 0..height) {
-			print "[ "
 			for(int x in 0..width) {
 				def altitude = (int) altitudeProducer.get(x,y)
-				print "$altitude "
 				List<String> flavors = flavorProducer.get(x,y)
+				
 				map.setVertexAltitude x, y, altitude
 				map.setVertexFlavors x, y, flavors
 			}
-			println "]"
 		}
 		
 		map.updateTiles tileset

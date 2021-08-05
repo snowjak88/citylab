@@ -3,6 +3,7 @@
  */
 package org.snowjak.city.controller;
 
+import static java.lang.Math.pow;
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
@@ -109,7 +110,8 @@ public class CityMapScreen implements ViewInitializer, ViewRenderer, ViewResizer
 			public boolean scrolled(InputEvent event, float x, float y, float amountX, float amountY) {
 				
 				currentScrollY += amountY;
-				((OrthographicCamera) viewport.getCamera()).zoom = (float) Math.pow(2f, currentScrollY);
+				final float newZoom = max(min((float) pow(2f, currentScrollY), 4f), 1f / 8f);
+				((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
 				
 				return true;
 			}
