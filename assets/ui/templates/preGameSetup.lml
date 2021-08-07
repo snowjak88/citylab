@@ -1,0 +1,18 @@
+<table oneColumn="true" defaultPad="2" tableAlign="center"
+	fillParent="true" defaultFillX="true">
+	<label>@pregame-mapwidth</label>
+	<intSpinner id="mapWidth" min=0 max=1024 step=64
+		value="$getMapWidth" onChange="setMapDimension" />
+	<label>@pregame-mapheight</label>
+	<intSpinner id="mapHeight" min=0 max=1024 step=64
+		value="$getMapHeight" onChange="setMapDimension" />
+	<label>@pregame-generator</label>
+	<selectBox onChange="setMapGenerator">
+		<:each generator="$getAvailableGenerators">
+			{generator}
+		</:each>
+	</selectBox>
+	<textButton onChange="goto:menu">@pregame-back</textButton>
+	<textButton id="playButton" disabled=true
+		onChange="goto:gameScreen">@pregame-play</textButton>
+</table>

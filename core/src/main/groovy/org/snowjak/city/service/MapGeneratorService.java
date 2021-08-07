@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.snowjak.city.CityGame;
 import org.snowjak.city.map.generator.MapGenerator;
+import org.snowjak.city.map.generator.support.MapGeneratorDsl;
 
 import com.badlogic.gdx.files.FileHandle;
 import com.github.czyzby.autumn.annotation.Component;
@@ -56,8 +57,18 @@ public class MapGeneratorService {
 	 */
 	public Set<String> getScriptNames(boolean onlyLoaded) {
 		
-		if (onlyLoaded)
+		if (onlyLoaded) {
+			//
+			// Ensure that all successfully-loaded generators are populated.
+			scriptFiles.keySet().forEach(name -> {
+				if (generators.containsKey(name))
+					return;
+				if (!assetService.isLoaded(scriptFiles.get(name).path()))
+					return;
+				generators.put(name, assetService.get(scriptFiles.get(name).path(), MapGenerator.class));
+			});
 			return generators.keySet();
+		}
 		return scriptFiles.keySet();
 	}
 	

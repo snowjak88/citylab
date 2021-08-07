@@ -1,12 +1,12 @@
-<!-- UI elements associated with the CityMapScreen view -->
+<!-- UI elements associated with the GameScreen view -->
 <table oneColumn="true" defaultPad="2" tableAlign="topLeft"
 	fillParent="true" defaultFillX="true">
 	<!-- Top menu-bar -->
 	<menuBar id="menubar" expandX="true" fillY="true">
-		<menu id="menubar-file" text="@cityMap-menu-file">
-			<menuItem>@cityMap-menu-file-open</menuItem>
-			<menuItem>@cityMap-menu-file-save</menuItem>
-			<menuItem onChange="app:exit">@cityMap-menu-file-exit</menuItem>
+		<menu id="menubar-file" text="@game-menu-file">
+			<menuItem>@game-menu-file-open</menuItem>
+			<menuItem>@game-menu-file-save</menuItem>
+			<menuItem onChange="app:exit">@game-menu-file-exit</menuItem>
 		</menu>
 	</menuBar>
 </table>

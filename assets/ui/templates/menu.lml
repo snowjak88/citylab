@@ -1,5 +1,5 @@
 <table oneColumn="true" defaultPad="2" tableAlign="center" fillParent="true" defaultFillX="true">
-	<textButton onChange="goto:gameScreen">@doNothing</textButton>
-	<textButton onChange="show:settings">@settings</textButton>
-	<textButton onChange="app:exit">@exit</textButton>
+	<textButton onChange="goto:preGameSetup">@menu-play</textButton>
+	<textButton onChange="show:settings">@menu-settings</textButton>
+	<textButton onChange="app:exit">@menu-exit</textButton>
 </table>

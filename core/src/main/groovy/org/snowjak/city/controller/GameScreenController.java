@@ -6,10 +6,11 @@ package org.snowjak.city.controller;
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
+import org.snowjak.city.GameData;
+import org.snowjak.city.GameData.GameParameters;
 import org.snowjak.city.input.DragEventReceiver;
 import org.snowjak.city.input.GameInputProcessor;
 import org.snowjak.city.input.ScrollEventReceiver;
-import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.renderer.MapRenderer;
 import org.snowjak.city.module.Module;
@@ -31,16 +32,12 @@ import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.github.czyzby.autumn.annotation.Inject;
-import com.github.czyzby.autumn.mvc.component.asset.AssetService;
-import com.github.czyzby.autumn.mvc.component.ui.InterfaceService;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewController;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewInitializer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewRenderer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewResizer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewShower;
 import com.github.czyzby.autumn.mvc.stereotype.View;
-import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
 import com.github.czyzby.lml.parser.action.ActionContainer;
 
 /**
@@ -57,14 +54,6 @@ import com.github.czyzby.lml.parser.action.ActionContainer;
 @View(id = "gameScreen", value = "ui/templates/gameScreen.lml")
 public class GameScreenController implements ViewInitializer, ViewShower, ViewRenderer, ViewResizer, ActionContainer {
 	
-	private static final Logger LOG = LoggerService.forClass(GameScreenController.class);
-	
-	@Inject
-	private AssetService assetService;
-	
-	@Inject
-	private InterfaceService interfaceService;
-	
 	@Inject
 	private MapGeneratorService mapGeneratorService;
 	
@@ -75,7 +64,6 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 	private final Viewport viewport = new FitViewport(8, 8);
 	private final SpriteBatch batch = new SpriteBatch();
 	
-	private CityMap map = null;
 	private MapRenderer renderer;
 	
 	private float cameraOffsetX, cameraOffsetY;
@@ -85,28 +73,34 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 	@Override
 	public void initialize(Stage stage, ObjectMap<String, Actor> actorMappedByIds) {
 		
+		final GameData data = GameData.get();
+		if (data.parameters == null)
+			data.parameters = new GameParameters();
+		
+		final GameParameters param = data.parameters;
+		
+		final MapGenerator generator = (param.selectedMapGenerator != null) ? param.selectedMapGenerator
+				: mapGeneratorService.getGenerator(param.selectedMapGeneratorName);
+		
+		data.map = generator.generate(param.mapWidth, param.mapHeight, tileSetService.getTileSet(), false, false);
+		
 		//
 		//
 		//
 		
-		final int worldWidthInTiles = 64, worldHeightInTiles = 64;
-		
-		final MapGenerator mapGenerator = mapGeneratorService.getGenerator("rolling-hills");
-		map = mapGenerator.generate(worldWidthInTiles, worldHeightInTiles, tileSetService.getTileSet(), false, false);
-		
-		renderer = new MapRenderer(map, batch);
+		renderer = new MapRenderer(data.map, batch);
 		
 		final Vector2 scratch = new Vector2();
 		scratch.set(0, 0);
 		final Vector3 worldBound1 = renderer.translateIsoToScreen(scratch).cpy();
 		
-		scratch.set(0, worldHeightInTiles);
+		scratch.set(0, param.mapHeight);
 		final Vector3 worldBound2 = renderer.translateIsoToScreen(scratch).cpy();
 		
-		scratch.set(worldWidthInTiles, 0);
+		scratch.set(param.mapWidth, 0);
 		final Vector3 worldBound3 = renderer.translateIsoToScreen(scratch).cpy();
 		
-		scratch.set(worldWidthInTiles, worldHeightInTiles);
+		scratch.set(param.mapWidth, param.mapHeight);
 		final Vector3 worldBound4 = renderer.translateIsoToScreen(scratch).cpy();
 		
 		minWorldX = min(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
