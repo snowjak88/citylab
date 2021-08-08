@@ -6,6 +6,7 @@ package org.snowjak.city.service;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.snowjak.city.CityGame;
@@ -79,6 +80,19 @@ public class TileSetService {
 			return loadedTilesets.keySet();
 		}
 		return tilesetScripts.keySet();
+	}
+	
+	/**
+	 * Given a TileSet instance, get the name under which we had loaded it. If a
+	 * TileSet has been loaded under multiple names, picks one of them at random.
+	 * 
+	 * @param instance
+	 * @return {@code null} if we didn't actually load this TileSet
+	 */
+	public String getTileSetName(TileSet instance) {
+		
+		return loadedTilesets.entrySet().stream().filter(e -> e.getValue() == instance).findFirst().map(Entry::getKey)
+				.orElse(null);
 	}
 	
 	/**

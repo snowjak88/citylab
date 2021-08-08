@@ -38,6 +38,11 @@ public class GameData {
 	public CityMap map = null;
 	
 	/**
+	 * The active {@link TileSet}.
+	 */
+	public TileSet tileset = null;
+	
+	/**
 	 * When we switch to the game screen, we'll use these configured parameters.
 	 */
 	public GameParameters parameters = new GameParameters();

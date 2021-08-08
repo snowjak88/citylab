@@ -6,10 +6,8 @@ package org.snowjak.city.map.generator
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.generator.support.FlavorsProducer
 import org.snowjak.city.map.generator.support.MapGeneratorDsl
-import org.snowjak.city.map.tiles.TileSet
 
 import com.sudoplay.joise.module.Module
-import com.sudoplay.joise.module.SeededModule
 
 /**
  * @author snowjak88
@@ -35,14 +33,13 @@ class MapGenerator {
 	 * 
 	 * @param width
 	 * @param height
-	 * @param tileset
 	 * @param wrapX
 	 * @param wrapY
 	 * @return
 	 */
-	public CityMap generate(int width, int height, TileSet tileset, boolean wrapX = false, boolean wrapY = false) {
+	public CityMap generate(int width, int height, boolean wrapX = false, boolean wrapY = false) {
 		
-		if(gen == null || tileset == null)
+		if(gen == null)
 			throw new NullPointerException()
 		
 		final Module altitudeProducer = gen.altitude
@@ -59,8 +56,6 @@ class MapGenerator {
 				map.setVertexFlavors x, y, flavors
 			}
 		}
-		
-		map.updateTiles tileset
 		
 		map
 	}

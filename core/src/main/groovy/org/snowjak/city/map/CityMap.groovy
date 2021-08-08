@@ -3,6 +3,7 @@
  */
 package org.snowjak.city.map
 
+import org.snowjak.city.GameData
 import org.snowjak.city.map.tiles.Tile
 import org.snowjak.city.map.tiles.TileCorner
 import org.snowjak.city.map.tiles.TileSet
@@ -203,6 +204,16 @@ public class CityMap {
 			return Collections.emptyList()
 		
 		Collections.unmodifiableList cells[cellX][cellY]
+	}
+	
+	/**
+	 * Calls {@link #updateTiles(TileSet)} with the currently-registered {@link TileSet} in {@link GameData}.
+	 * <p>
+	 * If {@link GameData#tileset} is not set, does nothing.
+	 * </p>
+	 */
+	public void updateTiles() {
+		updateTiles GameData.get().tileset
 	}
 	
 	/**
