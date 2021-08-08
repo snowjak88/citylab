@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.snowjak.city.GameData;
 import org.snowjak.city.service.MapGeneratorService;
+import org.snowjak.city.service.TileSetService;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -34,10 +35,28 @@ public class PreGameSetupController implements ViewRenderer, ActionContainer {
 	@Inject
 	private MapGeneratorService mapGeneratorService;
 	
+	@Inject
+	private TileSetService tilesetService;
+	
 	@LmlActor("playButton")
 	private TextButton playButton;
 	
 	private GameData gameData = GameData.get();
+	
+	@LmlAction
+	public List<String> getAvailableTilesets() {
+		
+		return new ArrayList<>(tilesetService.getScriptNames());
+	}
+	
+	@LmlAction
+	public void setTileset(final Actor actor) {
+		
+		@SuppressWarnings("unchecked")
+		final SelectBox<String> selectBox = (SelectBox<String>) actor;
+		gameData.parameters.selectedTileset = null;
+		gameData.parameters.selectedTilesetName = selectBox.getSelected();
+	}
 	
 	@LmlAction
 	public List<String> getAvailableGenerators() {

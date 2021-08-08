@@ -13,6 +13,7 @@ import org.snowjak.city.input.GameInputProcessor;
 import org.snowjak.city.input.ScrollEventReceiver;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.renderer.MapRenderer;
+import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.module.Module;
 import org.snowjak.city.service.MapGeneratorService;
 import org.snowjak.city.service.TileSetService;
@@ -83,6 +84,9 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 		
 		final GameParameters param = data.parameters;
 		
+		final TileSet tileset = (param.selectedTileset != null) ? param.selectedTileset
+				: tileSetService.getTileSet(param.selectedTilesetName);
+		
 		if (param.seed != null && !param.seed.isEmpty())
 			data.seed = param.seed;
 		
@@ -90,7 +94,7 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 				: mapGeneratorService.getGenerator(param.selectedMapGeneratorName);
 		
 		generator.setSeed(data.seed);
-		data.map = generator.generate(param.mapWidth, param.mapHeight, tileSetService.getTileSet(), false, false);
+		data.map = generator.generate(param.mapWidth, param.mapHeight, tileset);
 		
 		//
 		//

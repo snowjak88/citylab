@@ -1,6 +1,14 @@
 <table defaultPad="2" tableAlign="center" fillParent="true"
 	defaultFillX="true">
 	<:row>
+		<label>@pregame-tileset</label>
+		<selectBox onChange="setTileset">
+			<:each tileset="$getAvailableTilesets">
+				{tileset}
+			</:each>
+		</selectBox>
+	</:row>
+	<:row>
 		<label>@pregame-mapwidth</label>
 		<intSpinner id="mapWidth" min=0 max=1024 step=64
 			value="$getMapWidth" onChange="setMapDimension" />

@@ -3,7 +3,9 @@
  */
 package org.snowjak.city.service;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.snowjak.city.CityGame;
@@ -42,42 +44,67 @@ public class TileSetService {
 	@Inject
 	private AssetService assetService;
 	
-	private TileSet tileSet = null;
+	private final Map<String, FileHandle> tilesetScripts = new HashMap<>();
+	private final Map<String, TileSet> loadedTilesets = new HashMap<>();
 	
-	private final Set<FileHandle> loadedScripts = new LinkedHashSet<>();
-	
-	public TileSet getTileSet() {
+	/**
+	 * Returns the list of script-names for those scripts that have already been
+	 * successfully loaded.
+	 * 
+	 * @return
+	 */
+	public Set<String> getScriptNames() {
 		
-		if (tileSet == null)
+		return getScriptNames(true);
+	}
+	
+	/**
+	 * Returns a list of script-names. If {@code onlyLoaded}, then only returns
+	 * those script-files that have been successfully loaded already.
+	 * 
+	 * @return
+	 */
+	public Set<String> getScriptNames(boolean onlyLoaded) {
+		
+		if (onlyLoaded) {
+			//
+			// Ensure that all successfully-loaded generators are populated.
+			tilesetScripts.keySet().forEach(name -> {
+				if (loadedTilesets.containsKey(name))
+					return;
+				if (!assetService.isLoaded(tilesetScripts.get(name).path()))
+					return;
+				loadedTilesets.put(name, assetService.get(tilesetScripts.get(name).path(), TileSet.class));
+			});
+			return loadedTilesets.keySet();
+		}
+		return tilesetScripts.keySet();
+	}
+	
+	/**
+	 * Get the {@link TileSet} loaded under the given name. Returns {@code null} if
+	 * no such TileSet was loaded.
+	 * 
+	 * @param name
+	 * @return
+	 */
+	public TileSet getTileSet(String name) {
+		
+		if (!tilesetScripts.containsKey(name))
+			return null;
+		
+		if (!loadedTilesets.containsKey(name))
 			synchronized (this) {
-				if (tileSet == null) {
-					loadedScripts.forEach(f -> {
-						assetService.finishLoading(f.path(), TileSet.class);
-						mergeTileSet(assetService.get(f.path(), TileSet.class));
-					});
+				if (!loadedTilesets.containsKey(name)) {
+					final TileSet tileset = assetService.finishLoading(tilesetScripts.get(name).path(), TileSet.class);
+					if (tileset != null)
+						loadedTilesets.put(name, tileset);
+					else
+						tilesetScripts.remove(name);
 				}
 			}
 		
-		return tileSet;
-	}
-	
-	public void mergeTileSet(TileSet toMerge) {
-		
-		final TileSet newTileSet;
-		
-		if (toMerge == null)
-			return;
-		
-		try {
-			if (this.tileSet == null)
-				newTileSet = new TileSet(toMerge);
-			else
-				newTileSet = this.tileSet.merge(toMerge);
-		} catch (IllegalArgumentException e) {
-			return;
-		}
-		
-		this.tileSet = newTileSet;
+		return loadedTilesets.get(name);
 	}
 	
 	@Initiate(priority = AutumnActionPriority.LOW_PRIORITY)
@@ -85,8 +112,10 @@ public class TileSetService {
 		
 		LOG.info("Initializing ...");
 		
-		loadedScripts.addAll(scanDirectoryForScripts(Gdx.files.local(CityGame.EXTERNAL_ROOT_TILESETS)));
-		loadedScripts.forEach(f -> assetService.load(f.path(), TileSet.class));
+		scanDirectoryForScripts(Gdx.files.local(CityGame.EXTERNAL_ROOT_TILESETS)).forEach(f -> {
+			tilesetScripts.put(f.nameWithoutExtension(), f);
+			assetService.load(f.path(), TileSet.class);
+		});
 		
 		LOG.info("Finished initializing.");
 	}

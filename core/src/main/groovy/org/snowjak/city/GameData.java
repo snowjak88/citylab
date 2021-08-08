@@ -5,6 +5,7 @@ package org.snowjak.city;
 
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.generator.MapGenerator;
+import org.snowjak.city.map.tiles.TileSet;
 
 /**
  * Encapsulates game data.
@@ -49,5 +50,8 @@ public class GameData {
 		
 		public String selectedMapGeneratorName = "rolling-hills";
 		public MapGenerator selectedMapGenerator;
+		
+		public String selectedTilesetName = "default";
+		public TileSet selectedTileset;
 	}
 }
