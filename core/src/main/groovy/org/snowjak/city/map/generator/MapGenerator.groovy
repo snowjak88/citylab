@@ -3,6 +3,8 @@
  */
 package org.snowjak.city.map.generator
 
+import java.util.function.DoubleConsumer
+
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.generator.support.FlavorsProducer
 import org.snowjak.city.map.generator.support.MapGeneratorDsl
@@ -33,11 +35,10 @@ class MapGenerator {
 	 * 
 	 * @param width
 	 * @param height
-	 * @param wrapX
-	 * @param wrapY
+	 * @param progressUpdater optional progress-reporter. Called on every map-vertex with values in [0,1]
 	 * @return
 	 */
-	public CityMap generate(int width, int height, boolean wrapX = false, boolean wrapY = false) {
+	public CityMap generate(int width, int height, DoubleConsumer progressUpdater = {p -> }) {
 		
 		if(gen == null)
 			throw new NullPointerException()
@@ -47,8 +48,14 @@ class MapGenerator {
 		
 		final CityMap map = new CityMap(width, height)
 		
+		progressUpdater.accept 0
+		
 		for(int y in 0..height) {
 			for(int x in 0..width) {
+				
+				def progress = ((double)x / (double)width + (double)y / (double)height) / 2.0
+				progressUpdater.accept progress
+				
 				def altitude = (int) altitudeProducer.get(x,y)
 				List<String> flavors = flavorProducer.get(x,y)
 				

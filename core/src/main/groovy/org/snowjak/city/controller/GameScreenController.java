@@ -7,11 +7,9 @@ import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
 import org.snowjak.city.GameData;
-import org.snowjak.city.GameData.GameParameters;
 import org.snowjak.city.input.DragEventReceiver;
 import org.snowjak.city.input.GameInputProcessor;
 import org.snowjak.city.input.ScrollEventReceiver;
-import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.renderer.MapRenderer;
 import org.snowjak.city.module.Module;
 import org.snowjak.city.service.MapGeneratorService;
@@ -78,23 +76,6 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 	public void initialize(Stage stage, ObjectMap<String, Actor> actorMappedByIds) {
 		
 		final GameData data = GameData.get();
-		if (data.parameters == null)
-			data.parameters = new GameParameters();
-		
-		final GameParameters param = data.parameters;
-		
-		data.tileset = (param.selectedTileset != null) ? param.selectedTileset
-				: tileSetService.getTileSet(param.selectedTilesetName);
-		
-		if (param.seed != null && !param.seed.isEmpty())
-			data.seed = param.seed;
-		
-		final MapGenerator generator = (param.selectedMapGenerator != null) ? param.selectedMapGenerator
-				: mapGeneratorService.getGenerator(param.selectedMapGeneratorName);
-		
-		generator.setSeed(data.seed);
-		data.map = generator.generate(param.mapWidth, param.mapHeight);
-		data.map.updateTiles();
 		
 		//
 		//
@@ -106,13 +87,13 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 		scratch.set(0, 0);
 		final Vector3 worldBound1 = renderer.translateIsoToScreen(scratch).cpy();
 		
-		scratch.set(0, param.mapHeight);
+		scratch.set(0, data.map.getHeight());
 		final Vector3 worldBound2 = renderer.translateIsoToScreen(scratch).cpy();
 		
-		scratch.set(param.mapWidth, 0);
+		scratch.set(data.map.getWidth(), 0);
 		final Vector3 worldBound3 = renderer.translateIsoToScreen(scratch).cpy();
 		
-		scratch.set(param.mapWidth, param.mapHeight);
+		scratch.set(data.map.getWidth(), data.map.getHeight());
 		final Vector3 worldBound4 = renderer.translateIsoToScreen(scratch).cpy();
 		
 		minWorldX = min(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);

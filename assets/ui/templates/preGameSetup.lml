@@ -34,6 +34,6 @@
 	<:row>
 		<textButton onChange="goto:menu">@pregame-back</textButton>
 		<textButton id="playButton" disabled=true
-			onChange="goto:gameScreen">@pregame-play</textButton>
+			onChange="goto:preGameLoading">@pregame-play</textButton>
 	</:row>
 </table>

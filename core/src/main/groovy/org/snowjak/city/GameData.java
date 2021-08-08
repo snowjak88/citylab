@@ -3,9 +3,15 @@
  */
 package org.snowjak.city;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.tiles.TileSet;
+
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * Encapsulates game data.
@@ -28,6 +34,11 @@ public class GameData {
 	}
 	
 	/**
+	 * Thread-caching {@link ExecutorService}.
+	 */
+	public final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+	
+	/**
 	 * Seed to be used for random-number generation.
 	 */
 	public String seed = Long.toString(System.currentTimeMillis());
@@ -43,7 +54,7 @@ public class GameData {
 	public TileSet tileset = null;
 	
 	/**
-	 * When we switch to the game screen, we'll use these configured parameters.
+	 * Parameters to be used when getting ready to play the game.
 	 */
 	public GameParameters parameters = new GameParameters();
 	

@@ -3,6 +3,8 @@
  */
 package org.snowjak.city.map
 
+import java.util.function.DoubleConsumer
+
 import org.snowjak.city.GameData
 import org.snowjak.city.map.tiles.Tile
 import org.snowjak.city.map.tiles.TileCorner
@@ -211,17 +213,19 @@ public class CityMap {
 	 * <p>
 	 * If {@link GameData#tileset} is not set, does nothing.
 	 * </p>
+	 * @param progressUpdater optional progress-reporter. Called on every map-cell with values in [0,1]
 	 */
-	public void updateTiles() {
-		updateTiles GameData.get().tileset
+	public void updateTiles(DoubleConsumer progressUpdater = {p -> }) {
+		updateTiles GameData.get().tileset, progressUpdater
 	}
 	
 	/**
 	 * Updates the {@link Tile} assignments for every square in this map.
 	 * @param tilset
+	 * @param progressUpdater optional progress-reporter. Called on every map-cell with values in [0,1]
 	 */
-	public void updateTiles(TileSet tilset) {
-		updateTiles tilset, 0, 0, cells.length, cells[0].length
+	public void updateTiles(TileSet tilset, DoubleConsumer progressUpdater = {p -> }) {
+		updateTiles tilset, 0, 0, cells.length, cells[0].length, progressUpdater
 	}
 	
 	/**
@@ -233,8 +237,14 @@ public class CityMap {
 	 * @param startY
 	 * @param width
 	 * @param height
+	 * @param progressUpdater optional progress-reporter. Called on every map-cell with values in [0,1]
 	 */
-	public void updateTiles(TileSet tileset, int startX, int startY, int width, int height) {
+	public void updateTiles(TileSet tileset, int startX, int startY, int width, int height, DoubleConsumer progressUpdater = {p -> }) {
+		progressUpdater.accept 0.0
+		
+		final double finalCellCount = (width * height)
+		double currentCount = 0.0
+		
 		for(int x in startX..startX+width-1) {
 			if(x < 0 || x >= cells.length)
 				continue;
@@ -243,8 +253,28 @@ public class CityMap {
 				if(y < 0 || y >= cells[x].length)
 					continue;
 				
+				def progress = currentCount / finalCellCount
+				currentCount += 1.0
+				progressUpdater.accept progress
+				
 				cells[x][y] = tileset.getMinimalTilesFor(this, x, y)
 			}
 		}
+	}
+	
+	/**
+	 * Returns the width of this map, expressed in cells. This map's width in vertices will be this value, plus 1.
+	 * @return
+	 */
+	public int getWidth() {
+		cells.length;
+	}
+	
+	/**
+	 * Returns the height of this map, expressed in cells. This map's height in vertices will be this value, plus 1.
+	 * @return
+	 */
+	public int getHeight() {
+		cells[0].length;
 	}
 }
