@@ -9,6 +9,7 @@ import org.snowjak.city.map.generator.support.MapGeneratorDsl
 import org.snowjak.city.map.tiles.TileSet
 
 import com.sudoplay.joise.module.Module
+import com.sudoplay.joise.module.SeededModule
 
 /**
  * @author snowjak88
@@ -16,12 +17,14 @@ import com.sudoplay.joise.module.Module
  */
 class MapGenerator {
 	
-	private static final Random RND = new Random(System.currentTimeMillis());
-	
 	private MapGeneratorDsl gen;
 	
 	public MapGenerator(MapGeneratorDsl definition) {
 		this.gen = definition;
+	}
+	
+	public void setSeed(String seed) {
+		this.gen.setSeed(seed);
 	}
 	
 	/**
@@ -42,7 +45,7 @@ class MapGenerator {
 		if(gen == null || tileset == null)
 			throw new NullPointerException()
 		
-		final Module altitudeProducer = gen.altitude;
+		final Module altitudeProducer = gen.altitude
 		final FlavorsProducer flavorProducer = gen.flavors
 		
 		final CityMap map = new CityMap(width, height)

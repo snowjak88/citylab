@@ -10,14 +10,17 @@ import org.snowjak.city.GameData;
 import org.snowjak.city.service.MapGeneratorService;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.github.czyzby.autumn.annotation.Inject;
+import com.github.czyzby.autumn.mvc.component.ui.controller.ViewRenderer;
 import com.github.czyzby.autumn.mvc.stereotype.View;
 import com.github.czyzby.lml.annotation.LmlAction;
 import com.github.czyzby.lml.annotation.LmlActor;
 import com.github.czyzby.lml.parser.action.ActionContainer;
 import com.github.czyzby.lml.util.LmlUtilities;
+import com.kotcrab.vis.ui.widget.VisTextField;
 import com.kotcrab.vis.ui.widget.spinner.IntSpinnerModel;
 import com.kotcrab.vis.ui.widget.spinner.Spinner;
 
@@ -26,7 +29,7 @@ import com.kotcrab.vis.ui.widget.spinner.Spinner;
  *
  */
 @View(id = "preGameSetup", value = "ui/templates/preGameSetup.lml")
-public class PreGameSetupController implements ActionContainer {
+public class PreGameSetupController implements ViewRenderer, ActionContainer {
 	
 	@Inject
 	private MapGeneratorService mapGeneratorService;
@@ -52,8 +55,6 @@ public class PreGameSetupController implements ActionContainer {
 			gameData.parameters.mapWidth = model.getValue();
 		else if (LmlUtilities.getActorId(actor).equalsIgnoreCase("mapHeight"))
 			gameData.parameters.mapHeight = model.getValue();
-		
-		checkPlayButton();
 	}
 	
 	@LmlAction
@@ -63,8 +64,6 @@ public class PreGameSetupController implements ActionContainer {
 		final SelectBox<String> selectBox = (SelectBox<String>) actor;
 		gameData.parameters.selectedMapGenerator = null;
 		gameData.parameters.selectedMapGeneratorName = selectBox.getSelected();
-		
-		checkPlayButton();
 	}
 	
 	@LmlAction
@@ -77,6 +76,27 @@ public class PreGameSetupController implements ActionContainer {
 	public int getMapHeight() {
 		
 		return gameData.parameters.mapHeight;
+	}
+	
+	@LmlAction
+	public String getSeed() {
+		
+		return gameData.parameters.seed;
+	}
+	
+	@LmlAction
+	public void setSeed(Actor seedField) {
+		
+		gameData.parameters.seed = ((VisTextField) seedField).getText();
+	}
+	
+	@Override
+	public void render(Stage stage, float delta) {
+		
+		checkPlayButton();
+		
+		stage.act(delta);
+		stage.draw();
 	}
 	
 	private void checkPlayButton() {

@@ -38,6 +38,8 @@ import com.github.czyzby.autumn.mvc.component.ui.controller.ViewRenderer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewResizer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewShower;
 import com.github.czyzby.autumn.mvc.stereotype.View;
+import com.github.czyzby.kiwi.log.Logger;
+import com.github.czyzby.kiwi.log.LoggerService;
 import com.github.czyzby.lml.parser.action.ActionContainer;
 
 /**
@@ -53,6 +55,8 @@ import com.github.czyzby.lml.parser.action.ActionContainer;
  */
 @View(id = "gameScreen", value = "ui/templates/gameScreen.lml")
 public class GameScreenController implements ViewInitializer, ViewShower, ViewRenderer, ViewResizer, ActionContainer {
+	
+	private static final Logger LOG = LoggerService.forClass(GameScreenController.class);
 	
 	@Inject
 	private MapGeneratorService mapGeneratorService;
@@ -79,9 +83,13 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 		
 		final GameParameters param = data.parameters;
 		
+		if (param.seed != null && !param.seed.isEmpty())
+			data.seed = param.seed;
+		
 		final MapGenerator generator = (param.selectedMapGenerator != null) ? param.selectedMapGenerator
 				: mapGeneratorService.getGenerator(param.selectedMapGeneratorName);
 		
+		generator.setSeed(data.seed);
 		data.map = generator.generate(param.mapWidth, param.mapHeight, tileSetService.getTileSet(), false, false);
 		
 		//
@@ -184,13 +192,13 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 			
 			private void zoomOut() {
 				
-				final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom / 2f, 2f), 1f / 16f);
+				final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom / 2f, 8f), 1f);
 				((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
 			}
 			
 			private void zoomIn() {
 				
-				final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom * 2f, 2f), 1f / 16f);
+				final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom * 2f, 8f), 1f);
 				((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
 			}
 		});

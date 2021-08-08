@@ -27,6 +27,11 @@ public class GameData {
 	}
 	
 	/**
+	 * Seed to be used for random-number generation.
+	 */
+	public String seed = Long.toString(System.currentTimeMillis());
+	
+	/**
 	 * The current {@link CityMap}.
 	 */
 	public CityMap map = null;
@@ -39,6 +44,8 @@ public class GameData {
 	public static class GameParameters {
 		
 		public int mapWidth = 64, mapHeight = 64;
+		
+		public String seed = "";
 		
 		public String selectedMapGeneratorName = "rolling-hills";
 		public MapGenerator selectedMapGenerator;

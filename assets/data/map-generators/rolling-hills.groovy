@@ -5,7 +5,6 @@ def heightmap = scaleDomain {
 	source = autoCorrect {
 		source = fractal {
 			numOctaves = 2
-			seed = rnd() * 1024
 		}
 		low = lowest
 		high = highest

@@ -27,17 +27,12 @@ import org.snowjak.city.map.generator.support.joise.ModuleTranslateDomainConfigu
 
 import com.sudoplay.joise.module.Module
 import com.sudoplay.joise.module.ModuleAbs
-import com.sudoplay.joise.module.ModuleBasisFunction
-import com.sudoplay.joise.module.ModuleCellular
 import com.sudoplay.joise.module.ModuleClamp
 import com.sudoplay.joise.module.ModuleCos
 import com.sudoplay.joise.module.ModuleFloor
-import com.sudoplay.joise.module.ModuleFractal
-import com.sudoplay.joise.module.ModuleGradient
 import com.sudoplay.joise.module.ModuleInvert
 import com.sudoplay.joise.module.ModulePow
 import com.sudoplay.joise.module.ModuleSin
-import com.sudoplay.joise.module.ModuleSphere
 
 /**
  * @author snowjak88
@@ -46,6 +41,7 @@ import com.sudoplay.joise.module.ModuleSphere
 class MapGeneratorDsl {
 	
 	private static final Random RND = new Random(System.currentTimeMillis())
+	private static final String GLOBAL_SEED_NAME = "GLOBAL"
 	
 	Module altitude
 	FlavorsProducer flavors
@@ -53,7 +49,12 @@ class MapGeneratorDsl {
 	public MapGeneratorDsl() {
 		super()
 	}
-
+	
+	public void setSeed(String seed) {
+		RND.setSeed(seed.hashCode())
+		altitude.setSeed(GLOBAL_SEED_NAME, seed.hashCode())
+	}
+	
 	public double rnd() {
 		RND.nextDouble()
 	}
@@ -68,7 +69,9 @@ class MapGeneratorDsl {
 		def config = new ModuleBasisConfigurator()
 		script.delegate = config
 		config.with script
-		config.build()
+		def result = config.build()
+		result.seedName = GLOBAL_SEED_NAME
+		result
 	}
 	
 	/**
@@ -81,6 +84,7 @@ class MapGeneratorDsl {
 		def config = new ModuleCellularConfigurator()
 		script.delegate = config
 		config.with script
+		config.seedName = GLOBAL_SEED_NAME
 		config.build()
 	}
 	
@@ -93,7 +97,9 @@ class MapGeneratorDsl {
 		def config = new ModuleFractalConfigurator()
 		script.delegate = config
 		config.with script
-		config.build()
+		def result = config.build()
+		result.seedName = GLOBAL_SEED_NAME
+		result
 	}
 	
 	/**
