@@ -1,33 +1,23 @@
 
 id = "default"
 title = "Default tileset"
-description = "Default world tileset. Created by darkrose (https://opengameart.org/users/darkrose)."
+description = "Default world tileset. Uses assets created by Kenney Vleugels (www.kenney.nl)."
 
 //
-// The grid-dimensions for which this tileset can be made to work
+// The grid-dimensions for which this tileset was designed
 //
 // (Default: 32 / 16)
-gridWidth = 64
-gridHeight = 32
+gridWidth = 132
+gridHeight = 66
 
 //
 // Default width/height for all tiles. (Visible width/height, as distinct from grid width/height.)
 //
-// (Default: 32 / 32)
-width = 64
-height = 64
-
+// 0 = entire image (minus padding)
 //
-// Default file-name for all tiles
-// Must be in the same directory as this descriptor
-filename = "default.png"
-
-//
-// Starting x/y
-//
-// (Default: 0 / 0)
-x = 0
-y = 0
+// (Default: 32 / 16)
+width = 0
+height = 0
 
 //
 // Drawing offset (along Y axis, from the tile's bottom edge)
@@ -38,7 +28,31 @@ y = 0
 // to be positioned "below" the grid.
 //
 // (Default: 0)
-offset = 32
+surfaceOffset = 32
+
+//
+// Every unit of altitude should add/subtract these many pixels from this tile's Y-position.
+altitudeOffset = 32
+
+//
+// All image-references will be made relative to the given sub-directory.
+// This sub-directory must be in the same directory as this descriptor.
+//
+// (Default: no default)
+folder = "default/landscape"
+
+//
+// Default file-name for all tiles
+//
+// (Default: no default)
+// filename = "default.png"
+
+//
+// Starting x/y within the image-file for each tile
+//
+// (Default: 0 / 0)
+x = 0
+y = 0
 
 //
 // Each tile needs to be drawn with a vertical offset depending on its altitude.
@@ -64,21 +78,76 @@ padding = 0
 
 //
 // "Auto-advance" x/y for every subsequent tile
+//
+// If your tile-images are all part of a single tile-sheet, this can be
+// useful.
+//
 // Because [filename] is not loaded right when the script is executed,
 // you need to supply the image dimensions here
 //
-// Once set up, the "cursor" will iterate to the next tile-slot with every
-// tile definition
+// Once set up, the "cursor" will iterate to the next tile-slot (i.e., update x/y
+// by width/height) with every call to tile(). It's expected that we iterate across
+// the tile-sheet row by row, from left to right.
 //
 // You can also control the cursor by calling one of:
 //  - next()     -- skip next tile (assumed to be the same dimensions as the
 //                  previous tile, or the globally-configured width/height
 //  - nextRow()  -- skip to the beginning of the next row
-autoAdvance 640, 1024
+// autoAdvance 640, 1024
 
 //
-// As it happens, we need to skip the very first tile on the spritesheet (as it's blank)
-next()
+// Define a map-mutator.
+//
+// If your tileset requires that the map have certain characteristics that it *might*
+// not have, you can define one or more map-mutators.
+//
+// Each map-mutator implicitly receives a map and a current-cell-location. It is free to
+// use the provided functions to query the map for that cell or surrounding cells, and
+// make any necessary changes to the map (in the form of altitude- or flavor-adjustments).
+//
+// All mutators are applied in the same order that they're defined here.
+//
+mutator {
+	//
+	// Ensure all 0-altitude cells are marked as water
+	for(def corner in [TOP,RIGHT,BOTTOM,LEFT])
+		if( alt(corner) == 0 )
+			setFlavor corner, 'water'
+}
+
+mutator {
+	//
+	// For cells marked as water that are flat,
+	// vertices bordering higher-elevation vertices should be marked as sand
+	if( !isFlat() || alt(TOP) != 0 )
+		return
+	
+	def hasHigherElevation = {dx,dy,corner ->
+		if(dx * corner.dx < 0 && dy * corner.dy < 0)
+			return false
+		alt(dx,dy,corner) > 0
+	}
+	
+	if(hasHigherElevation(0,-1,LEFT) || hasHigherElevation(0,-1,BOTTOM)) {
+		setFlavor LEFT, 'sand'
+		setFlavor BOTTOM, 'sand'
+	}
+	
+	if(hasHigherElevation(0,+1,TOP) || hasHigherElevation(0,+1,RIGHT)) {
+		setFlavor TOP, 'sand'
+		setFlavor RIGHT, 'sand'
+	}
+	
+	if(hasHigherElevation(-1,0,LEFT) || hasHigherElevation(-1,0,TOP)) {
+		setFlavor LEFT, 'sand'
+		setFlavor TOP, 'sand'
+	}
+	
+	if(hasHigherElevation(+1,0,RIGHT) || hasHigherElevation(+1,0,BOTTOM)) {
+		setFlavor RIGHT, 'sand'
+		setFlavor BOTTOM, 'sand'
+	}
+}
 
 //
 // Define a tile
@@ -91,543 +160,328 @@ next()
 //  - decoration-flag
 //  - base
 //
-//
-//tile {
-//	id = "A"
-//	provides 'grass', 'water'
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "B"
-//	provides 'grass', 'water'
-//	rule { isFlat() }
-//}
-next()
 
 tile {
-	id = "C"
+	//
+	// Each tile needs an ID. This is a user-readable string you can use
+	// to identify this tile later, if need be.
+	id = "grass-flat"
+	//
+	// If you haven't specified [filename] in the surrounding tile-set, you need
+	// to define it here
+	filename = "landscapeTiles_067.png"
+	//
+	// Each tile provides one or more "flavors" to each of its corners.
+	// Each "provides" definition is additive to those before it.
+	// You can specify one or more flavors for all corners simultaneously, like this --
 	provides 'grass'
+	//
+	// -- or you can specify a flavor-list for one or more corners
+	provides [TOP, RIGHT, BOTTOM, LEFT],  ['grass']
+	//
+	// Each tile needs to have at least one rule defined.
+	// These rules control where this tile allows itself to be placed on the map.
+	// Most commonly, you'd specify this tile's altitude-requirements here, but
+	// you can express more complicated conditions, too.
+	rule {
+		isFlat()
+	}
+}
+
+tile {
+	id = 'dirt-flat'
+	filename = 'landscapeTiles_083.png'
+	provides 'dirt'
 	rule { isFlat() }
 }
 
 tile {
-	id = "D"
-	provides 'grass'
+	id = "sand-flat"
+	filename = 'landscapeTiles_059.png'
+	provides 'sand'
 	rule { isFlat() }
 }
 
-//tile {
-//	id = "E"
-//	provides [RIGHT], ['grass', 'water']
-//	provides [TOP, BOTTOM, LEFT], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
 tile {
-	id = "F"
-	provides 'grass'
+	id = 'open-water'
+	filename = 'landscapeTiles_066.png'
+	provides 'water'
 	rule { isFlat() }
 }
 
-//tile {
-//	id = "G"
-//	provides [TOP, LEFT], ['grass', 'water']
-//	provides [RIGHT, BOTTOM], ['grass']
-//	rule { isFlat() }
-//}
-next()
-//
-//tile {
-//	id = "H"
-//	provides [BOTTOM, LEFT], ['grass', 'water']
-//	provides [TOP, RIGHT], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "I"
-//	provides [BOTTOM, RIGHT], ['grass', 'water']
-//	provides [TOP, LEFT], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "J"
-//	provides [TOP], ['grass', 'water']
-//	provides [RIGHT, BOTTOM, LEFT], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "K"
-//	provides [RIGHT], ['grass', 'water']
-//	provides [TOP, BOTTOM, LEFT], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "L"
-//	provides [BOTTOM], ['grass', 'water']
-//	provides [TOP, RIGHT, LEFT], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "M"
-//	provides [LEFT], ['grass', 'water']
-//	provides [TOP, BOTTOM, RIGHT], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "N"
-//	provides [RIGHT, BOTTOM, LEFT], ['grass', 'water']
-//	provides [TOP], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "O"
-//	provides [TOP, BOTTOM, LEFT], ['grass', 'water']
-//	provides [RIGHT], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "P"
-//	provides [TOP, RIGHT, LEFT], ['grass', 'water']
-//	provides [BOTTOM], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "Q"
-//	provides [TOP, RIGHT, BOTTOM], ['grass', 'water']
-//	provides [LEFT], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "R"
-//	provides [TOP, RIGHT], ['grass', 'water']
-//	provides [BOTTOM, LEFT], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-//tile {
-//	id = "S"
-//	provides [TOP, LEFT], ['grass', 'water']
-//	provides [RIGHT, BOTTOM], ['grass']
-//	rule { isFlat() }
-//}
-next()
-
-nextRow()
-next()
-next()
-next()
-next()
-
 tile {
-	id = "AG"
+	id = 'grass-slope-north'
+	filename = 'landscapeTiles_098.png'
 	provides 'grass'
-	rule { isFlat() }
-}
-
-offset = 0
-
-tile {
-	id = "AH"
-	provides 'grass'
-	rule { isFlat([TOP, RIGHT, BOTTOM]) && altDelta(TOP, [LEFT], +1) }
+	base = LEFT
+	rule {
+		alt(LEFT) == alt(BOTTOM) && altDelta(LEFT, [TOP,RIGHT], +1)
+	}
 }
 
 tile {
-	id = "AI"
+	id = 'grass-slope-east'
+	filename = 'landscapeTiles_091.png'
 	provides 'grass'
-	rule { isFlat([TOP, LEFT]) && altDelta(TOP, [RIGHT, BOTTOM], +1) }
+	rule {
+		alt(LEFT) == alt(TOP) && altDelta(TOP, [BOTTOM,RIGHT], +1)
+	}
 }
 
 tile {
-	id = "AJ"
-	provides 'grass'
-	rule { isFlat([TOP, RIGHT]) && altDelta(TOP, [LEFT, BOTTOM], +1) }
-}
-
-tile {
-	id = "AK"
-	provides 'grass'
-	rule { isFlat([TOP, RIGHT, LEFT]) && altDelta(TOP, [BOTTOM], +1) }
-}
-
-nextRow()
-offset = 32
-tile {
-	id = "AL"
+	id = 'grass-slope-west'
+	filename = 'landscapeTiles_106.png'
 	provides 'grass'
 	base = RIGHT
-	rule { isFlat([RIGHT, LEFT, BOTTOM]) && altDelta(RIGHT, [TOP], -1) }
+	rule {
+		alt(RIGHT) == alt(BOTTOM) && altDelta(RIGHT, [TOP,LEFT], +1)
+	}
 }
 
 tile {
-	id = "AM"
+	id = 'grass-slope-south'
+	filename = 'landscapeTiles_099.png'
 	provides 'grass'
-	rule { isFlat([TOP, LEFT, BOTTOM]) && altDelta(TOP, [RIGHT], -1) }
+	rule {
+		alt(RIGHT) == alt(TOP) && altDelta(RIGHT, [BOTTOM,LEFT], +1)
+	}
 }
 
 tile {
-	id = "AN"
+	id = 'grass-slope-top'
+	filename = 'landscapeTiles_036.png'
 	provides 'grass'
-	rule { isFlat([TOP, RIGHT, LEFT]) && altDelta(TOP, [BOTTOM], -1) }
+	base = LEFT
+	rule {
+		altDelta(TOP, [RIGHT,BOTTOM,LEFT], -1)
+	}
 }
 
 tile {
-	id = "AO"
+	id = 'grass-slope-right'
+	filename = 'landscapeTiles_028.png'
 	provides 'grass'
-	rule { isFlat([TOP, RIGHT, BOTTOM]) && altDelta(TOP, [LEFT], -1) }
+	rule {
+		altDelta(RIGHT, [TOP,BOTTOM,LEFT], -1)
+	}
 }
 
 tile {
-	id = "AP"
+	id = 'grass-slope-bottom'
+	filename = 'landscapeTiles_021.png'
 	provides 'grass'
-	rule { altDelta(TOP, [RIGHT, LEFT, BOTTOM], -1) }
+	rule {
+		altDelta(BOTTOM, [TOP,RIGHT,LEFT], -1)
+	}
 }
 
 tile {
-	id = "AQ"
+	id = 'grass-slope-left'
+	filename = 'landscapeTiles_029.png'
 	provides 'grass'
-	rule { isFlat([TOP, RIGHT]) && altDelta(TOP, [LEFT, BOTTOM], -1) }
-}
-
-tile {
-	id = "AR"
-	provides 'grass'
-	rule { isFlat([TOP, LEFT]) && altDelta(TOP, [RIGHT, BOTTOM], -1) }
-}
-
-tile {
-	id = "AS"
-	offset = 0
-	provides 'grass'
-	rule { altDelta(RIGHT, [TOP, LEFT, BOTTOM], -1) }
-}
-
-nextRow()
-nextRow()
-nextRow()
-nextRow()
-
-//
-// Define a rule helper -- a special function that tile-rules can
-// use to simplify their syntax.
-//
-// Once defined, this can be used like any other function within
-// a rule-body.
-//
-// As a reminder of how this coordinate-system is laid out:
-//
-// (x,y) have their origin at the left corner of the map.
-// x increases down-right
-// y increases up-left
-//
-//
-ruleHelpers['isCellAboveWater'] = { dx,dy ->
-	alt(dx,dy,TOP) > 0 || alt(dx,dy,RIGHT) > 0 || alt(dx,dy,BOTTOM) > 0 || alt(dx,dy,LEFT) > 0
-}
-
-//
-// This helper lets you check surrounding cells for
-// having any of their corners above water.
-// flags[][] may contain:
-//   0 = must be below water
-//   1 = must be above water
-//  (anything else) = don't care
-ruleHelpers['surroundingAboveWater'] = { flags ->
-	for(int dx in -1..+1)
-		for(int dy in -1..+1) {
-			
-			def flag = flags[-dy + 1][dx+1]
-			if(flag != 0 && flag != 1)
-				continue
-			
-			def isAbove = isCellAboveWater(dx,dy)
-			if(isAbove == (flag == 0) )
-				return false
-		}
-	true
-}
-
-decoration = true
-tile {
-	id = "CE"
-	provides 'water'
 	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 0,  0, -1],
-			[ 0,  0,  1],
-			[-1,  1,  1]	]
-		)
+		altDelta(LEFT, [TOP,RIGHT,BOTTOM], -1)
 	}
 }
 
 tile {
-	id = "CF"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 0,  0,  0],
-			[ 0, -1,  0],
-			[-1,  1, -1]	]
-		)
-	}
+	id = 'water-beach-north'
+	filename = 'landscapeTiles_027.png'
+	base = LEFT
+	provides [LEFT, BOTTOM], ['water']
+	provides [TOP, RIGHT], ['sand']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CG"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 0,  0, -1],
-			[ 0, -1,  1],
-			[ 0,  0, -1]	]
-		)
-	}
+	id = 'water-beach-east'
+	filename = 'landscapeTiles_035.png'
+	provides [LEFT, TOP], ['water']
+	provides [BOTTOM, RIGHT], ['sand']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CH"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[-1,  0,  0],
-			[ 1, -1,  0],
-			[ 1,  1, -1]	]
-		)
-	}
+	id = 'water-beach-south'
+	filename = 'landscapeTiles_042.png'
+	provides [TOP, RIGHT], ['water']
+	provides [LEFT, BOTTOM], ['sand']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CI"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 0,  0,  0],
-			[ 0, -1,  0],
-			[ 0,  0,  0]	]
-		)
-	}
+	id = 'water-beach-west'
+	filename = 'landscapeTiles_034.png'
+	base = RIGHT
+	provides [BOTTOM, RIGHT], ['water']
+	provides [LEFT, TOP], ['sand']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CJ"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 0,  0,  0],
-			[ 0, -1,  0],
-			[ 0,  0,  0]	]
-		)
-	}
+	id = 'water-beach-corner-top'
+	filename = 'landscapeTiles_068.png'
+	base = LEFT
+	provides [TOP], ['sand']
+	provides [RIGHT, BOTTOM, LEFT], ['water']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CK"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[-1,  1,  1],
-			[ 0, -1,  1],
-			[ 0,  0, -1]	]
-		)
-	}
+	id = 'water-beach-corner-right'
+	filename = 'landscapeTiles_060.png'
+	provides [RIGHT], ['sand']
+	provides [TOP, BOTTOM, LEFT], ['water']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CL"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[-1,  0,  0],
-			[ 1, -1,  0],
-			[-1,  0,  0]	]
-		)
-	}
+	id = 'water-beach-corner-bottom'
+	filename = 'landscapeTiles_053.png'
+	provides [BOTTOM], ['sand']
+	provides [TOP, RIGHT, LEFT], ['water']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CM"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[-1,  1, -1],
-			[ 0, -1,  0],
-			[ 0,  0,  0]	]
-		)
-	}
+	id = 'water-beach-corner-left'
+	filename = 'landscapeTiles_061.png'
+	provides [LEFT], ['sand']
+	provides [TOP, RIGHT, BOTTOM], ['water']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CN"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 1,  1, -1],
-			[ 1, -1,  0],
-			[-1,  0,  0]	]
-		)
-	}
+	id = 'water-grass-north'
+	filename = 'landscapeTiles_043.png'
+	base = LEFT
+	provides [LEFT, BOTTOM], ['water']
+	provides [TOP, RIGHT], ['grass']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CO"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 1,  0, -1],
-			[ 0,  0,  1],
-			[-1,  1,  1]	]
-		)
-	}
+	id = 'water-grass-east'
+	filename = 'landscapeTiles_051.png'
+	provides [LEFT, TOP], ['water']
+	provides [BOTTOM, RIGHT], ['grass']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CP"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[-1,  1, -1],
-			[ 0,  0,  0],
-			[-1,  1, -1]	]
-		)
-	}
+	id = 'water-grass-south'
+	filename = 'landscapeTiles_058.png'
+	provides [TOP, RIGHT], ['water']
+	provides [LEFT, BOTTOM], ['grass']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CQ"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[-1,  0, -1],
-			[ 1,  0,  1],
-			[-1,  0, -1]	]
-		)
-	}
+	id = 'water-grass-west'
+	filename = 'landscapeTiles_050.png'
+	base = RIGHT
+	provides [BOTTOM, RIGHT], ['water']
+	provides [LEFT, TOP], ['grass']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CR"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[-1,  0,  1],
-			[ 1,  0,  0],
-			[ 1,  1, -1]	]
-		)
-	}
+	id = 'water-grass-corner-top'
+	filename = 'landscapeTiles_084.png'
+	base = LEFT
+	provides [TOP], ['grass']
+	provides [RIGHT, BOTTOM, LEFT], ['water']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CS"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[-1,  1,  1],
-			[ 0,  0,  1],
-			[ 1,  0, -1]	]
-		)
-	}
+	id = 'water-grass-corner-right'
+	filename = 'landscapeTiles_076.png'
+	provides [RIGHT], ['grass']
+	provides [TOP, BOTTOM, LEFT], ['water']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CT"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 1,  1, -1],
-			[ 1,  0,  0],
-			[-1,  0,  1]	]
-		)
-	}
+	id = 'water-grass-corner-bottom'
+	filename = 'landscapeTiles_069.png'
+	provides [BOTTOM], ['grass']
+	provides [TOP, RIGHT, LEFT], ['water']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CU"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 1,  0,  0],
-			[ 0,  0,  0],
-			[ 0,  0,  0]	]
-		)
-	}
+	id = 'water-grass-corner-left'
+	filename = 'landscapeTiles_077.png'
+	provides [LEFT], ['grass']
+	provides [TOP, RIGHT, BOTTOM], ['water']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CV"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 0,  0,  1],
-			[ 0,  0,  0],
-			[ 0,  0,  0]	]
-		)
-	}
+	id = 'grass-beach-water-corner-top'
+	filename = 'landscapeTiles_056.png'
+	provides [TOP], ['water']
+	provides [LEFT,RIGHT], ['sand']
+	provides [BOTTOM], ['grass']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CW"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 0,  0,  0],
-			[ 0,  0,  0],
-			[ 1,  0,  0]	]
-		)
-	}
+	id = 'grass-beach-water-corner-right'
+	filename = 'landscapeTiles_048.png'
+	provides [RIGHT], ['water']
+	provides [TOP,BOTTOM], ['sand']
+	provides [LEFT], ['grass']
+	rule { isFlat() }
 }
 
 tile {
-	id = "CX"
-	provides 'water'
-	rule {
-		isFlat() && alt(TOP) == 0
-		&& surroundingAboveWater(
-		[	[ 0,  0,  0],
-			[ 0,  0,  0],
-			[ 0,  0,  1]	]
-		)
-	}
+	id = 'grass-beach-water-corner-bottom'
+	filename = 'landscapeTiles_041.png'
+	provides [BOTTOM], ['water']
+	provides [LEFT,RIGHT], ['sand']
+	provides [TOP], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = 'grass-beach-water-corner-left'
+	filename = 'landscapeTiles_049.png'
+	provides [LEFT], ['water']
+	provides [TOP,BOTTOM], ['sand']
+	provides [RIGHT], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = 'grass-water-corner-top'
+	filename = 'landscapeTiles_070.png'
+	provides [TOP], ['water']
+	provides [LEFT,RIGHT,BOTTOM], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = 'grass-water-corner-right'
+	filename = 'landscapeTiles_062.png'
+	provides [RIGHT], ['water']
+	provides [TOP,LEFT,BOTTOM], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = 'grass-water-corner-bottom'
+	filename = 'landscapeTiles_055.png'
+	provides [BOTTOM], ['water']
+	provides [LEFT,RIGHT,TOP], ['grass']
+	rule { isFlat() }
+}
+
+tile {
+	id = 'grass-water-corner-left'
+	filename = 'landscapeTiles_063.png'
+	provides [LEFT], ['water']
+	provides [TOP,RIGHT,BOTTOM], ['grass']
+	rule { isFlat() }
 }

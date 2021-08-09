@@ -4,7 +4,6 @@
 package org.snowjak.city.map.tiles.support
 
 import org.snowjak.city.map.tiles.TileCorner
-import org.snowjak.city.map.tiles.TileRule
 
 /**
  * @author snowjak88
@@ -17,7 +16,7 @@ class TileDsl {
 	int x, y
 	int width, height
 	int gridWidth, gridHeight
-	int padding, offset
+	int padding, surfaceOffset, altitudeOffset
 	String filename
 	TileCorner base
 	

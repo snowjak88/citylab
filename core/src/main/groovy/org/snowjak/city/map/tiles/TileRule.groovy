@@ -10,19 +10,19 @@ import org.snowjak.city.map.tiles.support.TileSupport
  * @author snowjak88
  *
  */
-class TileRule {
+class TileRule<S extends TileSupport> {
 	
-	private Closure ruleSpec
-	private TileSupport support
+	Closure spec
+	S support
 
-	public TileRule(Closure ruleSpec, Map<String,Closure> ruleHelpers, TileSupport support) {
+	public TileRule(Closure spec, Map<String,Closure> helpers, S support) {
 		
-		this.ruleSpec = ruleSpec.rehydrate(support, this, this)
-		this.ruleSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		this.spec = spec.rehydrate(support, this, this)
+		this.spec.resolveStrategy = Closure.DELEGATE_FIRST
 		
 		this.support = support
-		ruleHelpers.each { name, helper ->
-			helper = helper.rehydrate(this.support, this.ruleSpec, this.ruleSpec)
+		helpers.each { name, helper ->
+			helper = helper.rehydrate(this.support, this.spec, this.spec)
 			this.support.metaClass."$name" = helper
 		}
 	}
@@ -39,6 +39,6 @@ class TileRule {
 		support.cellX = cellX
 		support.cellY = cellY
 		
-		ruleSpec()
+		spec()
 	}
 }

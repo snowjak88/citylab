@@ -3,8 +3,10 @@
  */
 package org.snowjak.city;
 
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.generator.MapGenerator;
@@ -36,7 +38,8 @@ public class GameData {
 	/**
 	 * Thread-caching {@link ExecutorService}.
 	 */
-	public final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+	public final ListeningExecutorService executor = MoreExecutors.listeningDecorator(MoreExecutors
+			.getExitingExecutorService((ThreadPoolExecutor) Executors.newCachedThreadPool(), Duration.ofSeconds(5)));
 	
 	/**
 	 * Seed to be used for random-number generation.

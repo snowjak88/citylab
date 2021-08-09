@@ -102,6 +102,12 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 			//
 			// Calculate safe texture-region dimensions, clamping the specified to the
 			// actual texture-dimensions.
+			
+			if (t.getWidth() == 0)
+				t.setWidth(imageTexture.getWidth() - 2 * t.getPadding());
+			if (t.getHeight() == 0)
+				t.setHeight(imageTexture.getHeight() - 2 * t.getPadding());
+			
 			final int startX = min(max(0, t.getX() + t.getPadding()), imageTexture.getWidth() - 1);
 			final int startY = min(max(0, t.getY() + t.getPadding()), imageTexture.getHeight() - 1);
 			final int width = max(min(t.getWidth(), imageTexture.getWidth() - t.getPadding()), 0);
@@ -152,9 +158,9 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 				dependencies.add(new AssetDescriptor<>(file.parent().child(td.getFilename()), Texture.class));
 			}
 			
-		} catch (Exception e) {
-			LOG.error(e, "Cannot load tile-set \"{0}\" -- unexpected exception.", file.path());
-			throw new RuntimeException("Cannot load tile-set \"" + file.path() + "\" -- unexpected exception.", e);
+		} catch (Throwable t) {
+			LOG.error(t, "Cannot load tile-set \"{0}\" -- unexpected exception.", file.path());
+			throw new RuntimeException("Cannot load tile-set \"" + file.path() + "\" -- unexpected exception.", t);
 		}
 		
 		return dependencies;

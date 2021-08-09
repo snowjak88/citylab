@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.snowjak.city.map.CityMap;
+import org.snowjak.city.map.tiles.support.TileSupport;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Disposable;
@@ -23,19 +24,20 @@ public class Tile implements Disposable {
 	
 	private final TileSet tilesetDescriptor;
 	private final String id, filename;
-	private final int x, y, width, height, gridWidth, gridHeight, padding, offset;
+	private final int x, y, gridWidth, gridHeight, padding, surfaceOffset, altitudeOffset;
 	private final TileCorner base;
 	private final boolean decoration;
 	private final long hashcode;
 	
 	private final EnumMap<TileCorner, List<String>> provision = new EnumMap<>(TileCorner.class);
-	private final List<TileRule> rules = new LinkedList<>();
+	private final List<TileRule<TileSupport>> rules = new LinkedList<>();
 	
+	private int width, height;
 	private TextureRegion sprite;
 	
 	public Tile(TileSet tilesetDescriptor, String id, String filename, int x, int y, int width, int height,
-			int gridWidth, int gridHeight, int padding, int offset, boolean decoration, TileCorner base,
-			Map<TileCorner, List<String>> provision, List<TileRule> rules) {
+			int gridWidth, int gridHeight, int padding, int surfaceOffset, int altitudeOffset, boolean decoration,
+			TileCorner base, Map<TileCorner, List<String>> provision, List<TileRule<TileSupport>> rules) {
 		
 		this.tilesetDescriptor = tilesetDescriptor;
 		this.id = id;
@@ -47,7 +49,8 @@ public class Tile implements Disposable {
 		this.gridWidth = gridWidth;
 		this.gridHeight = gridHeight;
 		this.padding = padding;
-		this.offset = offset;
+		this.surfaceOffset = surfaceOffset;
+		this.altitudeOffset = altitudeOffset;
 		this.decoration = decoration;
 		this.base = base;
 		
@@ -56,7 +59,8 @@ public class Tile implements Disposable {
 		
 		this.hashcode = (id + filename + Integer.toString(this.x) + Integer.toString(this.y)
 				+ Integer.toString(this.width) + Integer.toString(this.height) + Integer.toString(this.padding)
-				+ Integer.toString(this.offset) + Boolean.toString(this.decoration)).hashCode();
+				+ Integer.toString(this.surfaceOffset) + Integer.toString(this.altitudeOffset)
+				+ Boolean.toString(this.decoration)).hashCode();
 	}
 	
 	public TileSet getTilesetDescriptor() {
@@ -94,9 +98,19 @@ public class Tile implements Disposable {
 		return width;
 	}
 	
+	public void setWidth(int width) {
+		
+		this.width = width;
+	}
+	
 	public int getHeight() {
 		
 		return height;
+	}
+	
+	public void setHeight(int height) {
+		
+		this.height = height;
 	}
 	
 	public int getGridWidth() {
@@ -114,9 +128,14 @@ public class Tile implements Disposable {
 		return padding;
 	}
 	
-	public int getOffset() {
+	public int getSurfaceOffset() {
 		
-		return offset;
+		return surfaceOffset;
+	}
+	
+	public int getAltitudeOffset() {
+		
+		return altitudeOffset;
 	}
 	
 	public boolean isDecoration() {
@@ -145,7 +164,7 @@ public class Tile implements Disposable {
 	 */
 	public boolean isAcceptable(CityMap map, int cellX, int cellY) {
 		
-		for (TileRule rule : rules)
+		for (TileRule<TileSupport> rule : rules)
 			if (!rule.isAcceptable(map, cellX, cellY))
 				return false;
 		return true;

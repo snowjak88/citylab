@@ -3,6 +3,7 @@
  */
 package org.snowjak.city.map.tiles.support
 
+import org.snowjak.city.map.tiles.MapMutator
 import org.snowjak.city.map.tiles.Tile
 import org.snowjak.city.map.tiles.TileCorner
 import org.snowjak.city.map.tiles.TileRule
@@ -22,12 +23,14 @@ class TileSetDsl {
 	
 	int x = 0, y = 0
 	int width = 32, height = 32
-	int padding = 0, offset = 0
+	int padding = 0, surfaceOffset = 0, altitudeOffset = 0
+	String folder = ""
 	String filename = ""
 	boolean decoration = false
 	TileCorner base = TileCorner.TOP
 	
 	Map<String,Closure> ruleHelpers = [:]
+	List<Closure> mutators = []
 	
 	private int autoAdvanceLimitX = 0, autoAdvanceLimitY = 0
 	private boolean autoAdvance = false
@@ -43,7 +46,8 @@ class TileSetDsl {
 			x: x, y: y,
 			width: width, height: height,
 			gridWidth: gridWidth, gridHeight: gridHeight,
-			padding: padding, offset: offset,
+			padding: padding, surfaceOffset: surfaceOffset,
+			altitudeOffset: altitudeOffset,
 			base: base,
 			decoration: decoration,
 			filename: filename,
@@ -54,9 +58,21 @@ class TileSetDsl {
 		script = script.rehydrate(tileDsl, this, this)
 		script()
 		
+		tileDsl.filename = (folder == null || folder.trim().isBlank()) ? tileDsl.filename : "$folder/${tileDsl.filename}"
+		
 		tiles << tileDsl
 		
 		next()
+	}
+	
+	/**
+	 * Register a new map-mutator.
+	 * 
+	 * @param script
+	 */
+	public void mutator(@DelegatesTo(MutatorTileSupport) Closure script) {
+		
+		mutators << script
 	}
 	
 	/**
@@ -107,11 +123,16 @@ class TileSetDsl {
 	}
 	
 	TileSet build() {
-		def tsd = new TileSet(title, description, width, height, gridWidth, gridHeight, offset, padding)
+		
+		def mutatorInstances = new LinkedList<MapMutator>()
+		mutators.each { m -> mutatorInstances << new MapMutator(m, new HashMap(ruleHelpers), new MutatorTileSupport()) }
+		
+		def tsd = new TileSet(title, description, width, height, gridWidth, gridHeight, surfaceOffset, altitudeOffset, padding, mutatorInstances)
+		
 		tiles.each { dsl ->
 			def rules = new LinkedList<>()
 			dsl.rules.each { r -> rules << new TileRule(r, dsl.ruleHelpers, new TileSupport()) }
-			def tile = new Tile(tsd, dsl.id, dsl.filename, dsl.x, dsl.y, dsl.width, dsl.height, dsl.gridWidth, dsl.gridHeight, dsl.padding, dsl.offset, dsl.decoration, dsl.base, dsl.provision, rules)
+			def tile = new Tile(tsd, dsl.id, dsl.filename, dsl.x, dsl.y, dsl.width, dsl.height, dsl.gridWidth, dsl.gridHeight, dsl.padding, dsl.surfaceOffset, dsl.altitudeOffset, dsl.decoration, dsl.base, dsl.provision, rules)
 			for(TileCorner c : TileCorner.values())
 				tile.provision.computeIfAbsent c, { k -> new LinkedList<>() }
 			

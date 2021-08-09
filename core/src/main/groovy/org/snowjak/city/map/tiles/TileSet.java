@@ -25,12 +25,14 @@ import com.badlogic.gdx.utils.LongMap;
 public class TileSet implements Disposable {
 	
 	private final String title, description;
-	private final int width, height, gridWidth, gridHeight, offset, padding;
+	private final int width, height, gridWidth, gridHeight, surfaceOffset, altitudeOffset, padding;
 	private final Collection<Tile> allTiles = new LinkedList<>();
 	private final LongMap<Tile> tilesByHash = new LongMap<>();
 	
-	public TileSet(String title, String description, int width, int height, int gridWidth, int gridHeight, int offset,
-			int padding) {
+	private final List<MapMutator> mutators = new LinkedList<>();
+	
+	public TileSet(String title, String description, int width, int height, int gridWidth, int gridHeight,
+			int surfaceOffset, int altitudeOffset, int padding, Collection<MapMutator> mutators) {
 		
 		this.title = title;
 		this.description = description;
@@ -38,14 +40,16 @@ public class TileSet implements Disposable {
 		this.height = height;
 		this.gridWidth = gridWidth;
 		this.gridHeight = gridHeight;
-		this.offset = offset;
+		this.surfaceOffset = surfaceOffset;
+		this.altitudeOffset = altitudeOffset;
 		this.padding = padding;
+		this.mutators.addAll(mutators);
 	}
 	
 	public TileSet(TileSet toCopy) {
 		
 		this(toCopy.title, toCopy.description, toCopy.width, toCopy.height, toCopy.gridWidth, toCopy.gridHeight,
-				toCopy.offset, toCopy.padding);
+				toCopy.surfaceOffset, toCopy.altitudeOffset, toCopy.padding, toCopy.mutators);
 		toCopy.allTiles.forEach(this::addTile);
 	}
 	
@@ -107,9 +111,14 @@ public class TileSet implements Disposable {
 		return gridHeight;
 	}
 	
-	int getOffset() {
+	int getSurfaceOffset() {
 		
-		return offset;
+		return surfaceOffset;
+	}
+	
+	public int getAltitudeOffset() {
+		
+		return altitudeOffset;
 	}
 	
 	int getPadding() {
@@ -144,8 +153,35 @@ public class TileSet implements Disposable {
 	}
 	
 	/**
+	 * Get the {@link MapMutator}s associated with this TileSet.
+	 * 
+	 * @return
+	 */
+	public List<MapMutator> getMutators() {
+		
+		return Collections.unmodifiableList(mutators);
+	}
+	
+	/**
+	 * Execute this TileSet's configured {@link MapMutator}s against the given map
+	 * for the given cell.
+	 * 
+	 * @param map
+	 * @param cellX
+	 * @param cellY
+	 */
+	public void mutate(CityMap map, int cellX, int cellY) {
+		
+		mutators.forEach(m -> m.mutate(map, cellX, cellY));
+	}
+	
+	/**
 	 * Get the minimum set of Tiles that can fit the given map at the given
 	 * location.
+	 * <p>
+	 * You should probably execute {@link #mutate(CityMap, int, int) mutate()}
+	 * against this location before attempting to look for fitting tiles.
+	 * </p>
 	 * <p>
 	 * Note that this should only look at vertex-altitudes and -flavors (barring any
 	 * special Tile rules, which would be executed normally).

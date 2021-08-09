@@ -30,6 +30,7 @@ import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.tiles.Tile;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -152,13 +153,18 @@ public class MapRenderer {
 		if (map == null)
 			return;
 		
+		if (ownsBatch) {
+			batch.enableBlending();
+			batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+		}
+		
 		batch.begin();
 		
 		final Color batchColor = batch.getColor();
 		final float color = Color.toFloatBits(batchColor.r, batchColor.g, batchColor.b, batchColor.a);
 		
-		float tileWidth = DEFAULT_TILE_GRID_WIDTH * unitScale;
-		float tileHeight = DEFAULT_TILE_GRID_HEIGHT * unitScale;
+		final float tileWidth = DEFAULT_TILE_GRID_WIDTH * unitScale;
+		final float tileHeight = DEFAULT_TILE_GRID_HEIGHT * unitScale;
 		
 		final float layerOffsetX = 0;
 		// offset in tiled is y down, so we flip it
@@ -196,8 +202,13 @@ public class MapRenderer {
 					
 					final int altitude = map.getTileAltitude(col, row, tile.getBase());
 					
+					final float tileScale = DEFAULT_TILE_GRID_WIDTH / (float) tile.getGridWidth();
+					
+					final float altitudeFactor = ((float) altitude * tile.getAltitudeOffset() * unitScale * tileScale);
+					final float surfaceFactor = ((float) tile.getSurfaceOffset() * unitScale * tileScale);
+					
 					final float x = (col * halfTileWidth) + (row * halfTileWidth);
-					final float y = (row * halfTileHeight) - (col * halfTileHeight) + ((float) altitude * tileHeight);
+					final float y = (row * halfTileHeight) - (col * halfTileHeight) + altitudeFactor - surfaceFactor;
 					
 					final boolean flipX = false;// cell.getFlipHorizontally();
 					final boolean flipY = false;// cell.getFlipVertically();
@@ -205,21 +216,15 @@ public class MapRenderer {
 					
 					TextureRegion region = tile.getSprite();
 					
-					final float tileScale = DEFAULT_TILE_GRID_WIDTH / (float) tile.getGridWidth();
+					final float x1 = x + layerOffsetX;
+					final float y1 = y + layerOffsetY;
+					final float x2 = x1 + region.getRegionWidth() * unitScale * tileScale;
+					final float y2 = y1 + region.getRegionHeight() * unitScale * tileScale;
 					
-					// float x1 = x + tile.getOffsetX() * unitScale + layerOffsetX;
-					// float y1 = y + tile.getOffsetY() * unitScale + layerOffsetY;
-					// float x2 = x1 + region.getRegionWidth() * unitScale;
-					// float y2 = y1 + region.getRegionHeight() * unitScale;
-					float x1 = x + layerOffsetX;
-					float y1 = y - tile.getOffset() * unitScale * tileScale + layerOffsetY;
-					float x2 = x1 + region.getRegionWidth() * unitScale * tileScale;
-					float y2 = y1 + region.getRegionHeight() * unitScale * tileScale;
-					
-					float u1 = region.getU();
-					float v1 = region.getV2();
-					float u2 = region.getU2();
-					float v2 = region.getV();
+					final float u1 = region.getU();
+					final float v1 = region.getV2();
+					final float u2 = region.getU2();
+					final float v2 = region.getV();
 					
 					vertices[X1] = x1;
 					vertices[Y1] = y1;

@@ -146,6 +146,22 @@ public class CityMap {
 	}
 	
 	/**
+	 * Set the altitude associated with the given corner of the given cell. (Delegates to
+	 * {@link #setVertexAltitude(int, int, int) setVertexAltitude(cellX + corner.offsetX, cellY + corner.offsetY)}.)
+	 * @param cellX
+	 * @param cellY
+	 * @param corner
+	 * @param altitude
+	 */
+	public void setTileCornerAltitude(int cellX, int cellY, TileCorner corner, int altitude) {
+		
+		if (corner == null)
+			throw new NullPointerException("Cannot set corner altitude for null corner.")
+		
+		setVertexAltitude cellY + corner.offsetX, cellY + corner.offsetY, altitude
+	}
+	
+	/**
 	 * Set the altitude associated with the given vertex.
 	 * <p>
 	 * Note that this method doesn't change any {@link Tile} assignments by itself.
@@ -165,6 +181,21 @@ public class CityMap {
 			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
 		
 		vertexAltitudes[vertexX][vertexY] = altitude
+	}
+	
+	/**
+	 * Sets the flavors associated with the given corner of the given cell.
+	 * @param cellX
+	 * @param cellY
+	 * @param corner
+	 * @param flavors
+	 */
+	public void setTileCornerFlavors(int cellX, int cellY, TileCorner corner, List<String> flavors) {
+		
+		if (corner == null)
+			throw new NullPointerException("Cannot set corner flavors for null corner.")
+		
+		setVertexFlavors cellY + corner.offsetX, cellY + corner.offsetY, flavors
 	}
 	
 	/**
@@ -257,6 +288,7 @@ public class CityMap {
 				currentCount += 1.0
 				progressUpdater.accept progress
 				
+				tileset.mutate this, x, y
 				cells[x][y] = tileset.getMinimalTilesFor(this, x, y)
 			}
 		}

@@ -7,7 +7,7 @@ import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.tiles.TileCorner
 
 /**
- * Defines elements that can be used by any tile rule.
+ * Allows you to query the map.
  * 
  * @author snowjak88
  *
@@ -89,7 +89,32 @@ class TileSupport {
 	public int alt(int dx, int dy, TileCorner corner) {
 		if(!map.isValidCell(cellX + dx, cellY + dy))
 			return map.getTileAltitude(cellX, cellY, corner)
-			
+		
 		map.getTileAltitude(cellX + dx, cellY + dy, corner)
+	}
+	
+	/**
+	 * Returns {@code true} if the given corner for the currently-considered cell includes the given flavor.
+	 * @param corner
+	 * @param flavor
+	 * @return
+	 */
+	public boolean hasFlavor(TileCorner corner, String flavor) {
+		hasFlavor(0, 0, corner, flavor)
+	}
+	
+	/**
+	 * Returns {@code true} if the given corner for the cell located {@code dx,dy} away from the currently-considered cell includes the given flavor.
+	 * @param dx
+	 * @param dy
+	 * @param corner
+	 * @param flavor
+	 * @return
+	 */
+	public boolean hasFlavor(int dx, int dy, TileCorner corner, String flavor) {
+		if(!map.isValidCell(cellX + dx, cellY + dy))
+			return map.getTileCornerFlavors(cellX, cellY, corner).contains(flavor)
+		
+		map.getTileCornerFlavors(cellX + dx, cellY + dy, corner).contains(flavor)
 	}
 }
