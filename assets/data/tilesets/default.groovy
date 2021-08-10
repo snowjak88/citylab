@@ -109,44 +109,61 @@ padding = 0
 //
 mutator {
 	//
-	// Ensure all 0-altitude cells are marked as water
-	for(def corner in [TOP,RIGHT,BOTTOM,LEFT])
+	// Ensure all 0-altitude corners are marked as water
+	for(def corner in [TOP, RIGHT, BOTTOM, LEFT])
 		if( alt(corner) == 0 )
 			setFlavor corner, 'water'
 }
 
 mutator {
 	//
-	// For cells marked as water that are flat,
-	// vertices bordering higher-elevation vertices should be marked as sand
-	if( !isFlat() || alt(TOP) != 0 )
-		return
-	
-	def hasHigherElevation = {dx,dy,corner ->
-		if(dx * corner.dx < 0 && dy * corner.dy < 0)
-			return false
-		alt(dx,dy,corner) > 0
+	// Ensure 0-altitude vertices bordering higher-altitude vertices
+	// are marked as grass
+	def hasHigherAltitude = { dx,dy ->
+		for(def corner in [TOP,RIGHT,BOTTOM,LEFT])
+			if(alt(dx,dy,corner) >= 1)
+				return true
+		false
 	}
 	
-	if(hasHigherElevation(0,-1,LEFT) || hasHigherElevation(0,-1,BOTTOM)) {
-		setFlavor LEFT, 'sand'
-		setFlavor BOTTOM, 'sand'
+	if(hasHigherAltitude(-1,-1))
+		setFlavor LEFT, 'grass'
+	if(hasHigherAltitude(-1,0)) {
+		setFlavor TOP, 'grass'
+		setFlavor LEFT, 'grass'
 	}
-	
-	if(hasHigherElevation(0,+1,TOP) || hasHigherElevation(0,+1,RIGHT)) {
-		setFlavor TOP, 'sand'
-		setFlavor RIGHT, 'sand'
+	if(hasHigherAltitude(-1,+1))
+		setFlavor TOP, 'grass'
+	if(hasHigherAltitude(0,+1)) {
+		setFlavor TOP, 'grass'
+		setFlavor RIGHT, 'grass'
 	}
-	
-	if(hasHigherElevation(-1,0,LEFT) || hasHigherElevation(-1,0,TOP)) {
-		setFlavor LEFT, 'sand'
-		setFlavor TOP, 'sand'
+	if(hasHigherAltitude(+1,+1))
+		setFlavor RIGHT, 'grass'
+	if(hasHigherAltitude(+1,0)) {
+		setFlavor BOTTOM, 'grass'
+		setFlavor RIGHT, 'grass'
 	}
-	
-	if(hasHigherElevation(+1,0,RIGHT) || hasHigherElevation(+1,0,BOTTOM)) {
-		setFlavor RIGHT, 'sand'
-		setFlavor BOTTOM, 'sand'
+	if(hasHigherAltitude(+1,-1))
+		setFlavor BOTTOM, 'grass'
+	if(hasHigherAltitude(0,-1)) {
+		setFlavor BOTTOM, 'grass'
+		setFlavor LEFT, 'grass'
 	}
+}
+
+//
+// Define a tile-rule helper
+// These become available as additional functions you can call
+// directly within tile rules and tile-set mutators.
+// Just make sure you define it before you use it.
+//
+ruleHelper 'countHigherAltitude', { corner ->
+	def count = 0
+	for(def otherCorner in [TOP, RIGHT, BOTTOM, LEFT])
+		if(alt(corner) < alt(otherCorner))
+			count++
+	count
 }
 
 //
@@ -184,7 +201,7 @@ tile {
 	// Most commonly, you'd specify this tile's altitude-requirements here, but
 	// you can express more complicated conditions, too.
 	rule {
-		isFlat()
+		isFlat() || countHigherAltitude(TOP) == 3 || countHigherAltitude(RIGHT) == 3 || countHigherAltitude(BOTTOM) == 3 || countHigherAltitude(LEFT) == 3
 	}
 }
 

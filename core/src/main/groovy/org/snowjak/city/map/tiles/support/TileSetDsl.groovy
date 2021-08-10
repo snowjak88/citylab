@@ -65,6 +65,10 @@ class TileSetDsl {
 		next()
 	}
 	
+	public void ruleHelper(String name, @DelegatesTo(TileSupport) Closure script) {
+		ruleHelpers[name] = script
+	}
+	
 	/**
 	 * Register a new map-mutator.
 	 * 

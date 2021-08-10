@@ -195,7 +195,7 @@ public class CityMap {
 		if (corner == null)
 			throw new NullPointerException("Cannot set corner flavors for null corner.")
 		
-		setVertexFlavors cellY + corner.offsetX, cellY + corner.offsetY, flavors
+		setVertexFlavors cellX + corner.offsetX, cellY + corner.offsetY, flavors
 	}
 	
 	/**
@@ -217,7 +217,12 @@ public class CityMap {
 			throw new ArrayIndexOutOfBoundsException(
 			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
 		
-		vertices[vertexX][vertexY] = flavors
+		if(vertices[vertexX][vertexY] == null)
+			vertices[vertexX][vertexY] = new ArrayList<>()
+		else
+			vertices[vertexX][vertexY].clear()
+		
+		vertices[vertexX][vertexY].addAll flavors
 	}
 	
 	/**
@@ -273,8 +278,11 @@ public class CityMap {
 	public void updateTiles(TileSet tileset, int startX, int startY, int width, int height, DoubleConsumer progressUpdater = {p -> }) {
 		progressUpdater.accept 0.0
 		
-		final double finalCellCount = (width * height)
-		double currentCount = 0.0
+		tileset.mutate this, { p -> progressUpdater(p/2.0) }
+		final double finalCount = (width * height)
+		final double progressStep = 1.0 / finalCount
+		
+		double progress = 0.0
 		
 		for(int x in startX..startX+width-1) {
 			if(x < 0 || x >= cells.length)
@@ -284,11 +292,9 @@ public class CityMap {
 				if(y < 0 || y >= cells[x].length)
 					continue;
 				
-				def progress = currentCount / finalCellCount
-				currentCount += 1.0
 				progressUpdater.accept progress
+				progress += progressStep
 				
-				tileset.mutate this, x, y
 				cells[x][y] = tileset.getMinimalTilesFor(this, x, y)
 			}
 		}
@@ -299,7 +305,7 @@ public class CityMap {
 	 * @return
 	 */
 	public int getWidth() {
-		cells.length;
+		cells.length
 	}
 	
 	/**
@@ -307,6 +313,6 @@ public class CityMap {
 	 * @return
 	 */
 	public int getHeight() {
-		cells[0].length;
+		cells[0].length
 	}
 }

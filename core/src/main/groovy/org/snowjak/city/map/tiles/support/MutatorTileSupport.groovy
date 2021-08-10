@@ -20,6 +20,7 @@ class MutatorTileSupport extends TileSupport {
 	 * @param flavors
 	 */
 	public void setFlavor(TileCorner corner, String...flavors) {
+		println "setFlavor $cellX,$cellY,$corner,$flavors"
 		setFlavor 0, 0, corner, flavors
 	}
 	

@@ -3,6 +3,8 @@
  */
 package org.snowjak.city.map.tiles;
 
+import static org.snowjak.city.util.Util.clamp;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -10,6 +12,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.DoubleConsumer;
 
 import org.snowjak.city.map.CityMap;
 
@@ -163,6 +166,54 @@ public class TileSet implements Disposable {
 	}
 	
 	/**
+	 * Apply each mutator to the entire {@link CityMap map} in turn. Reports
+	 * progress with each iteration to {@code progressReporter} as a fraction (i.e.,
+	 * a value in [0..1])
+	 * 
+	 * @param map
+	 * @param progressReporter
+	 *            optional progress reporter
+	 */
+	public void mutate(CityMap map, final DoubleConsumer progressReporter) {
+		
+		mutate(map, 0, 0, map.getWidth(), map.getHeight(), progressReporter);
+	}
+	
+	/**
+	 * Apply each mutator to the given {@link CityMap map} region in turn. Reports
+	 * progress with each iteration to {@code progressReporter} as a fraction (i.e.,
+	 * a value in [0..1])
+	 * 
+	 * @param map
+	 * @param startX
+	 * @param startY
+	 * @param width
+	 * @param height
+	 * @param progressReporter
+	 *            optional progress reporter
+	 */
+	public void mutate(CityMap map, int startX, int startY, int width, int height,
+			final DoubleConsumer progressReporter) {
+		
+		final double finalCount = mutators.size() * map.getWidth() * map.getHeight();
+		final double progressStep = 1.0 / finalCount;
+		double progress = 0;
+		
+		final int x1 = clamp(startX, 0, map.getWidth() - 1), y1 = clamp(startY, 0, map.getHeight() - 1),
+				x2 = clamp(startX + width - 1, 0, map.getWidth() - 1),
+				y2 = clamp(startY + height - 1, 0, map.getHeight() - 1);
+		
+		for (MapMutator mutator : mutators)
+			for (int cellX = x1; cellX <= x2; cellX++)
+				for (int cellY = y1; cellY <= y2; cellY++) {
+					mutator.mutate(map, cellX, cellY);
+					if (progressReporter != null)
+						progressReporter.accept(progress);
+					progress += progressStep;
+				}
+	}
+	
+	/**
 	 * Execute this TileSet's configured {@link MapMutator}s against the given map
 	 * for the given cell.
 	 * 
@@ -229,6 +280,34 @@ public class TileSet implements Disposable {
 				continue;
 				
 			//
+			// The tile must not add anything we don't already need
+			boolean addsExtra = false;
+			for (TileCorner corner : remainingFlavors.keySet()) {
+				if (addsExtra)
+					break;
+				for (String flavor : tile.getProvision().get(corner))
+					if (!remainingFlavors.get(corner).contains(flavor)) {
+						addsExtra = true;
+						break;
+					}
+			}
+			if (addsExtra)
+				continue;
+				
+			//
+			// The "new remaining" list of flavors is the old list, minus the
+			// currently-selected tile's flavors
+			boolean fulfillsAnyFlavors = false;
+			final EnumMap<TileCorner, List<String>> newRemaining = new EnumMap<>(TileCorner.class);
+			for (TileCorner corner : remainingFlavors.keySet()) {
+				final List<String> remaining = new LinkedList<String>(remainingFlavors.get(corner));
+				fulfillsAnyFlavors = fulfillsAnyFlavors || remaining.removeAll(tile.getProvision().get(corner));
+				newRemaining.put(corner, remaining);
+			}
+			if (!fulfillsAnyFlavors)
+				continue;
+				
+			//
 			// If the tile's rules don't allow it to fit here -- skip it.
 			if (!tile.isAcceptable(map, cellX, cellY))
 				continue;
@@ -243,16 +322,6 @@ public class TileSet implements Disposable {
 			else
 				currentTileList.clear();
 			currentTileList.add(tile);
-			
-			//
-			// The "new remaining" list of flavors is the old list, minus the
-			// currently-selected tile's flavors
-			final EnumMap<TileCorner, List<String>> newRemaining = new EnumMap<>(TileCorner.class);
-			for (TileCorner corner : remainingFlavors.keySet()) {
-				final List<String> remaining = new LinkedList<String>(remainingFlavors.get(corner));
-				remaining.removeAll(tile.getProvision().get(corner));
-				newRemaining.put(corner, remaining);
-			}
 			
 			//
 			// We don't want to select the current tile again in our search.
