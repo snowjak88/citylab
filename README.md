@@ -1,8 +1,33 @@
 # jCity
 
-A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/tommyettinger/gdx-liftoff).
+A [libGDX](https://libgdx.com/) tech-demo. Eventually intended to implement a city-building game with an emphasis on logistics.
 
-Project template included launchers with [Autumn](https://github.com/czyzby/gdx-lml/tree/master/autumn) class scanners and a basic [Autumn MVC](https://github.com/czyzby/gdx-lml/tree/master/mvc) application.
+At present, this gives you:
+
+ - A rudimentary UI
+ - An isometric game-screen with pan and zoom
+ - The beginnings of a homemade tile-set
+ - *Lots* of Groovy scripting.
+
+## Groovy Scripting
+
+A big goal of this project is to enable extensibility.
+
+To that end, I've tried to implement some useful DSLs (Domain-Specific Languages) using [Groovy](http://www.groovy-lang.org/). At present, these allow you to define:
+
+ - Map-generators
+ - Tile-sets
+ 
+ The tile-set DSL, especially, I've put a lot of work into.
+ 
+When I get around to it, the plan is to enable entire gameplay modules to be loaded that way as well -- new map-overlays, new buildings, new mechanics.
+
+### Notes for the future
+
+I've been feeling that the Tile-Set DSL is too cluttered. That, and it doesn't do everything that I want it to do -- e.g.:
+
+ - allow you to easily include tile-set definitions in sub-folders that inherit their super-definition's properties.
+ - support run-time tile properties -- e.g., enabling water-tiles to re-draw themselves at a higher or lower altitude as need be
 
 ## Gradle
 
