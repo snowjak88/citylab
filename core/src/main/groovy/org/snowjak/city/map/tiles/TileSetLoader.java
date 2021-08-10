@@ -8,7 +8,10 @@ import static org.snowjak.city.util.Util.min;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
+import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.snowjak.city.map.tiles.TileSetLoader.TileSetLoaderParameters;
@@ -41,27 +44,12 @@ import groovy.util.DelegatingScript;
  */
 public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoaderParameters> {
 	
-	/**
-	 * Property stored in {@link TiledMapTileSet#getProperties()}: title assigned to
-	 * the tile-set.
-	 */
-	public static final String PROPERTIES_TILESET_TITLE = "tileset-title",
-			/**
-			 * Property stored in {@link TiledMapTileSet#getProperties()}:
-			 * tile-set-descriptor file-name
-			 */
-			PROPERTIES_TILESET_FILENAME = "tileset-file",
-			/**
-			 * Property stored in {@link TiledMapTile#getProperties()}: title assigned to
-			 * the tile.
-			 */
-			PROPERTIES_TILE_TITLE = "tile-title";
-	
 	private static final Logger LOG = LoggerService.forClass(TileSetLoader.class);
 	
-	final CompilerConfiguration config;
+	private final CompilerConfiguration config;
+	private final GroovyShell shell;
 	
-	private TileSet tileSet;
+	private final Map<FileHandle, TileSet> tileSets = new LinkedHashMap<>();
 	
 	/**
 	 * Construct a new {@link TileSetLoader}.
@@ -78,18 +66,19 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 		config = new CompilerConfiguration();
 		config.setScriptBaseClass(DelegatingScript.class.getName());
 		config.addCompilationCustomizers(customImports);
+		
+		shell = new GroovyShell(this.getClass().getClassLoader(), new Binding(), config);
 	}
 	
 	@Override
 	public void loadAsync(AssetManager manager, String fileName, FileHandle file, TileSetLoaderParameters parameter) {
 		
-		//
-		// Load the specified image for each tile-descriptor,
-		// create the resulting TiledMapTile instance,
-		// and insert it into the TileSet.
-		//
+		final TileSet tileSet;
+		synchronized (this) {
+			tileSet = tileSets.get(file);
+		}
+		
 		for (Tile t : tileSet.getAllTiles()) {
-			
 			final FileHandle imageFile = file.parent().child(t.getFilename());
 			if (!imageFile.exists())
 				throw new RuntimeException(new FileNotFoundException("Cannot load tile-set \"" + file.path()
@@ -122,7 +111,9 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 	@Override
 	public TileSet loadSync(AssetManager manager, String fileName, FileHandle file, TileSetLoaderParameters parameter) {
 		
-		return tileSet;
+		synchronized (this) {
+			return tileSets.get(file);
+		}
 	}
 	
 	@SuppressWarnings("rawtypes")
@@ -137,30 +128,26 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 		if (!file.exists())
 			throw new RuntimeException(new FileNotFoundException());
 		
-		final TileSetDsl dsl = new TileSetDsl();
-		final DelegatingScript script;
 		try {
 			
-			final GroovyShell shell = new GroovyShell(this.getClass().getClassLoader(), new Binding(), config);
-			script = (DelegatingScript) shell.parse(file.file());
+			final TileSetDsl dsl = new TileSetDsl();
+			
+			final DelegatingScript script = (DelegatingScript) shell.parse(file.file());
 			script.setDelegate(dsl);
-			
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		
-		try {
-			
 			script.run();
-			tileSet = dsl.build();
 			
-			for (Tile td : tileSet.getAllTiles()) {
+			final TileSet tileSet = dsl.build();
+			
+			for (Tile td : tileSet.getAllTiles())
 				dependencies.add(new AssetDescriptor<>(file.parent().child(td.getFilename()), Texture.class));
+			
+			synchronized (this) {
+				tileSets.put(file, tileSet);
 			}
 			
 		} catch (Throwable t) {
 			LOG.error(t, "Cannot load tile-set \"{0}\" -- unexpected exception.", file.path());
-			throw new RuntimeException("Cannot load tile-set \"" + file.path() + "\" -- unexpected exception.", t);
+			return null;
 		}
 		
 		return dependencies;
@@ -168,5 +155,11 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 	
 	public static class TileSetLoaderParameters extends AssetLoaderParameters<TileSet> {
 		
+	}
+	
+	@FunctionalInterface
+	public interface ScriptParser {
+		
+		public DelegatingScript parse(FileHandle file) throws CompilationFailedException, IOException;
 	}
 }

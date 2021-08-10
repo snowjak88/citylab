@@ -126,7 +126,7 @@ public class TileSetService {
 		
 		LOG.info("Initializing ...");
 		
-		scanDirectoryForScripts(Gdx.files.local(CityGame.EXTERNAL_ROOT_TILESETS)).forEach(f -> {
+		scanDirectoryForScripts(Gdx.files.local(CityGame.EXTERNAL_ROOT_TILESETS), false).forEach(f -> {
 			tilesetScripts.put(f.nameWithoutExtension(), f);
 			assetService.load(f.path(), TileSet.class);
 		});
@@ -134,7 +134,7 @@ public class TileSetService {
 		LOG.info("Finished initializing.");
 	}
 	
-	private Set<FileHandle> scanDirectoryForScripts(FileHandle directory) {
+	private Set<FileHandle> scanDirectoryForScripts(FileHandle directory, boolean includeSubdirectories) {
 		
 		final Set<FileHandle> results = new LinkedHashSet<>();
 		
@@ -144,8 +144,8 @@ public class TileSetService {
 		LOG.info("Scanning [{0}]", directory.path());
 		
 		for (FileHandle child : directory.list())
-			if (child.isDirectory())
-				results.addAll(scanDirectoryForScripts(child));
+			if (child.isDirectory() && includeSubdirectories)
+				results.addAll(scanDirectoryForScripts(child, includeSubdirectories));
 			else if (child.name().toLowerCase().endsWith(".groovy")) {
 				LOG.info("Found script-file [{0}]", child.path());
 				results.add(child);
