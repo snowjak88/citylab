@@ -3,18 +3,20 @@
  */
 package org.snowjak.city.controller;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.Collectors;
 
 import org.snowjak.city.GameData;
 import org.snowjak.city.service.MapGeneratorService;
-import org.snowjak.city.service.TileSetService;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectMap;
 import com.github.czyzby.autumn.annotation.Inject;
+import com.github.czyzby.autumn.mvc.component.ui.controller.ViewController;
+import com.github.czyzby.autumn.mvc.component.ui.controller.ViewInitializer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewRenderer;
 import com.github.czyzby.autumn.mvc.stereotype.View;
 import com.github.czyzby.lml.annotation.LmlAction;
@@ -30,38 +32,30 @@ import com.kotcrab.vis.ui.widget.spinner.Spinner;
  *
  */
 @View(id = "preGameSetup", value = "ui/templates/preGameSetup.lml")
-public class PreGameSetupController implements ViewRenderer, ActionContainer {
+public class PreGameSetupController implements ViewInitializer, ViewRenderer, ActionContainer {
 	
 	@Inject
 	private MapGeneratorService mapGeneratorService;
 	
-	@Inject
-	private TileSetService tilesetService;
+	@LmlActor("map-generator-select")
+	private SelectBox<MapGeneratorBean> mapGeneratorSelect;
 	
 	@LmlActor("playButton")
 	private TextButton playButton;
 	
 	private GameData gameData = GameData.get();
 	
-	@LmlAction
-	public List<String> getAvailableTilesets() {
+	@Override
+	public void initialize(Stage stage, ObjectMap<String, Actor> actorMappedByIds) {
 		
-		return new ArrayList<>(tilesetService.getScriptNames());
+		mapGeneratorSelect.setItems(getAvailableGenerators());
 	}
 	
-	@LmlAction
-	public void setTileset(final Actor actor) {
+	public Array<MapGeneratorBean> getAvailableGenerators() {
 		
-		@SuppressWarnings("unchecked")
-		final SelectBox<String> selectBox = (SelectBox<String>) actor;
-		gameData.parameters.selectedTileset = null;
-		gameData.parameters.selectedTilesetName = selectBox.getSelected();
-	}
-	
-	@LmlAction
-	public List<String> getAvailableGenerators() {
-		
-		return new ArrayList<>(mapGeneratorService.getScriptNames());
+		return new Array<>(mapGeneratorService.getLoadedNames().stream()
+				.map(n -> new MapGeneratorBean(n, mapGeneratorService.get(n).getTitle())).collect(Collectors.toList())
+				.toArray(new MapGeneratorBean[0]));
 	}
 	
 	@LmlAction
@@ -80,9 +74,9 @@ public class PreGameSetupController implements ViewRenderer, ActionContainer {
 	public void setMapGenerator(final Actor actor) {
 		
 		@SuppressWarnings("unchecked")
-		final SelectBox<String> selectBox = (SelectBox<String>) actor;
+		final SelectBox<MapGeneratorBean> selectBox = (SelectBox<MapGeneratorBean>) actor;
 		gameData.parameters.selectedMapGenerator = null;
-		gameData.parameters.selectedMapGeneratorName = selectBox.getSelected();
+		gameData.parameters.selectedMapGeneratorName = selectBox.getSelected().name;
 	}
 	
 	@LmlAction
@@ -118,6 +112,13 @@ public class PreGameSetupController implements ViewRenderer, ActionContainer {
 		stage.draw();
 	}
 	
+	@Override
+	public void destroy(ViewController viewController) {
+		
+		//
+		// nothing to do
+	}
+	
 	private void checkPlayButton() {
 		
 		if (playButton == null)
@@ -134,5 +135,26 @@ public class PreGameSetupController implements ViewRenderer, ActionContainer {
 			configValid = false;
 		
 		playButton.setDisabled(!configValid);
+	}
+	
+	public static class MapGeneratorBean {
+		
+		public String name, title;
+		
+		public MapGeneratorBean() {
+			
+		}
+		
+		public MapGeneratorBean(String name, String title) {
+			
+			this.name = name;
+			this.title = title;
+		}
+		
+		@Override
+		public String toString() {
+			
+			return title;
+		}
 	}
 }

@@ -34,6 +34,11 @@ public class TileSet implements Disposable {
 	
 	private final List<MapMutator> mutators = new LinkedList<>();
 	
+	public TileSet() {
+		
+		this("", "", 0, 0, 0, 0, 0, 0, 0, Collections.emptyList());
+	}
+	
 	public TileSet(String title, String description, int width, int height, int gridWidth, int gridHeight,
 			int surfaceOffset, int altitudeOffset, int padding, Collection<MapMutator> mutators) {
 		

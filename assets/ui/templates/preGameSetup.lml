@@ -1,14 +1,6 @@
 <table defaultPad="2" tableAlign="center" fillParent="true"
 	defaultFillX="true">
 	<:row>
-		<label>@pregame-tileset</label>
-		<selectBox onChange="setTileset">
-			<:each tileset="$getAvailableTilesets">
-				{tileset}
-			</:each>
-		</selectBox>
-	</:row>
-	<:row>
 		<label>@pregame-mapwidth</label>
 		<intSpinner id="mapWidth" min=0 max=1024 step=64
 			value="$getMapWidth" onChange="setMapDimension" />
@@ -20,11 +12,7 @@
 	</:row>
 	<:row>
 		<label>@pregame-generator</label>
-		<selectBox onChange="setMapGenerator">
-			<:each generator="$getAvailableGenerators">
-				{generator}
-			</:each>
-		</selectBox>
+		<selectBox id="map-generator-select" onChange="setMapGenerator"/>
 	</:row>
 	<:row>
 		<label>@pregame-seed</label>

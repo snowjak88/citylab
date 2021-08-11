@@ -27,6 +27,14 @@ class MapGenerator {
 		this.gen.setSeed(seed);
 	}
 	
+	public String getTitle() {
+		gen.title
+	}
+	
+	public String getDescription() {
+		gen.description
+	}
+	
 	/**
 	 * Run this generator, producing a new map with the given dimensions in tiles/cells.
 	 * <p>

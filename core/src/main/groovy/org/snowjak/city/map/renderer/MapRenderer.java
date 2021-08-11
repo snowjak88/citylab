@@ -25,7 +25,10 @@ import static com.badlogic.gdx.graphics.g2d.Batch.Y3;
 import static com.badlogic.gdx.graphics.g2d.Batch.Y4;
 
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.function.Consumer;
 
+import org.snowjak.city.GameData;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.tiles.Tile;
 
@@ -49,10 +52,16 @@ import com.badlogic.gdx.math.Vector3;
  * @author snowjak88
  *
  */
-public class MapRenderer {
+public class MapRenderer implements RenderingSupport {
 	
 	private static final int NUM_VERTICES = 20;
 	private static final float DEFAULT_TILE_GRID_WIDTH = 32f, DEFAULT_TILE_GRID_HEIGHT = 16f;
+	
+	final private float unitScale = 1f / DEFAULT_TILE_GRID_WIDTH;
+	final private float tileWidth = DEFAULT_TILE_GRID_WIDTH * unitScale;
+	final private float tileHeight = DEFAULT_TILE_GRID_HEIGHT * unitScale;
+	final private float halfTileWidth = tileWidth * 0.5f;
+	final private float halfTileHeight = tileHeight * 0.5f;
 	
 	private Matrix4 isoTransform;
 	private Matrix4 invIsotransform;
@@ -69,7 +78,6 @@ public class MapRenderer {
 	private final float[] vertices = new float[NUM_VERTICES];
 	
 	private CityMap map;
-	private float unitScale = 1f / DEFAULT_TILE_GRID_WIDTH;
 	private Batch batch;
 	private boolean ownsBatch = false;
 	
@@ -160,18 +168,13 @@ public class MapRenderer {
 		
 		batch.begin();
 		
-		final Color batchColor = batch.getColor();
-		final float color = Color.toFloatBits(batchColor.r, batchColor.g, batchColor.b, batchColor.a);
-		
-		final float tileWidth = DEFAULT_TILE_GRID_WIDTH * unitScale;
-		final float tileHeight = DEFAULT_TILE_GRID_HEIGHT * unitScale;
+		// final Color batchColor = batch.getColor();
+		// final float color = Color.toFloatBits(batchColor.r, batchColor.g,
+		// batchColor.b, batchColor.a);
 		
 		final float layerOffsetX = 0;
 		// offset in tiled is y down, so we flip it
 		final float layerOffsetY = -0;
-		
-		final float halfTileWidth = tileWidth * 0.5f;
-		final float halfTileHeight = tileHeight * 0.5f;
 		
 		// setting up the screen points
 		// COL1
@@ -186,154 +189,179 @@ public class MapRenderer {
 		
 		// transforming screen coordinates to iso coordinates (so we don't render more
 		// than we need to)
-		int row1 = (int) (translateScreenToIso(topLeft).y / tileWidth) - 2;
-		int row2 = (int) (translateScreenToIso(bottomRight).y / tileWidth) + 2;
+		int row1 = (int) (viewportToWorld(topLeft).y / tileWidth) - 2;
+		int row2 = (int) (viewportToWorld(bottomRight).y / tileWidth) + 2;
 		
-		int col1 = (int) (translateScreenToIso(bottomLeft).x / tileWidth) - 2;
-		int col2 = (int) (translateScreenToIso(topRight).x / tileWidth) + 2;
+		int col1 = (int) (viewportToWorld(bottomLeft).x / tileWidth) - 2;
+		int col2 = (int) (viewportToWorld(topRight).x / tileWidth) + 2;
+		
+		final SortedSet<AbstractMapRenderingHook> renderingHooks = GameData.get().mapRenderingHooks;
 		
 		for (int row = row2; row >= row1; row--) {
 			for (int col = col1; col <= col2; col++) {
 				
 				if (!map.isValidCell(col, row))
 					continue;
-				
-				for (Tile tile : map.getTiles(col, row)) {
 					
-					final int altitude = map.getTileAltitude(col, row, tile.getBase());
-					
-					final float tileScale = DEFAULT_TILE_GRID_WIDTH / (float) tile.getGridWidth();
-					
-					final float altitudeFactor = ((float) altitude * tile.getAltitudeOffset() * unitScale * tileScale);
-					final float surfaceFactor = ((float) tile.getSurfaceOffset() * unitScale * tileScale);
-					
-					final float x = (col * halfTileWidth) + (row * halfTileWidth);
-					final float y = (row * halfTileHeight) - (col * halfTileHeight) + altitudeFactor - surfaceFactor;
-					
-					final boolean flipX = false;// cell.getFlipHorizontally();
-					final boolean flipY = false;// cell.getFlipVertically();
-					final int rotations = 0;// cell.getRotation();
-					
-					TextureRegion region = tile.getSprite();
-					
-					final float x1 = x + layerOffsetX;
-					final float y1 = y + layerOffsetY;
-					final float x2 = x1 + region.getRegionWidth() * unitScale * tileScale;
-					final float y2 = y1 + region.getRegionHeight() * unitScale * tileScale;
-					
-					final float u1 = region.getU();
-					final float v1 = region.getV2();
-					final float u2 = region.getU2();
-					final float v2 = region.getV();
-					
-					vertices[X1] = x1;
-					vertices[Y1] = y1;
-					vertices[C1] = color;
-					vertices[U1] = u1;
-					vertices[V1] = v1;
-					
-					vertices[X2] = x1;
-					vertices[Y2] = y2;
-					vertices[C2] = color;
-					vertices[U2] = u1;
-					vertices[V2] = v2;
-					
-					vertices[X3] = x2;
-					vertices[Y3] = y2;
-					vertices[C3] = color;
-					vertices[U3] = u2;
-					vertices[V3] = v2;
-					
-					vertices[X4] = x2;
-					vertices[Y4] = y1;
-					vertices[C4] = color;
-					vertices[U4] = u2;
-					vertices[V4] = v1;
-					
-					if (flipX) {
-						float temp = vertices[U1];
-						vertices[U1] = vertices[U3];
-						vertices[U3] = temp;
-						temp = vertices[U2];
-						vertices[U2] = vertices[U4];
-						vertices[U4] = temp;
-					}
-					if (flipY) {
-						float temp = vertices[V1];
-						vertices[V1] = vertices[V3];
-						vertices[V3] = temp;
-						temp = vertices[V2];
-						vertices[V2] = vertices[V4];
-						vertices[V4] = temp;
-					}
-					if (rotations != 0) {
-						switch (rotations) {
-						case Cell.ROTATE_90: {
-							float tempV = vertices[V1];
-							vertices[V1] = vertices[V2];
-							vertices[V2] = vertices[V3];
-							vertices[V3] = vertices[V4];
-							vertices[V4] = tempV;
-							
-							float tempU = vertices[U1];
-							vertices[U1] = vertices[U2];
-							vertices[U2] = vertices[U3];
-							vertices[U3] = vertices[U4];
-							vertices[U4] = tempU;
-							break;
-						}
-						case Cell.ROTATE_180: {
-							float tempU = vertices[U1];
-							vertices[U1] = vertices[U3];
-							vertices[U3] = tempU;
-							tempU = vertices[U2];
-							vertices[U2] = vertices[U4];
-							vertices[U4] = tempU;
-							float tempV = vertices[V1];
-							vertices[V1] = vertices[V3];
-							vertices[V3] = tempV;
-							tempV = vertices[V2];
-							vertices[V2] = vertices[V4];
-							vertices[V4] = tempV;
-							break;
-						}
-						case Cell.ROTATE_270: {
-							float tempV = vertices[V1];
-							vertices[V1] = vertices[V4];
-							vertices[V4] = vertices[V3];
-							vertices[V3] = vertices[V2];
-							vertices[V2] = tempV;
-							
-							float tempU = vertices[U1];
-							vertices[U1] = vertices[U4];
-							vertices[U4] = vertices[U3];
-							vertices[U3] = vertices[U2];
-							vertices[U2] = tempU;
-							break;
-						}
-						}
-					}
-					batch.draw(region.getTexture(), vertices, 0, NUM_VERTICES);
-				}
+				// for (Tile tile : map.getTiles(col, row)) {
+				//
+				// }
+				for (MapRenderingHook hook : renderingHooks)
+					hook.renderCell(col, row, this);
 			}
 		}
 		
 		batch.end();
 	}
 	
-	public Vector3 translateIsoToScreen(Vector2 iso) {
+	@Override
+	public void render(Consumer<Batch> customRenderer) {
+		
+		customRenderer.accept(batch);
+	}
+	
+	@Override
+	public void renderTile(int col, int row, Tile tile, Color tint) {
+		
+		final float color;
+		if (tint == null)
+			color = Color.toFloatBits(batch.getColor().r, batch.getColor().g, batch.getColor().b, batch.getColor().a);
+		else
+			color = Color.toFloatBits(tint.r, tint.g, tint.b, tint.a);
+		
+		final int altitude = map.getTileAltitude(col, row, tile.getBase());
+		
+		final float tileScale = DEFAULT_TILE_GRID_WIDTH / (float) tile.getGridWidth();
+		
+		final float altitudeFactor = ((float) altitude * tile.getAltitudeOffset() * unitScale * tileScale);
+		final float surfaceFactor = ((float) tile.getSurfaceOffset() * unitScale * tileScale);
+		
+		final float x = (col * halfTileWidth) + (row * halfTileWidth);
+		final float y = (row * halfTileHeight) - (col * halfTileHeight) + altitudeFactor - surfaceFactor;
+		
+		final boolean flipX = false;// cell.getFlipHorizontally();
+		final boolean flipY = false;// cell.getFlipVertically();
+		final int rotations = 0;// cell.getRotation();
+		
+		TextureRegion region = tile.getSprite();
+		
+		// final float x1 = x + layerOffsetX;
+		// final float y1 = y + layerOffsetY;
+		final float x1 = x;
+		final float y1 = y;
+		final float x2 = x1 + region.getRegionWidth() * unitScale * tileScale;
+		final float y2 = y1 + region.getRegionHeight() * unitScale * tileScale;
+		
+		final float u1 = region.getU();
+		final float v1 = region.getV2();
+		final float u2 = region.getU2();
+		final float v2 = region.getV();
+		
+		vertices[X1] = x1;
+		vertices[Y1] = y1;
+		vertices[C1] = color;
+		vertices[U1] = u1;
+		vertices[V1] = v1;
+		
+		vertices[X2] = x1;
+		vertices[Y2] = y2;
+		vertices[C2] = color;
+		vertices[U2] = u1;
+		vertices[V2] = v2;
+		
+		vertices[X3] = x2;
+		vertices[Y3] = y2;
+		vertices[C3] = color;
+		vertices[U3] = u2;
+		vertices[V3] = v2;
+		
+		vertices[X4] = x2;
+		vertices[Y4] = y1;
+		vertices[C4] = color;
+		vertices[U4] = u2;
+		vertices[V4] = v1;
+		
+		if (flipX) {
+			float temp = vertices[U1];
+			vertices[U1] = vertices[U3];
+			vertices[U3] = temp;
+			temp = vertices[U2];
+			vertices[U2] = vertices[U4];
+			vertices[U4] = temp;
+		}
+		if (flipY) {
+			float temp = vertices[V1];
+			vertices[V1] = vertices[V3];
+			vertices[V3] = temp;
+			temp = vertices[V2];
+			vertices[V2] = vertices[V4];
+			vertices[V4] = temp;
+		}
+		if (rotations != 0) {
+			switch (rotations) {
+			case Cell.ROTATE_90: {
+				float tempV = vertices[V1];
+				vertices[V1] = vertices[V2];
+				vertices[V2] = vertices[V3];
+				vertices[V3] = vertices[V4];
+				vertices[V4] = tempV;
+				
+				float tempU = vertices[U1];
+				vertices[U1] = vertices[U2];
+				vertices[U2] = vertices[U3];
+				vertices[U3] = vertices[U4];
+				vertices[U4] = tempU;
+				break;
+			}
+			case Cell.ROTATE_180: {
+				float tempU = vertices[U1];
+				vertices[U1] = vertices[U3];
+				vertices[U3] = tempU;
+				tempU = vertices[U2];
+				vertices[U2] = vertices[U4];
+				vertices[U4] = tempU;
+				float tempV = vertices[V1];
+				vertices[V1] = vertices[V3];
+				vertices[V3] = tempV;
+				tempV = vertices[V2];
+				vertices[V2] = vertices[V4];
+				vertices[V4] = tempV;
+				break;
+			}
+			case Cell.ROTATE_270: {
+				float tempV = vertices[V1];
+				vertices[V1] = vertices[V4];
+				vertices[V4] = vertices[V3];
+				vertices[V3] = vertices[V2];
+				vertices[V2] = tempV;
+				
+				float tempU = vertices[U1];
+				vertices[U1] = vertices[U4];
+				vertices[U4] = vertices[U3];
+				vertices[U3] = vertices[U2];
+				vertices[U2] = tempU;
+				break;
+			}
+			}
+		}
+		
+		batch.draw(region.getTexture(), vertices, 0, NUM_VERTICES);
+	}
+	
+	@Override
+	public Vector2 worldToViewport(Vector2 iso) {
 		
 		scratchV3.set(iso.x, iso.y, 0);
 		scratchV3.mul(isoTransform);
 		
-		return scratchV3;
+		return new Vector2(scratchV3.x, scratchV3.y);
 	}
 	
-	public Vector3 translateScreenToIso(Vector2 vec) {
+	public Vector2 viewportToWorld(Vector2 vec) {
 		
 		scratchV3.set(vec.x, vec.y, 0);
 		scratchV3.mul(invIsotransform);
 		
-		return scratchV3;
+		return new Vector2(scratchV3.x, scratchV3.y);
 	}
 }

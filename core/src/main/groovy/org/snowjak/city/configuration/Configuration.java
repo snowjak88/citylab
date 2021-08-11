@@ -5,7 +5,10 @@ import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.generator.MapGeneratorLoader;
 import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.map.tiles.TileSetLoader;
+import org.snowjak.city.module.Module;
+import org.snowjak.city.module.ModuleLoader;
 import org.snowjak.city.service.ScaleService;
+import org.snowjak.city.service.TileSetService;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
@@ -47,7 +50,7 @@ public class Configuration {
 	private static final Logger LOG = LoggerService.forClass(Configuration.class);
 	
 	/** Name of the application's preferences file. */
-	public static final String PREFERENCES = "jCity";
+	public static final String PREFERENCES_NAME = "jCity";
 	/** Path to the internationalization bundle. */
 	@I18nBundle
 	private final String bundlePath = "i18n/bundle";
@@ -81,13 +84,13 @@ public class Configuration {
 	 * methods methods will be automatically added to LML templates - see
 	 * settings.lml template.
 	 */
-	@SoundVolume(preferences = PREFERENCES)
+	@SoundVolume(preferences = PREFERENCES_NAME)
 	private final String soundVolume = "soundVolume";
-	@SoundEnabled(preferences = PREFERENCES)
+	@SoundEnabled(preferences = PREFERENCES_NAME)
 	private final String soundEnabled = "soundOn";
-	@MusicVolume(preferences = PREFERENCES)
+	@MusicVolume(preferences = PREFERENCES_NAME)
 	private final String musicVolume = "musicVolume";
-	@MusicEnabled(preferences = PREFERENCES)
+	@MusicEnabled(preferences = PREFERENCES_NAME)
 	private final String musicEnabledPreference = "musicOn";
 	
 	/**
@@ -95,14 +98,14 @@ public class Configuration {
 	 * preferences file. Locale changing actions will be automatically added to LML
 	 * templates - see settings.lml template.
 	 */
-	@I18nLocale(propertiesPath = PREFERENCES, defaultLocale = "en")
+	@I18nLocale(propertiesPath = PREFERENCES_NAME, defaultLocale = "en")
 	private final String localePreference = "locale";
 	@AvailableLocales
 	private final String[] availableLocales = new String[] { "en" };
 	
 	/** Setting the default Preferences object path. */
 	@Preference
-	private final String preferencesPath = PREFERENCES;
+	private final String preferencesPath = PREFERENCES_NAME;
 	
 	/**
 	 * Thanks to the Initiate annotation, this method will be automatically invoked
@@ -116,7 +119,7 @@ public class Configuration {
 	 */
 	@Initiate
 	public void initiateConfiguration(final InterfaceService interfaceService, final ScaleService scaleService,
-			final SkinService skinService, final AssetService assetService) {
+			final SkinService skinService, final AssetService assetService, final TileSetService tilesetService) {
 		
 		// Loading default VisUI skin with the selected scale:
 		VisUI.load(scaleService.getScale());
@@ -131,7 +134,7 @@ public class Configuration {
 		Lml.EXTRACT_UNANNOTATED_METHODS = false;
 		
 		addExternalBundles(interfaceService);
-		addCustomAssetLoaders(assetService);
+		addCustomAssetLoaders(assetService, tilesetService);
 	}
 	
 	private void addExternalBundles(InterfaceService interfaceService) {
@@ -165,14 +168,18 @@ public class Configuration {
 		LOG.info("Finished scanning for external bundles.");
 	}
 	
-	private void addCustomAssetLoaders(AssetService assetService) {
+	private void addCustomAssetLoaders(AssetService assetService, TileSetService tilesetService) {
 		
 		final TileSetLoader tileSetLoader = new TileSetLoader(CityGame.RESOLVER);
-		assetService.getAssetManager().setLoader(TileSet.class, ".groovy", tileSetLoader);
-		assetService.getEagerAssetManager().setLoader(TileSet.class, ".groovy", tileSetLoader);
+		assetService.getAssetManager().setLoader(TileSet.class, tileSetLoader);
+		assetService.getEagerAssetManager().setLoader(TileSet.class, tileSetLoader);
 		
 		final MapGeneratorLoader mapGeneratorLoader = new MapGeneratorLoader(CityGame.RESOLVER);
-		assetService.getAssetManager().setLoader(MapGenerator.class, ".groovy", mapGeneratorLoader);
-		assetService.getEagerAssetManager().setLoader(MapGenerator.class, ".groovy", mapGeneratorLoader);
+		assetService.getAssetManager().setLoader(MapGenerator.class, mapGeneratorLoader);
+		assetService.getEagerAssetManager().setLoader(MapGenerator.class, mapGeneratorLoader);
+		
+		final ModuleLoader moduleLoader = new ModuleLoader(CityGame.RESOLVER, tilesetService);
+		assetService.getAssetManager().setLoader(Module.class, moduleLoader);
+		assetService.getEagerAssetManager().setLoader(Module.class, moduleLoader);
 	}
 }

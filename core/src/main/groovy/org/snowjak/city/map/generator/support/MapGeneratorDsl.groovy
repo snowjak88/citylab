@@ -43,6 +43,7 @@ class MapGeneratorDsl {
 	private static final Random RND = new Random(System.currentTimeMillis())
 	private static final String GLOBAL_SEED_NAME = "GLOBAL"
 	
+	String title, description
 	Module altitude
 	FlavorsProducer flavors
 	

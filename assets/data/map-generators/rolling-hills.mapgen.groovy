@@ -1,3 +1,6 @@
+title = "Rolling Hills"
+description = "rolling hills abound, why not"
+
 def lowest = 0
 def highest = 4
 

@@ -1,8 +1,5 @@
-println "In default.groovy"
-
-id = "default"
-title = "Default tileset"
-description = "Default world tileset, being the developer's first Blender project."
+title = "Default landscape tileset"
+description = "Default landscape tileset, being the developer's first Blender project."
 
 //
 // The grid-dimensions for which this tileset was designed

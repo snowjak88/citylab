@@ -12,15 +12,13 @@ import org.snowjak.city.input.GameInputProcessor;
 import org.snowjak.city.input.ScrollEventReceiver;
 import org.snowjak.city.map.renderer.MapRenderer;
 import org.snowjak.city.module.Module;
-import org.snowjak.city.service.MapGeneratorService;
-import org.snowjak.city.service.TileSetService;
 
+import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -28,15 +26,12 @@ import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.github.czyzby.autumn.annotation.Inject;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewController;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewInitializer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewRenderer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewResizer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewShower;
 import com.github.czyzby.autumn.mvc.stereotype.View;
-import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
 import com.github.czyzby.lml.parser.action.ActionContainer;
 
 /**
@@ -52,14 +47,6 @@ import com.github.czyzby.lml.parser.action.ActionContainer;
  */
 @View(id = "gameScreen", value = "ui/templates/gameScreen.lml")
 public class GameScreenController implements ViewInitializer, ViewShower, ViewRenderer, ViewResizer, ActionContainer {
-	
-	private static final Logger LOG = LoggerService.forClass(GameScreenController.class);
-	
-	@Inject
-	private MapGeneratorService mapGeneratorService;
-	
-	@Inject
-	private TileSetService tileSetService;
 	
 	private final GameInputProcessor inputProcessor = new GameInputProcessor();
 	private final Viewport viewport = new FitViewport(8, 8);
@@ -83,16 +70,16 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 		
 		final Vector2 scratch = new Vector2();
 		scratch.set(0, 0);
-		final Vector3 worldBound1 = renderer.translateIsoToScreen(scratch).cpy();
+		final Vector2 worldBound1 = renderer.worldToViewport(scratch).cpy();
 		
 		scratch.set(0, data.map.getHeight());
-		final Vector3 worldBound2 = renderer.translateIsoToScreen(scratch).cpy();
+		final Vector2 worldBound2 = renderer.worldToViewport(scratch).cpy();
 		
 		scratch.set(data.map.getWidth(), 0);
-		final Vector3 worldBound3 = renderer.translateIsoToScreen(scratch).cpy();
+		final Vector2 worldBound3 = renderer.worldToViewport(scratch).cpy();
 		
 		scratch.set(data.map.getWidth(), data.map.getHeight());
-		final Vector3 worldBound4 = renderer.translateIsoToScreen(scratch).cpy();
+		final Vector2 worldBound4 = renderer.worldToViewport(scratch).cpy();
 		
 		minWorldX = min(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
 		minWorldY = min(worldBound1.y, worldBound2.y, worldBound3.y, worldBound4.y);
@@ -198,6 +185,10 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 	public void render(Stage stage, float delta) {
 		
 		stage.act(delta);
+		
+		final Engine entityEngine = GameData.get().entityEngine;
+		if (entityEngine != null)
+			entityEngine.update(delta);
 		
 		if (renderer != null) {
 			viewport.apply();

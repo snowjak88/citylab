@@ -3,12 +3,9 @@
  */
 package org.snowjak.city.map
 
-import java.util.function.DoubleConsumer
-
-import org.snowjak.city.GameData
-import org.snowjak.city.map.tiles.Tile
 import org.snowjak.city.map.tiles.TileCorner
-import org.snowjak.city.map.tiles.TileSet
+
+import com.badlogic.ashley.core.Entity
 
 /**
  * Manages the game map.
@@ -26,7 +23,7 @@ public class CityMap {
 	
 	private List<String>[][] vertices
 	private int[][] vertexAltitudes
-	private List<Tile>[][] cells
+	private Set<Entity>[][] entities
 	
 	/**
 	 * Are the given cell-coordinates located within this map?
@@ -35,9 +32,9 @@ public class CityMap {
 	 * @return
 	 */
 	public boolean isValidCell(int cellX, int cellY) {
-		( (cells != null)
+		( (entities != null)
 				&& (cellX >= 0) && (cellY >= 0)
-				&& (cellX < cells.length) && ( cellY < cells[cellX].length) )
+				&& (cellX < getWidth()) && ( cellY < getHeight()) )
 	}
 	
 	/**
@@ -50,7 +47,7 @@ public class CityMap {
 		
 		vertices = new List<String>[width+1][height+1]
 		vertexAltitudes = new int[width+1][height+1]
-		cells = new List<Tile>[width][height]
+		entities = new List<Entity>[width][height]
 	}
 	
 	/**
@@ -226,7 +223,7 @@ public class CityMap {
 	}
 	
 	/**
-	 * Get the list of assigned {@link Tile}s at this location, or {@link Collections#emptyList()} if no Tiles are assigned.
+	 * Get the set of assigned {@link Entity Entities} at this location, or {@link Collections#emptyList()} if no Entities are assigned.
 	 * @param cellX
 	 * @param cellY
 	 * @return
@@ -234,78 +231,72 @@ public class CityMap {
 	 *             if ({@code cellX}) or
 	 *             ({@code cellY}) fall outside the map
 	 */
-	public List<Tile> getTiles(int cellX, int cellY) {
+	public Set<Entity> getEntities(int cellX, int cellY) {
+		
 		if(!isValidCell(cellX, cellY))
 			throw new ArrayIndexOutOfBoundsException(String.format("Given cell index [%d,%d] is out of bounds.", cellX, cellY));
 		
-		if( cells[cellX][cellY] == null )
-			return Collections.emptyList()
+		if(entities[cellX][cellY] == null)
+			return Collections.emptyList();
 		
-		Collections.unmodifiableList cells[cellX][cellY]
+		Collections.unmodifiableSet entities[cellX][cellY]
 	}
 	
 	/**
-	 * Calls {@link #updateTiles(TileSet)} with the currently-registered {@link TileSet} in {@link GameData}.
-	 * <p>
-	 * If {@link GameData#tileset} is not set, does nothing.
-	 * </p>
-	 * @param progressUpdater optional progress-reporter. Called on every map-cell with values in [0,1]
-	 */
-	public void updateTiles(DoubleConsumer progressUpdater = {p -> }) {
-		updateTiles GameData.get().tileset, progressUpdater
-	}
-	
-	/**
-	 * Updates the {@link Tile} assignments for every square in this map.
-	 * @param tilset
-	 * @param progressUpdater optional progress-reporter. Called on every map-cell with values in [0,1]
-	 */
-	public void updateTiles(TileSet tilset, DoubleConsumer progressUpdater = {p -> }) {
-		updateTiles tilset, 0, 0, cells.length, cells[0].length, progressUpdater
-	}
-	
-	/**
-	 * Updates the {@link Tile} assignments for every square in this map, starting
-	 * from cell {@code startX,startY} and proceeding in a rectangle of {@code width,height} cells.
+	 * Add the given Entity to the given cell.
 	 * 
-	 * @param tileset
-	 * @param startX
-	 * @param startY
-	 * @param width
-	 * @param height
-	 * @param progressUpdater optional progress-reporter. Called on every map-cell with values in [0,1]
+	 * <p>
+	 * <strong>Note</strong> that this doesn't check to see if this Entity
+	 * is already associated with any other cell -- you have to take care of that bookkeeping yourself.
+	 * </p>
+	 * 
+	 * @param cellX
+	 * @param cellY
+	 * @param entity
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if ({@code cellX}) or
+	 *             ({@code cellY}) fall outside the map
 	 */
-	public void updateTiles(TileSet tileset, int startX, int startY, int width, int height, DoubleConsumer progressUpdater = {p -> }) {
-		progressUpdater.accept 0.0
+	public void addEntity( int cellX, int cellY, Entity entity) {
+		if(!isValidCell(cellX, cellY))
+			throw new ArrayIndexOutOfBoundsException(String.format("Given cell index [%d,%d] is out of bounds.", cellX, cellY));
 		
-		tileset.mutate this, { p -> progressUpdater(p/2.0) }
-		final double finalCount = (width * height)
-		final double progressStep = 1.0 / finalCount
+		if(entities[cellX][cellY] == null)
+			entities[cellX][cellY] = new LinkedHashSet<>();
 		
-		double progress = 0.0
-		
-		for(int x in startX..startX+width-1) {
-			if(x < 0 || x >= cells.length)
-				continue;
-			
-			for(int y in startY..startY+height-1) {
-				if(y < 0 || y >= cells[x].length)
-					continue;
-				
-				progressUpdater.accept progress
-				progress += progressStep
-				
-				cells[x][y] = tileset.getMinimalTilesFor(this, x, y)
-			}
-		}
+		entities[cellX][cellY] << entity
 	}
+	
+	/**
+	 * Remove the given Entity from the given cell, if it exists
+	 *
+	 * <p>
+	 * <strong>Note</strong> that this doesn't check to see if this Entity
+	 * is already associated with any other cell -- you have to take care of that bookkeeping yourself.
+	 * </p>
+	 *
+	 * @param cellX
+	 * @param cellY
+	 * @param entity
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if ({@code cellX}) or
+	 *             ({@code cellY}) fall outside the map
+	 */
+	public void removeEntity( int cellX, int cellY, Entity entity) {
+		if(!isValidCell(cellX, cellY))
+			throw new ArrayIndexOutOfBoundsException(String.format("Given cell index [%d,%d] is out of bounds.", cellX, cellY));
+		
+		if(entities[cellX][cellY] != null)
+			entities[cellX][cellY].remove entity
+	}
+	
 	
 	/**
 	 * Returns the width of this map, expressed in cells. This map's width in vertices will be this value, plus 1.
 	 * @return
 	 */
 	public int getWidth() {
-		cells.length
+		entities.length
 	}
 	
 	/**
@@ -313,6 +304,6 @@ public class CityMap {
 	 * @return
 	 */
 	public int getHeight() {
-		cells[0].length
+		entities[0].length
 	}
 }
