@@ -17,35 +17,18 @@ To that end, I've tried to implement some useful DSLs (Domain-Specific Languages
 
  - Map-generators
  - Tile-sets
+ - Modules
  
- The tile-set DSL, especially, I've put a lot of work into.
- 
-When I get around to it, the plan is to enable entire gameplay modules to be loaded that way as well -- new map-overlays, new buildings, new mechanics.
+## Recent Changes
 
-### Notes for the future
+Tile-fitting -- or, more properly, *terrain* tile-fitting -- is carried out in a new entity-processing system, which itself is defined at run-time in our very first Module! The CityMap instance now just carries "flavors" from the map-generator (need to think of a better name for those), and a list of Entities for every cell.
 
-I've been feeling that the Tile-Set DSL is too cluttered. That, and it doesn't do everything that I want it to do -- e.g.:
+Modules! Modules are here now. At present, you can define the following for each module:
 
- - allow you to easily include tile-set definitions in sub-folders that inherit their super-definition's properties.
- - support run-time tile properties -- e.g., enabling water-tiles to re-draw themselves at a higher or lower altitude as need be
+ * entity systems (at present only IteratingSystem is supported, but it's trivial to add).
+ * "rendering hooks" -- i.e., a callback that's executed for every map-cell that gets rendered. A chance for your Module to put something on the map, so to speak.
 
-## Gradle
+What's yet to be added:
+ * UI elements
 
-This project uses [Gradle](http://gradle.org/) to manage dependencies. Gradle wrapper was included, so you can run Gradle tasks using `gradlew.bat` or `./gradlew` commands. Useful Gradle tasks and flags:
-
-- `--continue`: when using this flag, errors will not stop the tasks from running.
-- `--daemon`: thanks to this flag, Gradle daemon will be used to run chosen tasks.
-- `--offline`: when using this flag, cached dependency archives will be used.
-- `--refresh-dependencies`: this flag forces validation of all dependencies. Useful for snapshot versions.
-- `build`: builds sources and archives of every project.
-- `cleanEclipse`: removes Eclipse project data.
-- `cleanIdea`: removes IntelliJ project data.
-- `clean`: removes `build` folders, which store compiled classes and built archives.
-- `eclipse`: generates Eclipse project data.
-- `idea`: generates IntelliJ project data.
-- `lwjgl3:jar`: builds application's runnable jar, which can be found at `lwjgl3/build/libs`.
-- `lwjgl3:run`: starts the application.
-- `test`: runs unit tests (if any).
-
-Note that most tasks that are not specific to a single project can be run with `name:` prefix, where the `name` should be replaced with the ID of a specific project.
-For example, `core:clean` removes `build` folder only from the `core` project.
+Defined a new AbstractScriptService (or whatever I called it), which purports to render more efficient the task of serving up those resources we load that are implemented by a Groovy script. Really just cuts down on the boilerplate a bit.
