@@ -18,10 +18,15 @@ tilesetName = preference('tileset-name', 'default-landscape.tileset')
 tileset = tileSetService.get(tilesetName)
 
 //
+// ComponentMappers make us faster at querying and retrieving Components from entities
+terrainMapper = ComponentMapper.getFor(HasTerrainTile)
+atCellMapper = ComponentMapper.getFor(AtMapCell)
+
+//
 // Declare an entity-processing system.
 //
 iteratingSystem 'terrainFittingSystem', Family.all(AtMapCell).exclude(HasTerrainTile).get(), { entity, deltaTime ->
-	def mapCell = entity.getComponent(AtMapCell)
+	def mapCell = atCellMapper.get(entity)
 	
 	def tiles = tileset.getMinimalTilesFor(data.map, (int) mapCell.cellX, (int) mapCell.cellY)
 	
@@ -33,13 +38,7 @@ iteratingSystem 'terrainFittingSystem', Family.all(AtMapCell).exclude(HasTerrain
 // Declare a hook into the map-rendering loop.
 //
 renderHook 0, { cellX, cellY, support ->
-	for(def entity in data.map.getEntities(cellX, cellY)) {
-		
-		def terrainTile = entity.getComponent(HasTerrainTile)
-		if(terrainTile == null)
-			continue
-		
-		for(def tile in terrainTile.tiles)
+	for(def entity in data.map.getEntities(cellX, cellY, HasTerrainTile))
+		for(def tile in terrainMapper.get(entity).tiles)
 			support.renderTile cellX, cellY, tile
-	}
 }

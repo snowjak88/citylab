@@ -3,8 +3,12 @@
  */
 package org.snowjak.city.map
 
+import java.util.stream.Collectors
+
 import org.snowjak.city.map.tiles.TileCorner
 
+import com.badlogic.ashley.core.Component
+import com.badlogic.ashley.core.ComponentMapper
 import com.badlogic.ashley.core.Entity
 
 /**
@@ -24,6 +28,8 @@ public class CityMap {
 	private List<String>[][] vertices
 	private int[][] vertexAltitudes
 	private Set<Entity>[][] entities
+	
+	private final Map<Class<? extends Component>,ComponentMapper> componentMappers = [:]
 	
 	/**
 	 * Are the given cell-coordinates located within this map?
@@ -231,7 +237,7 @@ public class CityMap {
 	 *             if ({@code cellX}) or
 	 *             ({@code cellY}) fall outside the map
 	 */
-	public Set<Entity> getEntities(int cellX, int cellY) {
+	public Set<Entity> getEntities(int cellX, int cellY, Class<? extends Component> withComponentClass = null) {
 		
 		if(!isValidCell(cellX, cellY))
 			throw new ArrayIndexOutOfBoundsException(String.format("Given cell index [%d,%d] is out of bounds.", cellX, cellY));
@@ -239,7 +245,12 @@ public class CityMap {
 		if(entities[cellX][cellY] == null)
 			return Collections.emptyList();
 		
-		Collections.unmodifiableSet entities[cellX][cellY]
+		if(withComponentClass == null)
+			return Collections.unmodifiableSet(entities[cellX][cellY])
+		else {
+			def mapper = componentMappers.computeIfAbsent(withComponentClass, {c -> ComponentMapper.getFor(c)})
+			return entities[cellX][cellY].stream().filter({e -> mapper.has(e)}).collect(Collectors.toSet())
+		}
 	}
 	
 	/**
