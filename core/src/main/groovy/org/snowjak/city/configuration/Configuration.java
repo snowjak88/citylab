@@ -7,6 +7,7 @@ import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.map.tiles.TileSetLoader;
 import org.snowjak.city.module.Module;
 import org.snowjak.city.module.ModuleLoader;
+import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.ScaleService;
 import org.snowjak.city.service.TileSetService;
 
@@ -16,7 +17,6 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
-import com.github.czyzby.autumn.mvc.component.asset.AssetService;
 import com.github.czyzby.autumn.mvc.component.ui.InterfaceService;
 import com.github.czyzby.autumn.mvc.component.ui.SkinService;
 import com.github.czyzby.autumn.mvc.stereotype.preference.AvailableLocales;
@@ -119,7 +119,7 @@ public class Configuration {
 	 */
 	@Initiate
 	public void initiateConfiguration(final InterfaceService interfaceService, final ScaleService scaleService,
-			final SkinService skinService, final AssetService assetService, final TileSetService tilesetService) {
+			final SkinService skinService, final GameAssetService assetService, final TileSetService tilesetService) {
 		
 		// Loading default VisUI skin with the selected scale:
 		VisUI.load(scaleService.getScale());
@@ -168,18 +168,15 @@ public class Configuration {
 		LOG.info("Finished scanning for external bundles.");
 	}
 	
-	private void addCustomAssetLoaders(AssetService assetService, TileSetService tilesetService) {
+	private void addCustomAssetLoaders(GameAssetService assetService, TileSetService tilesetService) {
 		
 		final TileSetLoader tileSetLoader = new TileSetLoader(CityGame.RESOLVER);
-		assetService.getAssetManager().setLoader(TileSet.class, tileSetLoader);
-		assetService.getEagerAssetManager().setLoader(TileSet.class, tileSetLoader);
+		assetService.setLoader(TileSet.class, tileSetLoader);
 		
 		final MapGeneratorLoader mapGeneratorLoader = new MapGeneratorLoader(CityGame.RESOLVER);
-		assetService.getAssetManager().setLoader(MapGenerator.class, mapGeneratorLoader);
-		assetService.getEagerAssetManager().setLoader(MapGenerator.class, mapGeneratorLoader);
+		assetService.setLoader(MapGenerator.class, mapGeneratorLoader);
 		
 		final ModuleLoader moduleLoader = new ModuleLoader(CityGame.RESOLVER, tilesetService);
-		assetService.getAssetManager().setLoader(Module.class, moduleLoader);
-		assetService.getEagerAssetManager().setLoader(Module.class, moduleLoader);
+		assetService.setLoader(Module.class, moduleLoader);
 	}
 }

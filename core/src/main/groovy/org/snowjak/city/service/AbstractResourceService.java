@@ -3,6 +3,7 @@
  */
 package org.snowjak.city.service;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -12,7 +13,6 @@ import java.util.Set;
 
 import com.badlogic.gdx.files.FileHandle;
 import com.github.czyzby.autumn.annotation.Initiate;
-import com.github.czyzby.autumn.mvc.component.asset.AssetService;
 import com.github.czyzby.kiwi.log.Logger;
 import com.github.czyzby.kiwi.log.LoggerService;
 
@@ -20,31 +20,59 @@ import com.github.czyzby.kiwi.log.LoggerService;
  * @author snowjak88
  *
  */
-public abstract class AbstractScriptService<S, R> implements ScriptResourceService<S, R> {
+public abstract class AbstractResourceService<S, R> implements ResourceService<S, R> {
 	
-	private static final Logger LOG = LoggerService.forClass(AbstractScriptService.class);
+	/**
+	 * {@link ResourceConverter} that simply converts a resource into itself. Useful
+	 * where your resource-loader yields a useful resource already.
+	 */
+	public static final ResourceConverter<?, ?> IDENTITY_RESOURCE_CONVERTER = (s) -> s;
+	
+	private static final Logger LOG = LoggerService.forClass(AbstractResourceService.class);
 	
 	private final Class<S> toLoadType;
-	private final ResourceScriptConverter<S, R> scriptConverter;
-	private final AssetService assetService;
+	private final ResourceConverter<S, R> resourceConverter;
+	// private final Lazy<GameAssetService> deferredAssetService;
 	private final FileHandle baseDirectory;
 	private final boolean includeSubdirectories;
 	private final String extension;
 	
 	private final Map<String, FileHandle> scriptFiles = new HashMap<>();
 	private final Map<String, R> resources = new HashMap<>();
+	private final Map<String, RuntimeException> failedResources = new HashMap<>();
 	
-	public AbstractScriptService(Class<S> toLoadType, ResourceScriptConverter<S, R> scriptConverter,
-			AssetService assetService, FileHandle baseDirectory, boolean includeSubdirectories, String extension) {
+	private final GameAssetService assetService;
+	
+	@SuppressWarnings("unchecked")
+	public AbstractResourceService(Class<S> toLoadType, GameAssetService deferredAssetService, FileHandle baseDirectory,
+			boolean includeSubdirectories, String extension) {
+		
+		this(toLoadType, (ResourceConverter<S, R>) IDENTITY_RESOURCE_CONVERTER, deferredAssetService, baseDirectory,
+				includeSubdirectories, extension);
+	}
+	
+	public AbstractResourceService(Class<S> toLoadType, ResourceConverter<S, R> scriptConverter,
+			GameAssetService deferredAssetService, FileHandle baseDirectory, boolean includeSubdirectories,
+			String extension) {
 		
 		this.toLoadType = toLoadType;
-		this.scriptConverter = scriptConverter;
-		this.assetService = assetService;
+		this.resourceConverter = scriptConverter;
+		// this.deferredAssetService = deferredAssetService;
+		this.assetService = deferredAssetService;
 		this.baseDirectory = baseDirectory;
 		this.includeSubdirectories = includeSubdirectories;
 		this.extension = extension;
 	}
-
+	
+	/**
+	 * @return a list of those resources that failed to load, along with their
+	 *         corresponding exceptions
+	 */
+	public Map<String, RuntimeException> getLoadFailures() {
+		
+		return Collections.unmodifiableMap(failedResources);
+	}
+	
 	@Override
 	public Set<String> getLoadedNames() {
 		
@@ -74,11 +102,17 @@ public abstract class AbstractScriptService<S, R> implements ScriptResourceServi
 	public R get(String name, boolean waitToFinish) {
 		
 		//
+		// If this resource failed, then just return null.
+		//
+		if (failedResources.containsKey(name))
+			return null;
+			
+		//
 		// If we're still waiting for this resource to load --
 		// we'd better wait for this resource to finish loading.
 		//
 		if (waitToFinish && scriptFiles.containsKey(name) && !resources.containsKey(name)) {
-			assetService.finishLoading(scriptFiles.get(name).path(), toLoadType);
+			assetService.finishLoading(scriptFiles.get(name).path());
 			checkLoadedResources();
 			return get(name, true);
 		}
@@ -100,6 +134,9 @@ public abstract class AbstractScriptService<S, R> implements ScriptResourceServi
 	protected void initInternal() {
 		
 		LOG.info("Initializing ...");
+		
+		assetService.addFailureHandler(toLoadType, RuntimeException.class,
+				(a, e) -> failedResources.put(getNameFromFileHandle(a.file), e));
 		
 		scanDirectoryForScripts().forEach(f -> {
 			scriptFiles.put(getNameFromFileHandle(f), f);
@@ -154,6 +191,12 @@ public abstract class AbstractScriptService<S, R> implements ScriptResourceServi
 			final String name = entry.getKey();
 			final FileHandle file = entry.getValue();
 			
+			if (failedResources.containsKey(name)) {
+				LOG.info("Failed to load script \"{0}\" [{1}].", name, file.path());
+				scriptsIterator.remove();
+				continue;
+			}
+			
 			final S script = assetService.get(file.path(), toLoadType);
 			
 			//
@@ -165,7 +208,7 @@ public abstract class AbstractScriptService<S, R> implements ScriptResourceServi
 			}
 			
 			try {
-				final R resource = scriptConverter.convert(script);
+				final R resource = resourceConverter.convert(script);
 				
 				//
 				// Otherwise -- looks like it worked.
@@ -181,7 +224,7 @@ public abstract class AbstractScriptService<S, R> implements ScriptResourceServi
 	}
 	
 	@FunctionalInterface
-	public interface ResourceScriptConverter<S, R> {
+	public interface ResourceConverter<S, R> {
 		
 		public R convert(S script);
 	}

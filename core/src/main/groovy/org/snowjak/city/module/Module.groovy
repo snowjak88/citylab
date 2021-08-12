@@ -6,7 +6,7 @@ import org.snowjak.city.map.renderer.AbstractMapRenderingHook
 import org.snowjak.city.map.renderer.DelegatingMapRenderingHook
 import org.snowjak.city.map.renderer.MapRenderingHook
 import org.snowjak.city.map.tiles.TileSet
-import org.snowjak.city.service.ScriptResourceService
+import org.snowjak.city.service.ResourceService
 
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.EntitySystem
@@ -33,7 +33,7 @@ public class Module {
 	
 	String id, description
 	
-	ScriptResourceService<TileSet,TileSet> tileSetService
+	ResourceService<TileSet,TileSet> tileSetService
 	
 	final GameData data = GameData.get()
 	final Map<String,EntitySystem> systems = [:]

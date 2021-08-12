@@ -9,7 +9,6 @@ import org.snowjak.city.map.generator.support.MapGeneratorDsl;
 
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
-import com.github.czyzby.autumn.mvc.component.asset.AssetService;
 import com.github.czyzby.autumn.mvc.config.AutumnActionPriority;
 
 /**
@@ -19,12 +18,12 @@ import com.github.czyzby.autumn.mvc.config.AutumnActionPriority;
  *
  */
 @Component
-public class MapGeneratorService extends AbstractScriptService<MapGenerator, MapGenerator> {
+public class MapGeneratorService extends AbstractResourceService<MapGenerator, MapGenerator> {
 	
-	public MapGeneratorService(AssetService assetService) {
+	public MapGeneratorService(GameAssetService assetService) {
 		
-		super(MapGenerator.class, (mg) -> mg, assetService,
-				CityGame.RESOLVER.resolve(CityGame.EXTERNAL_ROOT_MAP_GENERATORS), true, ".mapgen.groovy");
+		super(MapGenerator.class, assetService, CityGame.RESOLVER.resolve(CityGame.EXTERNAL_ROOT_MAP_GENERATORS), true,
+				".mapgen.groovy");
 	}
 	
 	@Initiate(priority = AutumnActionPriority.LOW_PRIORITY)

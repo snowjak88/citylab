@@ -1,0 +1,23 @@
+<dialog id="resourceLoadFailures" title="@loadfailure-title"
+	style="dialog">
+	<table oneColumn=true growX=true>
+		<:each assetType="$getAssetTypes">
+			<:row padRight=15 padLeft=15 padTop=30 padBottom=5>
+				<label align=center>@loadfailure-{assetType}</label>
+			</:row>
+			<table id="{assetType}" growX=true>
+				<:each loadFailureID="$getLoadFailureIDs"
+					assetType={assetType}>
+					<:row>
+						<:column column="1" grow=false />
+						<:column column="2" grow=true />
+						<label id={loadFailureID} align=left>$getLoadFailureFile</label>
+						<label id={loadFailureID} align=right padLeft=30>$getLoadFailureMessage
+						</label>
+					</:row>
+				</:each>
+			</table>
+		</:each>
+	</table>
+	<textButton onResult="close">@loadfailure-close</textButton>
+</dialog>

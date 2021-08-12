@@ -8,6 +8,7 @@ import static org.snowjak.city.util.Util.min;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -50,6 +51,7 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 	private final GroovyShell shell;
 	
 	private final Map<FileHandle, TileSet> tileSets = new LinkedHashMap<>();
+	private final Map<FileHandle, RuntimeException> failures = new HashMap<>();
 	
 	/**
 	 * Construct a new {@link TileSetLoader}.
@@ -72,6 +74,9 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 	
 	@Override
 	public void loadAsync(AssetManager manager, String fileName, FileHandle file, TileSetLoaderParameters parameter) {
+		
+		if (failures.containsKey(file))
+			throw failures.get(file);
 		
 		final TileSet tileSet;
 		synchronized (this) {
@@ -112,6 +117,7 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 	public TileSet loadSync(AssetManager manager, String fileName, FileHandle file, TileSetLoaderParameters parameter) {
 		
 		synchronized (this) {
+			
 			return tileSets.get(file);
 		}
 	}
@@ -136,6 +142,7 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 			script.setDelegate(dsl);
 			script.run();
 			
+			dsl.validate();
 			final TileSet tileSet = dsl.build();
 			
 			for (Tile td : tileSet.getAllTiles())
@@ -145,6 +152,9 @@ public class TileSetLoader extends AsynchronousAssetLoader<TileSet, TileSetLoade
 				tileSets.put(file, tileSet);
 			}
 			
+		} catch (RuntimeException e) {
+			failures.put(file, e);
+			return null;
 		} catch (Throwable t) {
 			LOG.error(t, "Cannot load tile-set \"{0}\" -- unexpected exception.", file.path());
 			return null;

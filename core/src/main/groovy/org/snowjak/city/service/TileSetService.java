@@ -8,11 +8,7 @@ import org.snowjak.city.map.tiles.TileSet;
 
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
-import com.github.czyzby.autumn.annotation.Inject;
-import com.github.czyzby.autumn.annotation.Provider;
-import com.github.czyzby.autumn.mvc.component.asset.AssetService;
 import com.github.czyzby.autumn.mvc.config.AutumnActionPriority;
-import com.github.czyzby.autumn.provider.DependencyProvider;
 
 /**
  * Provides Tileset-related application-level services.
@@ -21,30 +17,11 @@ import com.github.czyzby.autumn.provider.DependencyProvider;
  *
  */
 @Component
-public class TileSetService extends AbstractScriptService<TileSet, TileSet> {
+public class TileSetService extends AbstractResourceService<TileSet, TileSet> {
 	
-	@Provider
-	public static class TileSetServiceProvider implements DependencyProvider<TileSetService> {
+	public TileSetService(GameAssetService assetService) {
 		
-		@Inject
-		private AssetService assetService;
-		
-		@Override
-		public Class<TileSetService> getDependencyType() {
-			
-			return TileSetService.class;
-		}
-		
-		@Override
-		public TileSetService provide() {
-			
-			return new TileSetService(assetService);
-		}
-	}
-	
-	public TileSetService(AssetService assetService) {
-		
-		super(TileSet.class, (t) -> t, assetService, CityGame.RESOLVER.resolve(CityGame.EXTERNAL_ROOT_TILESETS), true,
+		super(TileSet.class, assetService, CityGame.RESOLVER.resolve(CityGame.EXTERNAL_ROOT_TILESETS), true,
 				".tileset.groovy");
 	}
 	

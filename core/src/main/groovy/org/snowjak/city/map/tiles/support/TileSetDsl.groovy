@@ -8,6 +8,8 @@ import org.snowjak.city.map.tiles.Tile
 import org.snowjak.city.map.tiles.TileCorner
 import org.snowjak.city.map.tiles.TileRule
 import org.snowjak.city.map.tiles.TileSet
+import org.snowjak.city.util.validation.Validator
+import org.snowjak.city.util.validation.Validator.ValidationException
 
 /**
  * @author snowjak88
@@ -36,6 +38,26 @@ class TileSetDsl {
 	private boolean autoAdvance = false
 	
 	private List<TileDsl> tiles = []
+	
+	/**
+	 * A {@link Validator} configured for TileSetDsl instances
+	 */
+	public static final Validator<TileSetDsl> VALIDATOR = Validator.getFor(TileSetDsl)
+			.notBlank({it.title}, "Tile-set must have a non-blank title")
+			.notEmpty({it.tiles}, "Tile-set doesn't define any tiles")
+			.build()
+	
+	/**
+	 * Applies {@link #VALIDATOR} to this TileSetDsl instance
+	 * 
+	 * @throws ValidationException
+	 */
+	public void validate() throws ValidationException {
+		VALIDATOR.validate this
+		
+		for(def t in tiles)
+			t.validate()
+	}
 	
 	/**
 	 * Build a new tile. Implicitly calls {@link #next()} after the tile is defined.
@@ -134,6 +156,7 @@ class TileSetDsl {
 		def tsd = new TileSet(title, description, width, height, gridWidth, gridHeight, surfaceOffset, altitudeOffset, padding, mutatorInstances)
 		
 		tiles.each { dsl ->
+			
 			def rules = new LinkedList<>()
 			dsl.rules.each { r -> rules << new TileRule(r, dsl.ruleHelpers, new TileSupport()) }
 			def tile = new Tile(tsd, dsl.id, dsl.filename, dsl.x, dsl.y, dsl.width, dsl.height, dsl.gridWidth, dsl.gridHeight, dsl.padding, dsl.surfaceOffset, dsl.altitudeOffset, dsl.decoration, dsl.base, dsl.provision, rules)

@@ -1,8 +1,9 @@
 package org.snowjak.city.controller;
 
+import org.snowjak.city.service.GameAssetService;
+
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.github.czyzby.autumn.annotation.Inject;
-import com.github.czyzby.autumn.mvc.component.asset.AssetService;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewRenderer;
 import com.github.czyzby.autumn.mvc.stereotype.View;
 import com.github.czyzby.lml.annotation.LmlActor;
@@ -23,7 +24,7 @@ public class LoadingController implements ViewRenderer {
 	 * progress.
 	 */
 	@Inject
-	private AssetService assetService;
+	private GameAssetService assetService;
 	/**
 	 * This is a widget injected from the loading.lml template. "loadingBar" is its
 	 * ID.

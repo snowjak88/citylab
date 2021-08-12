@@ -14,7 +14,7 @@ import com.badlogic.gdx.files.FileHandle;
  * @author snowjak88
  *
  */
-public interface ScriptResourceService<S, R> {
+public interface ResourceService<S, R> {
 	
 	/**
 	 * @return the list of names for successfully-loaded resources
