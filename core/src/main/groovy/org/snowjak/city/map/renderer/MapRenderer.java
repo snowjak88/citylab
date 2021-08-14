@@ -25,7 +25,6 @@ import static com.badlogic.gdx.graphics.g2d.Batch.Y3;
 import static com.badlogic.gdx.graphics.g2d.Batch.Y4;
 
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.snowjak.city.GameData;
@@ -38,6 +37,9 @@ import org.snowjak.city.map.tiles.TileCorner;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Pixmap.Format;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -48,6 +50,8 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+
+import space.earlygrey.shapedrawer.ShapeDrawer;
 
 /**
  * Largely copies the logic of {@link IsometricTiledMapRenderer}, modified to
@@ -98,6 +102,7 @@ public class MapRenderer implements RenderingSupport {
 	
 	private CityMap map;
 	private Batch batch;
+	private ShapeDrawer shapeDrawer;
 	private boolean ownsBatch = false;
 	
 	/**
@@ -108,7 +113,7 @@ public class MapRenderer implements RenderingSupport {
 	public final AbstractCustomRenderingHook MAP_RENDERING_HOOK = new AbstractCustomRenderingHook(0) {
 		
 		@Override
-		public void render(RenderingSupport support) {
+		public void render(Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
 			
 			//
 			// This main rendering-hook handles rendering the actual map.
@@ -175,6 +180,15 @@ public class MapRenderer implements RenderingSupport {
 		
 		this.batch = (batch != null) ? batch : new SpriteBatch();
 		ownsBatch = (batch == null);
+		
+		final Pixmap shapeDrawerPixmap = new Pixmap(1, 1, Format.RGB888);
+		shapeDrawerPixmap.setColor(Color.WHITE);
+		shapeDrawerPixmap.fill();
+		final Texture shapeDrawerTexture = new Texture(shapeDrawerPixmap);
+		final TextureRegion shapeDrawerRegion = new TextureRegion(shapeDrawerTexture);
+		
+		this.shapeDrawer = new ShapeDrawer(this.batch, shapeDrawerRegion);
+		this.shapeDrawer.setDefaultLineWidth(1f / DISPLAYED_GRID_WIDTH);
 	}
 	
 	public void setView(OrthographicCamera camera) {
@@ -241,7 +255,7 @@ public class MapRenderer implements RenderingSupport {
 		batch.begin();
 		
 		for (AbstractCustomRenderingHook hook : GameData.get().customRenderingHooks)
-			hook.render(this);
+			hook.render(batch, shapeDrawer, this);
 		
 		batch.end();
 	}
@@ -266,12 +280,6 @@ public class MapRenderer implements RenderingSupport {
 		
 		return (cellX >= mapVisibleMinX && cellX <= mapVisibleMaxX && cellY >= mapVisibleMinY
 				&& cellY <= mapVisibleMaxY);
-	}
-	
-	@Override
-	public void render(Consumer<Batch> customRenderer) {
-		
-		customRenderer.accept(batch);
 	}
 	
 	@Override
@@ -410,9 +418,8 @@ public class MapRenderer implements RenderingSupport {
 	@Override
 	public Vector2[] getCellVertices(int col, int row, TileCorner base) {
 		
-		final Vector2[] result = new Vector2[4];
-		getCellVertices(col, row, result, base);
-		return result;
+		getCellVertices(col, row, cellVertices, base);
+		return cellVertices;
 	}
 	
 	/**

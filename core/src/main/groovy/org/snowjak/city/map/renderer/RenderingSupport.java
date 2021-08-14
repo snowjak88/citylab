@@ -12,6 +12,8 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
 
+import space.earlygrey.shapedrawer.ShapeDrawer;
+
 /**
  * @author snowjak88
  *
@@ -42,14 +44,6 @@ public interface RenderingSupport {
 	public void renderTile(int cellX, int cellY, Tile tile, Color tint);
 	
 	/**
-	 * Execute a custom rendering method, that consumes the active {@link Batch} and
-	 * uses it for some purpose.
-	 * 
-	 * @param customRenderer
-	 */
-	public void render(Consumer<Batch> customRenderer);
-	
-	/**
 	 * 
 	 * @param viewportX
 	 * @param viewportY
@@ -57,7 +51,7 @@ public interface RenderingSupport {
 	 *         currently visible
 	 */
 	public boolean isPointVisible(int viewportX, int viewportY);
-
+	
 	/**
 	 * 
 	 * @param viewportX
@@ -96,6 +90,12 @@ public interface RenderingSupport {
 	 * x2,y2
 	 * x2,y1
 	 * </pre>
+	 * </p>
+	 * <p>
+	 * <strong>Note</strong> that, to save on garbage-collection, the Vector2[]
+	 * instance that's returned should be considered to be owned by this
+	 * RenderingSupport instance. Do not plan on the value of this array remaining
+	 * stable over time.
 	 * </p>
 	 * 
 	 * @param cellX

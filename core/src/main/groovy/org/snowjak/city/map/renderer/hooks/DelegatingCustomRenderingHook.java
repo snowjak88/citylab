@@ -5,6 +5,10 @@ package org.snowjak.city.map.renderer.hooks;
 
 import org.snowjak.city.map.renderer.RenderingSupport;
 
+import com.badlogic.gdx.graphics.g2d.Batch;
+
+import space.earlygrey.shapedrawer.ShapeDrawer;
+
 /**
  * {@link AbstractMapRenderingHook} that delegates to a
  * {@link CustomRenderingHook} (enabling you to delegate to a lambda-expression
@@ -44,8 +48,8 @@ public class DelegatingCustomRenderingHook extends AbstractCustomRenderingHook {
 	}
 	
 	@Override
-	public void render(RenderingSupport support) {
+	public void render(Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
 		
-		implementation.render(support);
+		implementation.render(batch, shapeDrawer, support);
 	}
 }
