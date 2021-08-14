@@ -6,11 +6,20 @@ package org.snowjak.city.controller;
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+
 import org.snowjak.city.GameData;
-import org.snowjak.city.input.DragEventReceiver;
 import org.snowjak.city.input.GameInputProcessor;
-import org.snowjak.city.input.ScrollEventReceiver;
+import org.snowjak.city.input.MapClickEvent;
+import org.snowjak.city.input.MapHoverEvent;
+import org.snowjak.city.input.ScreenDragEndEvent;
+import org.snowjak.city.input.ScreenDragStartEvent;
+import org.snowjak.city.input.ScreenDragUpdateEvent;
+import org.snowjak.city.input.ScrollEvent;
 import org.snowjak.city.map.renderer.MapRenderer;
+import org.snowjak.city.map.renderer.RenderingSupport;
+import org.snowjak.city.map.renderer.hooks.AbstractMapRenderingHook;
 import org.snowjak.city.module.Module;
 
 import com.badlogic.ashley.core.Engine;
@@ -18,6 +27,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -32,7 +42,11 @@ import com.github.czyzby.autumn.mvc.component.ui.controller.ViewRenderer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewResizer;
 import com.github.czyzby.autumn.mvc.component.ui.controller.ViewShower;
 import com.github.czyzby.autumn.mvc.stereotype.View;
+import com.github.czyzby.kiwi.log.Logger;
+import com.github.czyzby.kiwi.log.LoggerService;
 import com.github.czyzby.lml.parser.action.ActionContainer;
+
+import space.earlygrey.shapedrawer.ShapeDrawer;
 
 /**
  * Takes care of:
@@ -48,7 +62,9 @@ import com.github.czyzby.lml.parser.action.ActionContainer;
 @View(id = "gameScreen", value = "ui/templates/gameScreen.lml")
 public class GameScreenController implements ViewInitializer, ViewShower, ViewRenderer, ViewResizer, ActionContainer {
 	
-	private final GameInputProcessor inputProcessor = new GameInputProcessor();
+	private static final Logger LOG = LoggerService.forClass(GameScreenController.class);
+	
+	private GameInputProcessor inputProcessor;
 	private final Viewport viewport = new FitViewport(8, 8);
 	
 	private MapRenderer renderer;
@@ -70,16 +86,16 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 		
 		final Vector2 scratch = new Vector2();
 		scratch.set(0, 0);
-		final Vector2 worldBound1 = renderer.worldToViewport(scratch).cpy();
+		final Vector2 worldBound1 = renderer.mapToViewport(scratch).cpy();
 		
 		scratch.set(0, data.map.getHeight());
-		final Vector2 worldBound2 = renderer.worldToViewport(scratch).cpy();
+		final Vector2 worldBound2 = renderer.mapToViewport(scratch).cpy();
 		
 		scratch.set(data.map.getWidth(), 0);
-		final Vector2 worldBound3 = renderer.worldToViewport(scratch).cpy();
+		final Vector2 worldBound3 = renderer.mapToViewport(scratch).cpy();
 		
 		scratch.set(data.map.getWidth(), data.map.getHeight());
-		final Vector2 worldBound4 = renderer.worldToViewport(scratch).cpy();
+		final Vector2 worldBound4 = renderer.mapToViewport(scratch).cpy();
 		
 		minWorldX = min(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
 		minWorldY = min(worldBound1.y, worldBound2.y, worldBound3.y, worldBound4.y);
@@ -89,89 +105,26 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 		//
 		// Register the base map-control input-receivers.
 		//
-		inputProcessor.register(new DragEventReceiver() {
+		inputProcessor = new GameInputProcessor((s) -> {
+			//
+			// Screen- to viewport-coordinates ...
+			final Vector2 tmp = new Vector2(s);
+			viewport.unproject(tmp);
 			
-			Vector2 scratch = new Vector2();
-			boolean ongoing = false;
-			float startX = 0, startY = 0;
-			
-			@Override
-			public void dragStart(int screenX, int screenY, int button) {
-				
-				if (button != Input.Buttons.LEFT) {
-					ongoing = false;
-					return;
-				}
-				
-				setStart(screenX, screenY);
-				ongoing = true;
-			}
-			
-			@Override
-			public void dragUpdate(int screenX, int screenY) {
-				
-				if (!ongoing)
-					return;
-				
-				scrollMap(screenX, screenY);
-				setStart(screenX, screenY);
-			}
-			
-			@Override
-			public void dragEnd(int screenX, int screenY) {
-				
-				if (!ongoing)
-					return;
-				
-				scrollMap(screenX, screenY);
-				ongoing = false;
-			}
-			
-			private void setStart(int screenX, int screenY) {
-				
-				scratch.set(screenX, screenY);
-				viewport.unproject(scratch);
-				startX = scratch.x;
-				startY = scratch.y;
-			}
-			
-			private void scrollMap(int screenX, int screenY) {
-				
-				scratch.set(screenX, screenY);
-				viewport.unproject(scratch);
-				final float endX = scratch.x, endY = scratch.y;
-				
-				cameraOffsetX = min(max(cameraOffsetX + (endX - startX) / 2f, minWorldX), maxWorldX);
-				cameraOffsetY = min(max(cameraOffsetY + (endY - startY) / 2f, minWorldY), maxWorldY);
-			}
+			//
+			// ... then viewport- to map-coordinates ...
+			return renderer.viewportToMap(tmp);
 		});
 		
-		inputProcessor.register(new ScrollEventReceiver() {
-			
-			@Override
-			public void scroll(float amountX, float amountY) {
-				
-				if (amountY == 0)
-					return;
-				
-				if (amountY < 0)
-					zoomOut();
-				else
-					zoomIn();
-			}
-			
-			private void zoomOut() {
-				
-				final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom / 2f, 8f), 1f);
-				((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
-			}
-			
-			private void zoomIn() {
-				
-				final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom * 2f, 8f), 1f);
-				((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
-			}
-		});
+		final InputHandler inputHandler = new InputHandler();
+		inputProcessor.register(ScreenDragStartEvent.class,
+				e -> inputHandler.dragStart(e.getX(), e.getY(), e.getButton()));
+		inputProcessor.register(ScreenDragUpdateEvent.class, e -> inputHandler.dragUpdate(e.getX(), e.getY()));
+		inputProcessor.register(ScreenDragEndEvent.class, e -> inputHandler.dragEnd(e.getX(), e.getY()));
+		inputProcessor.register(ScrollEvent.class, e -> inputHandler.scroll(e.getAmountX(), e.getAmountY()));
+		
+		inputProcessor.register(MapClickEvent.class, e -> LOG.info("Clicked the map at {0},{1}", e.getX(), e.getY()));
+		
 	}
 	
 	@Override
@@ -221,5 +174,82 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 	@Override
 	public void destroy(ViewController viewController) {
 		
+	}
+	
+	class InputHandler {
+		
+		Vector2 scratch = new Vector2();
+		boolean ongoing = false;
+		float startX = 0, startY = 0;
+		
+		public void dragStart(int screenX, int screenY, int button) {
+			
+			if (button != Input.Buttons.LEFT) {
+				ongoing = false;
+				return;
+			}
+			
+			setStart(screenX, screenY);
+			ongoing = true;
+		}
+		
+		public void dragUpdate(int screenX, int screenY) {
+			
+			if (!ongoing)
+				return;
+			
+			scrollMap(screenX, screenY);
+			setStart(screenX, screenY);
+		}
+		
+		public void dragEnd(int screenX, int screenY) {
+			
+			if (!ongoing)
+				return;
+			
+			scrollMap(screenX, screenY);
+			ongoing = false;
+		}
+		
+		private void setStart(int screenX, int screenY) {
+			
+			scratch.set(screenX, screenY);
+			viewport.unproject(scratch);
+			startX = scratch.x;
+			startY = scratch.y;
+		}
+		
+		private void scrollMap(int screenX, int screenY) {
+			
+			scratch.set(screenX, screenY);
+			viewport.unproject(scratch);
+			final float endX = scratch.x, endY = scratch.y;
+			
+			cameraOffsetX = min(max(cameraOffsetX + (endX - startX) / 2f, minWorldX), maxWorldX);
+			cameraOffsetY = min(max(cameraOffsetY + (endY - startY) / 2f, minWorldY), maxWorldY);
+		}
+		
+		public void scroll(float amountX, float amountY) {
+			
+			if (amountY == 0)
+				return;
+			
+			if (amountY < 0)
+				zoomOut();
+			else
+				zoomIn();
+		}
+		
+		private void zoomOut() {
+			
+			final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom / 2f, 8f), 1f);
+			((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
+		}
+		
+		private void zoomIn() {
+			
+			final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom * 2f, 8f), 1f);
+			((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
+		}
 	}
 }

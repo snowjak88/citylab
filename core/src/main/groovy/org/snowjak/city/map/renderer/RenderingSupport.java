@@ -6,6 +6,7 @@ package org.snowjak.city.map.renderer;
 import java.util.function.Consumer;
 
 import org.snowjak.city.map.tiles.Tile;
+import org.snowjak.city.map.tiles.TileCorner;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
@@ -18,7 +19,7 @@ import com.badlogic.gdx.math.Vector2;
 public interface RenderingSupport {
 	
 	/**
-	 * Render the given {@link Tile} at the given cell location.
+	 * Schedule the given {@link Tile} to be rendered at the given cell location.
 	 * 
 	 * @param cellX
 	 * @param cellY
@@ -30,7 +31,7 @@ public interface RenderingSupport {
 	}
 	
 	/**
-	 * Render the given {@link Tile} at the given cell location.
+	 * Schedule the given {@link Tile} to be rendered at the given cell location.
 	 * 
 	 * @param cellX
 	 * @param cellY
@@ -49,11 +50,61 @@ public interface RenderingSupport {
 	public void render(Consumer<Batch> customRenderer);
 	
 	/**
-	 * Convert the given world-coordinates to viewport coordinates (i.e., what you'd
+	 * 
+	 * @param viewportX
+	 * @param viewportY
+	 * @return {@code true} if the given point (given in viewport coordinates) is
+	 *         currently visible
+	 */
+	public boolean isPointVisible(int viewportX, int viewportY);
+
+	/**
+	 * 
+	 * @param viewportX
+	 * @param viewportY
+	 * @return {@code true} if the given point (given in viewport coordinates) is
+	 *         currently visible
+	 */
+	public boolean isPointVisible(float viewportX, float viewportY);
+	
+	/**
+	 * 
+	 * @param cellX
+	 * @param cellY
+	 * @return {@code true} if the given cell is currently visible
+	 */
+	public boolean isCellVisible(int cellX, int cellY);
+	
+	/**
+	 * Convert the given map-coordinates to viewport coordinates (i.e., what you'd
 	 * need to perform drawing).
 	 * 
-	 * @param worldCoordinates
+	 * @param mapCoordinates
 	 * @return
 	 */
-	public Vector2 worldToViewport(Vector2 worldCoordinates);
+	public Vector2 mapToViewport(Vector2 mapCoordinates);
+	
+	/**
+	 * Given a map-cell (identified with {@code x,y}), compute its 4 vertices in
+	 * terms of the viewport's coordinate system.
+	 * <p>
+	 * Vertices are given clockwise from (-x,-y):
+	 * 
+	 * <pre>
+	 * x1,y1
+	 * x1,y2
+	 * x2,y2
+	 * x2,y1
+	 * </pre>
+	 * </p>
+	 * 
+	 * @param cellX
+	 * @param cellY
+	 * @param base
+	 *            use TileCorner as the basis for altitude calculations (to produce
+	 *            a "flat" set of vertices), or {@code null} to use altitude at each
+	 *            vertex
+	 * @return
+	 */
+	public Vector2[] getCellVertices(int cellX, int cellY, TileCorner base);
 }

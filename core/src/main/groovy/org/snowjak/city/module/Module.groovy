@@ -2,9 +2,9 @@ package org.snowjak.city.module
 
 import org.snowjak.city.GameData
 import org.snowjak.city.configuration.Configuration
-import org.snowjak.city.map.renderer.AbstractMapRenderingHook
-import org.snowjak.city.map.renderer.DelegatingMapRenderingHook
 import org.snowjak.city.map.renderer.MapRenderingHook
+import org.snowjak.city.map.renderer.hooks.AbstractMapRenderingHook
+import org.snowjak.city.map.renderer.hooks.DelegatingMapRenderingHook
 import org.snowjak.city.map.tiles.TileSet
 import org.snowjak.city.service.ResourceService
 
@@ -66,6 +66,6 @@ public class Module {
 					}
 				}
 		
-		systems << [id : system]
+		systems << ["$id" : system]
 	}
 }

@@ -38,7 +38,8 @@ iteratingSystem 'terrainFittingSystem', Family.all(AtMapCell).exclude(HasTerrain
 // Declare a hook into the map-rendering loop.
 //
 renderHook 0, { cellX, cellY, support ->
-	for(def entity in data.map.getEntities(cellX, cellY, HasTerrainTile))
+	for(def entity in data.map.getEntities(cellX, cellY, HasTerrainTile)) {
 		for(def tile in terrainMapper.get(entity).tiles)
 			support.renderTile cellX, cellY, tile
+	}
 }

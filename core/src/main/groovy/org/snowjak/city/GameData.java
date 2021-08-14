@@ -12,7 +12,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.generator.MapGenerator;
-import org.snowjak.city.map.renderer.AbstractMapRenderingHook;
+import org.snowjak.city.map.renderer.hooks.AbstractMapRenderingHook;
 
 import com.badlogic.ashley.core.Engine;
 import com.google.common.util.concurrent.ListeningExecutorService;

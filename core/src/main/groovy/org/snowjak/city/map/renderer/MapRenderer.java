@@ -27,10 +27,13 @@ import static com.badlogic.gdx.graphics.g2d.Batch.Y4;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.snowjak.city.GameData;
 import org.snowjak.city.map.CityMap;
+import org.snowjak.city.map.renderer.hooks.AbstractMapRenderingHook;
 import org.snowjak.city.map.tiles.Tile;
+import org.snowjak.city.map.tiles.TileCorner;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -40,6 +43,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.maps.tiled.renderers.IsometricTiledMapRenderer;
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -55,13 +59,18 @@ import com.badlogic.gdx.math.Vector3;
 public class MapRenderer implements RenderingSupport {
 	
 	private static final int NUM_VERTICES = 20;
-	private static final float DEFAULT_TILE_GRID_WIDTH = 32f, DEFAULT_TILE_GRID_HEIGHT = 16f;
 	
-	final private float unitScale = 1f / DEFAULT_TILE_GRID_WIDTH;
-	final private float tileWidth = DEFAULT_TILE_GRID_WIDTH * unitScale;
-	final private float tileHeight = DEFAULT_TILE_GRID_HEIGHT * unitScale;
-	final private float halfTileWidth = tileWidth * 0.5f;
-	final private float halfTileHeight = tileHeight * 0.5f;
+	private static final float TILE_WIDTH = 1f;
+	private static final float TILE_HEIGHT = 0.5f;
+	private static final float TILE_ALTITUDE_MUTIPLIER = 0.25f;
+	
+	private static final float HALF_TILE_WIDTH = TILE_WIDTH * 0.5f;
+	private static final float HALF_TILE_HEIGHT = TILE_HEIGHT * 0.5f;
+	
+	private static final float DISPLAYED_GRID = 32f;
+	private static final float DISPLAYED_GRID_WIDTH = DISPLAYED_GRID * TILE_WIDTH;
+	private static final float DISPLAYED_GRID_HEIGHT = DISPLAYED_GRID * TILE_HEIGHT;
+	private static final float DISPLAYED_ALTITUDE_MULTIPLIER = DISPLAYED_GRID * TILE_ALTITUDE_MUTIPLIER;
 	
 	private Matrix4 isoTransform;
 	private Matrix4 invIsotransform;
@@ -73,9 +82,19 @@ public class MapRenderer implements RenderingSupport {
 	private Vector2 bottomRight = new Vector2();
 	
 	private Rectangle viewBounds = new Rectangle();
-	private Rectangle imageBounds = new Rectangle();
 	
+	private final float layerOffsetX = 0, layerOffsetY = -0;
+	private int mapVisibleMinX = 0, mapVisibleMinY = 0, mapVisibleMaxX = 0, mapVisibleMaxY = 0;
+	
+	/**
+	 * Scratch packed float[] array for delivering vertex-data to OpenGL
+	 */
 	private final float[] vertices = new float[NUM_VERTICES];
+	
+	/**
+	 * Scratch Vector2[4] array for preparing cell-vertices
+	 */
+	private final Vector2[] cellVertices = new Vector2[4];
 	
 	private CityMap map;
 	private Batch batch;
@@ -105,11 +124,13 @@ public class MapRenderer implements RenderingSupport {
 	
 	private void init() {
 		
+		for (int i = 0; i < cellVertices.length; i++)
+			cellVertices[i] = new Vector2();
+		
 		// create the isometric transform
 		isoTransform = new Matrix4();
 		isoTransform.idt();
 		
-		// isoTransform.translate(0, 32, 0);
 		isoTransform.scale((float) (Math.sqrt(2.0) / 2.0), (float) (Math.sqrt(2.0) / 4.0), 1.0f);
 		isoTransform.rotate(0.0f, 0.0f, 1.0f, -45);
 		
@@ -156,27 +177,9 @@ public class MapRenderer implements RenderingSupport {
 		viewBounds.set(x, y, width, height);
 	}
 	
-	public void render() {
+	private void updateViewportBounds() {
 		
-		if (map == null)
-			return;
-		
-		if (ownsBatch) {
-			batch.enableBlending();
-			batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-		}
-		
-		batch.begin();
-		
-		// final Color batchColor = batch.getColor();
-		// final float color = Color.toFloatBits(batchColor.r, batchColor.g,
-		// batchColor.b, batchColor.a);
-		
-		final float layerOffsetX = 0;
-		// offset in tiled is y down, so we flip it
-		final float layerOffsetY = -0;
-		
-		// setting up the screen points
+		// setting up the viewport bounds
 		// COL1
 		topRight.set(viewBounds.x + viewBounds.width - layerOffsetX, viewBounds.y - layerOffsetY);
 		// COL2
@@ -189,29 +192,59 @@ public class MapRenderer implements RenderingSupport {
 		
 		// transforming screen coordinates to iso coordinates (so we don't render more
 		// than we need to)
-		int row1 = (int) (viewportToWorld(topLeft).y / tileWidth) - 2;
-		int row2 = (int) (viewportToWorld(bottomRight).y / tileWidth) + 2;
+		mapVisibleMinY = (int) (viewportToMap(topLeft, true).y / TILE_WIDTH) - 2;
+		mapVisibleMaxY = (int) (viewportToMap(bottomRight, true).y / TILE_WIDTH) + 2;
 		
-		int col1 = (int) (viewportToWorld(bottomLeft).x / tileWidth) - 2;
-		int col2 = (int) (viewportToWorld(topRight).x / tileWidth) + 2;
+		mapVisibleMinX = (int) (viewportToMap(bottomLeft, true).x / TILE_WIDTH) - 2;
+		mapVisibleMaxX = (int) (viewportToMap(topRight, true).x / TILE_WIDTH) + 2;
+	}
+	
+	public void render() {
+		
+		if (map == null)
+			return;
+		
+		if (ownsBatch) {
+			batch.enableBlending();
+			batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+		}
+		
+		updateViewportBounds();
+		
+		batch.begin();
 		
 		final SortedSet<AbstractMapRenderingHook> renderingHooks = GameData.get().mapRenderingHooks;
 		
-		for (int row = row2; row >= row1; row--) {
-			for (int col = col1; col <= col2; col++) {
-				
-				if (!map.isValidCell(col, row))
-					continue;
-					
-				// for (Tile tile : map.getTiles(col, row)) {
-				//
-				// }
-				for (MapRenderingHook hook : renderingHooks)
-					hook.renderCell(col, row, this);
-			}
-		}
-		
+		if (map != null)
+			for (int cellY = mapVisibleMaxY; cellY >= mapVisibleMinY; cellY--)
+				for (int cellX = mapVisibleMinX; cellX <= mapVisibleMaxX; cellX++)
+					if (map.isValidCell(cellX, cellY))
+						for (MapRenderingHook hook : renderingHooks)
+							hook.renderCell(cellX, cellY, this);
+						
 		batch.end();
+	}
+	
+	@Override
+	public boolean isPointVisible(int viewportX, int viewportY) {
+		
+		return isPointVisible(viewportX, viewportY);
+	}
+	
+	@Override
+	public boolean isPointVisible(float viewportX, float viewportY) {
+		
+		return viewBounds.contains(viewportX, viewportY);
+	}
+	
+	@Override
+	public boolean isCellVisible(int cellX, int cellY) {
+		
+		if (map == null || !map.isValidCell(cellX, cellY))
+			return false;
+		
+		return (cellX >= mapVisibleMinX && cellX <= mapVisibleMaxX && cellY >= mapVisibleMinY
+				&& cellY <= mapVisibleMaxY);
 	}
 	
 	@Override
@@ -223,21 +256,28 @@ public class MapRenderer implements RenderingSupport {
 	@Override
 	public void renderTile(int col, int row, Tile tile, Color tint) {
 		
+		if (map == null || !map.isValidCell(col, row))
+			return;
+		if (!isCellVisible(col, row))
+			return;
+		
 		final float color;
 		if (tint == null)
 			color = Color.toFloatBits(batch.getColor().r, batch.getColor().g, batch.getColor().b, batch.getColor().a);
 		else
 			color = Color.toFloatBits(tint.r, tint.g, tint.b, tint.a);
 		
-		final int altitude = map.getTileAltitude(col, row, tile.getBase());
+		final float tileScale = 1f / (float) tile.getGridWidth();
+		final TileCorner base = tile.getBase();
+		getCellVertices(col, row, cellVertices, base);
 		
-		final float tileScale = DEFAULT_TILE_GRID_WIDTH / (float) tile.getGridWidth();
-		
-		final float altitudeFactor = ((float) altitude * tile.getAltitudeOffset() * unitScale * tileScale);
-		final float surfaceFactor = ((float) tile.getSurfaceOffset() * unitScale * tileScale);
-		
-		final float x = (col * halfTileWidth) + (row * halfTileWidth);
-		final float y = (row * halfTileHeight) - (col * halfTileHeight) + altitudeFactor - surfaceFactor;
+		float x = cellVertices[0].x, y = cellVertices[0].y;
+		for (int i = 1; i < 4; i++) {
+			if (x > cellVertices[i].x)
+				x = cellVertices[i].x;
+			if (y > cellVertices[i].y)
+				y = cellVertices[i].y;
+		}
 		
 		final boolean flipX = false;// cell.getFlipHorizontally();
 		final boolean flipY = false;// cell.getFlipVertically();
@@ -245,12 +285,10 @@ public class MapRenderer implements RenderingSupport {
 		
 		TextureRegion region = tile.getSprite();
 		
-		// final float x1 = x + layerOffsetX;
-		// final float y1 = y + layerOffsetY;
 		final float x1 = x;
-		final float y1 = y;
-		final float x2 = x1 + region.getRegionWidth() * unitScale * tileScale;
-		final float y2 = y1 + region.getRegionHeight() * unitScale * tileScale;
+		final float y1 = y - ((float) tile.getSurfaceOffset() * tileScale);
+		final float x2 = x1 + region.getRegionWidth() * tileScale;
+		final float y2 = y1 + region.getRegionHeight() * tileScale;
 		
 		final float u1 = region.getU();
 		final float v1 = region.getV2();
@@ -349,7 +387,61 @@ public class MapRenderer implements RenderingSupport {
 	}
 	
 	@Override
-	public Vector2 worldToViewport(Vector2 iso) {
+	public Vector2[] getCellVertices(int col, int row, TileCorner base) {
+		
+		final Vector2[] result = new Vector2[4];
+		getCellVertices(col, row, result, base);
+		return result;
+	}
+	
+	/**
+	 * Given a map-cell (identified with {@code x,y}), compute its 4 vertices in
+	 * terms of the viewport's coordinate system.
+	 * <p>
+	 * Vertices are given clockwise from (-x,-y):
+	 * 
+	 * <pre>
+	 * x1,y1
+	 * x1,y2
+	 * x2,y2
+	 * x2,y1
+	 * </pre>
+	 * </p>
+	 * 
+	 * @param col
+	 * @param row
+	 * @param vertices
+	 * @param base
+	 *            use TileCorner as the basis for altitude calculations, or
+	 *            {@code null} to use altitude at each vertex
+	 * @return
+	 * @throw {@link IndexOutOfBoundsException} if {@code col} or {@code row} fall
+	 *        outside of the map
+	 */
+	private void getCellVertices(int col, int row, Vector2[] vertices, TileCorner base) {
+		
+		int index = 0;
+		for (TileCorner corner : TileCorner.values()) {
+			vertices[index++].set(computeCellVertexX(col + corner.getOffsetX(), row + corner.getOffsetY()),
+					computeCellVertexY(col + corner.getOffsetX(), row + corner.getOffsetY(),
+							(base == null || base == corner) ? map.getTileAltitude(col, row, corner)
+									: map.getTileAltitude(col, row, base)));
+		}
+	}
+	
+	private float computeCellVertexX(int vertexX, int vertexY) {
+		
+		return (vertexX * HALF_TILE_WIDTH) + (vertexY * HALF_TILE_WIDTH);
+	}
+	
+	private float computeCellVertexY(int vertexX, int vertexY, int altitude) {
+		
+		return (vertexY * HALF_TILE_HEIGHT) - (vertexX * HALF_TILE_HEIGHT)
+				+ ((float) altitude * TILE_ALTITUDE_MUTIPLIER);
+	}
+	
+	@Override
+	public Vector2 mapToViewport(Vector2 iso) {
 		
 		scratchV3.set(iso.x, iso.y, 0);
 		scratchV3.mul(isoTransform);
@@ -357,11 +449,69 @@ public class MapRenderer implements RenderingSupport {
 		return new Vector2(scratchV3.x, scratchV3.y);
 	}
 	
-	public Vector2 viewportToWorld(Vector2 vec) {
+	/**
+	 * Unproject the given viewport-location to the map (taking vertex-altitude into
+	 * account).
+	 * 
+	 * @param viewportCoordinates
+	 * @return the mutated {@code viewportCoordinates}
+	 */
+	public Vector2 viewportToMap(Vector2 viewportCoordinates) {
 		
-		scratchV3.set(vec.x, vec.y, 0);
+		return viewportToMap(viewportCoordinates, false);
+	}
+	
+	/**
+	 * Unproject the given viewport-location to the map (taking vertex-altitude into
+	 * account).
+	 * 
+	 * @param viewportCoordinates
+	 * @param ignoreAltitude
+	 * @return
+	 */
+	public Vector2 viewportToMap(Vector2 viewportCoordinates, boolean ignoreAltitude) {
+		
+		//
+		// Figure out which (viewport-)vertical column to scan through.
+		//
+		// If the map were flat, this would be the cell we're hitting ...
+		scratchV3.set(viewportCoordinates.x, viewportCoordinates.y, 0);
 		scratchV3.mul(invIsotransform);
+		final float flatMapCellX = scratchV3.x, flatMapCellY = scratchV3.y;
 		
-		return new Vector2(scratchV3.x, scratchV3.y);
+		//
+		// this is the column we need to scan ...
+		final int column = Math.round(flatMapCellX + flatMapCellY);
+		
+		//
+		// Now iterate up the column -- starting at cell [column,0] and continuing by
+		// [-1,+1]
+		// until we find a cell whose viewport-projected vertices contain the given
+		// viewport-coordinate.
+		final Predicate<Vector2> isWithinQuadrilaterial = (
+				v) -> (Intersector.isPointInTriangle(v.x, v.y, cellVertices[0].x, cellVertices[0].y, cellVertices[1].x,
+						cellVertices[1].y, cellVertices[3].x, cellVertices[3].y)
+						|| Intersector.isPointInTriangle(v.x, v.y, cellVertices[1].x, cellVertices[1].y,
+								cellVertices[2].x, cellVertices[2].y, cellVertices[3].x, cellVertices[3].y));
+		
+		int cellX = column, cellY = 0;
+		boolean justDidX = true;
+		while (map.isValidCell(cellX, cellY)) {
+			
+			getCellVertices(cellX, cellY, cellVertices, null);
+			
+			if (isWithinQuadrilaterial.test(viewportCoordinates))
+				return new Vector2(cellX, cellY);
+			
+			if (justDidX)
+				cellX--;
+			else
+				cellY++;
+			justDidX = !justDidX;
+		}
+		
+		//
+		// Eh. Return our best guess.
+		return new Vector2(flatMapCellX, flatMapCellY);
 	}
 }

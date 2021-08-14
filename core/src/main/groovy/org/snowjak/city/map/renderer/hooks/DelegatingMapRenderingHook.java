@@ -1,7 +1,10 @@
 /**
  * 
  */
-package org.snowjak.city.map.renderer;
+package org.snowjak.city.map.renderer.hooks;
+
+import org.snowjak.city.map.renderer.MapRenderingHook;
+import org.snowjak.city.map.renderer.RenderingSupport;
 
 /**
  * {@link AbstractMapRenderingHook} that delegates to a {@link MapRenderingHook}
