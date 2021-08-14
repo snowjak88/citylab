@@ -159,6 +159,9 @@ public class MapRenderer implements RenderingSupport {
 		for (int i = 0; i < cellVertices.length; i++)
 			cellVertices[i] = new Vector2();
 		
+		for (int i = 0; i < viewportToMapVertices.length; i++)
+			viewportToMapVertices[i] = new Vector2();
+		
 		// create the isometric transform
 		isoTransform = new Matrix4();
 		isoTransform.idt();
@@ -489,9 +492,15 @@ public class MapRenderer implements RenderingSupport {
 		return viewportToMap(viewportCoordinates, false);
 	}
 	
+	private Vector3 viewportToMapScratchV3 = new Vector3();
+	private Vector2[] viewportToMapVertices = new Vector2[4];
+	
 	/**
 	 * Unproject the given viewport-location to the map (taking vertex-altitude into
 	 * account).
+	 * <p>
+	 * This method is thread-safe. You may call it from multiple threads at once.
+	 * </p>
 	 * 
 	 * @param viewportCoordinates
 	 * @param ignoreAltitude
@@ -499,47 +508,70 @@ public class MapRenderer implements RenderingSupport {
 	 */
 	public Vector2 viewportToMap(Vector2 viewportCoordinates, boolean ignoreAltitude) {
 		
-		//
-		// Figure out which (viewport-)vertical column to scan through.
-		//
-		// If the map were flat, this would be the cell we're hitting ...
-		scratchV3.set(viewportCoordinates.x, viewportCoordinates.y, 0);
-		scratchV3.mul(invIsotransform);
-		final float flatMapCellX = scratchV3.x, flatMapCellY = scratchV3.y;
-		
-		//
-		// this is the column we need to scan ...
-		final int column = Math.round(flatMapCellX + flatMapCellY);
-		
-		//
-		// Now iterate up the column -- starting at cell [column,0] and continuing by
-		// [-1,+1]
-		// until we find a cell whose viewport-projected vertices contain the given
-		// viewport-coordinate.
-		final Predicate<Vector2> isWithinQuadrilaterial = (
-				v) -> (Intersector.isPointInTriangle(v.x, v.y, cellVertices[0].x, cellVertices[0].y, cellVertices[1].x,
-						cellVertices[1].y, cellVertices[3].x, cellVertices[3].y)
-						|| Intersector.isPointInTriangle(v.x, v.y, cellVertices[1].x, cellVertices[1].y,
-								cellVertices[2].x, cellVertices[2].y, cellVertices[3].x, cellVertices[3].y));
-		
-		int cellX = column, cellY = 0;
-		boolean justDidX = true;
-		while (map.isValidCell(cellX, cellY)) {
+		synchronized (viewportToMapScratchV3) {
+			//
+			// Figure out which (viewport-)vertical column to scan through.
+			//
+			// If the map were flat, this would be the cell we're hitting ...
+			viewportToMapScratchV3.set(viewportCoordinates.x, viewportCoordinates.y, 0);
+			viewportToMapScratchV3.mul(invIsotransform);
+			final float flatMapCellX = viewportToMapScratchV3.x, flatMapCellY = viewportToMapScratchV3.y;
 			
-			getCellVertices(cellX, cellY, cellVertices, null);
+			//
+			// this is the column we need to scan ...
+			final int column = Math.round(flatMapCellX + flatMapCellY);
 			
-			if (isWithinQuadrilaterial.test(viewportCoordinates))
-				return new Vector2(cellX, cellY);
+			//
+			// Now iterate up the column -- starting at cell [column,0] and continuing by
+			// [-1,+1] until we find a cell whose viewport-projected vertices contain the
+			// given viewport-coordinate.
+			//
+			final Predicate<Vector2> isWithinQuadrilaterial = (v) -> (Intersector.isPointInTriangle(v.x, v.y,
+					viewportToMapVertices[0].x, viewportToMapVertices[0].y, viewportToMapVertices[1].x,
+					viewportToMapVertices[1].y, viewportToMapVertices[3].x, viewportToMapVertices[3].y)
+					|| Intersector.isPointInTriangle(v.x, v.y, viewportToMapVertices[1].x, viewportToMapVertices[1].y,
+							viewportToMapVertices[2].x, viewportToMapVertices[2].y, viewportToMapVertices[3].x,
+							viewportToMapVertices[3].y));
 			
-			if (justDidX)
-				cellX--;
-			else
-				cellY++;
-			justDidX = !justDidX;
+			int cellX = column, cellY = 0;
+			//
+			// We will alternate back and forth between decrementing X and incrementing Y.
+			// This field governs whether we do one or the other.
+			boolean justDidX = true;
+			
+			//
+			// Note that we might just start off with cellX being *way* outside the map,
+			// if "column" is greater than map.getWidth().
+			//
+			// Accordingly, we might have to iterate for a bit until we get on the map.
+			//
+			while (cellX > 0 && cellY < map.getHeight() && !map.isValidCell(cellX, cellY)) {
+				if (justDidX)
+					cellX--;
+				else
+					cellY++;
+				justDidX = !justDidX;
+			}
+			
+			//
+			// OK -- so long as we're still on the map, search.
+			while (map.isValidCell(cellX, cellY)) {
+				
+				getCellVertices(cellX, cellY, viewportToMapVertices, null);
+				
+				if (isWithinQuadrilaterial.test(viewportCoordinates))
+					return new Vector2(cellX, cellY);
+				
+				if (justDidX)
+					cellX--;
+				else
+					cellY++;
+				justDidX = !justDidX;
+			}
+			
+			//
+			// Eh. Return our best guess.
+			return new Vector2(flatMapCellX, flatMapCellY);
 		}
-		
-		//
-		// Eh. Return our best guess.
-		return new Vector2(flatMapCellX, flatMapCellY);
 	}
 }

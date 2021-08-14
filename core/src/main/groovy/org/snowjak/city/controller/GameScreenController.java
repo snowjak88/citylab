@@ -6,21 +6,29 @@ package org.snowjak.city.controller;
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.snowjak.city.GameData;
 import org.snowjak.city.input.GameInputProcessor;
 import org.snowjak.city.input.MapClickEvent;
+import org.snowjak.city.input.MapHoverEvent;
 import org.snowjak.city.input.ScreenDragEndEvent;
 import org.snowjak.city.input.ScreenDragStartEvent;
 import org.snowjak.city.input.ScreenDragUpdateEvent;
 import org.snowjak.city.input.ScrollEvent;
 import org.snowjak.city.map.renderer.MapRenderer;
+import org.snowjak.city.map.renderer.RenderingSupport;
+import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
 import org.snowjak.city.module.Module;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -38,6 +46,8 @@ import com.github.czyzby.autumn.mvc.stereotype.View;
 import com.github.czyzby.kiwi.log.Logger;
 import com.github.czyzby.kiwi.log.LoggerService;
 import com.github.czyzby.lml.parser.action.ActionContainer;
+
+import space.earlygrey.shapedrawer.ShapeDrawer;
 
 /**
  * Takes care of:
@@ -116,6 +126,37 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 		inputProcessor.register(ScrollEvent.class, e -> inputHandler.scroll(e.getAmountX(), e.getAmountY()));
 		
 		inputProcessor.register(MapClickEvent.class, e -> LOG.info("Clicked the map at {0},{1}", e.getX(), e.getY()));
+		
+		final AtomicInteger hoverX = new AtomicInteger(0), hoverY = new AtomicInteger(0);
+		final AtomicBoolean hoverActive = new AtomicBoolean(false);
+		inputProcessor.register(MapHoverEvent.class, e -> {
+			if (GameData.get().map == null || !GameData.get().map.isValidCell(e.getX(), e.getY())) {
+				hoverActive.set(false);
+				return;
+			}
+			
+			hoverActive.set(true);
+			hoverX.set(e.getX());
+			hoverY.set(e.getY());
+		});
+		final AbstractCustomRenderingHook hoverHook = new AbstractCustomRenderingHook(100) {
+			
+			@Override
+			public void render(Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
+				
+				if (!hoverActive.get())
+					return;
+				
+				final Vector2[] vertices = support.getCellVertices(hoverX.get(), hoverY.get(), null);
+				shapeDrawer.setColor(Color.WHITE);
+				shapeDrawer.line(vertices[0], vertices[1]);
+				shapeDrawer.line(vertices[1], vertices[2]);
+				shapeDrawer.line(vertices[2], vertices[3]);
+				shapeDrawer.line(vertices[3], vertices[0]);
+			}
+		};
+		
+		GameData.get().customRenderingHooks.add(hoverHook);
 		
 	}
 	
