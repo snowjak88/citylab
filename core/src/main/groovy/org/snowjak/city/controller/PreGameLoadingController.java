@@ -195,9 +195,15 @@ public class PreGameLoadingController implements ViewInitializer, ViewRenderer {
 					
 					//
 					// Register rendering hooks with the main GameData instance
-					if (!module.getRenderingHooks().isEmpty()) {
+					//
+					
+					if (!module.getCellRenderingHooks().isEmpty()) {
+						LOG.info("Module [{0}]: registering map-rendering-hooks ...", moduleName);
+						data.cellRenderingHooks.addAll(module.getCellRenderingHooks());
+					}
+					if (!module.getCustomRenderingHooks().isEmpty()) {
 						LOG.info("Module [{0}]: registering rendering-hooks ...", moduleName);
-						data.mapRenderingHooks.addAll(module.getRenderingHooks());
+						data.customRenderingHooks.addAll(module.getCustomRenderingHooks());
 					}
 					
 					//

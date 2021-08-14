@@ -12,7 +12,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.generator.MapGenerator;
-import org.snowjak.city.map.renderer.hooks.AbstractMapRenderingHook;
+import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook;
+import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
 
 import com.badlogic.ashley.core.Engine;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -45,10 +46,20 @@ public class GameData {
 			.getExitingExecutorService((ThreadPoolExecutor) Executors.newCachedThreadPool(), Duration.ofSeconds(5)));
 	
 	/**
-	 * Hooks into the {@link CityMap}-rendering process.
+	 * Hooks into the {@link CityMap}-rendering process. These are called every
+	 * frame, in ascending order of their priority, for every visible map-cell.
 	 */
-	public final SortedSet<AbstractMapRenderingHook> mapRenderingHooks = new TreeSet<AbstractMapRenderingHook>(
-			(h1, h2) -> Integer.compare(h1.getOrder(), h2.getOrder()));
+	public final SortedSet<AbstractCellRenderingHook> cellRenderingHooks = new TreeSet<AbstractCellRenderingHook>(
+			(h1, h2) -> Integer.compare(h1.getPriority(), h2.getPriority()));
+	
+	/**
+	 * Hooks into the {@link CityMap}-rendering process. These are called every
+	 * frame, in ascending order of their priority. The map-renderer itself has
+	 * priority 0; hooks with negative priority are called before, while those with
+	 * positive priority are called after.
+	 */
+	public final SortedSet<AbstractCustomRenderingHook> customRenderingHooks = new TreeSet<AbstractCustomRenderingHook>(
+			(h1, h2) -> Integer.compare(h1.getPriority(), h2.getPriority()));
 	
 	/**
 	 * Seed to be used for random-number generation.

@@ -25,13 +25,13 @@ import static com.badlogic.gdx.graphics.g2d.Batch.Y3;
 import static com.badlogic.gdx.graphics.g2d.Batch.Y4;
 
 import java.util.Map;
-import java.util.SortedSet;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.snowjak.city.GameData;
 import org.snowjak.city.map.CityMap;
-import org.snowjak.city.map.renderer.hooks.AbstractMapRenderingHook;
+import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook;
+import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
 import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileCorner;
 
@@ -99,6 +99,33 @@ public class MapRenderer implements RenderingSupport {
 	private CityMap map;
 	private Batch batch;
 	private boolean ownsBatch = false;
+	
+	/**
+	 * The rendering-hook that actually executes the map-renderer. In effect, this
+	 * MapRenderer hooks into itself, with priority 0. This enables the MapRenderer
+	 * to allow other rendering-hooks to execute prior to the map being rendered.
+	 */
+	public final AbstractCustomRenderingHook MAP_RENDERING_HOOK = new AbstractCustomRenderingHook(0) {
+		
+		@Override
+		public void render(RenderingSupport support) {
+			
+			//
+			// This main rendering-hook handles rendering the actual map.
+			//
+			if (map == null)
+				return;
+			
+			if (GameData.get().cellRenderingHooks.isEmpty())
+				return;
+			
+			for (int cellY = mapVisibleMaxY; cellY >= mapVisibleMinY; cellY--)
+				for (int cellX = mapVisibleMinX; cellX <= mapVisibleMaxX; cellX++)
+					if (map.isValidCell(cellX, cellY))
+						for (AbstractCellRenderingHook hook : GameData.get().cellRenderingHooks)
+							hook.renderCell(cellX, cellY, support);
+		}
+	};
 	
 	public MapRenderer() {
 		
@@ -213,15 +240,9 @@ public class MapRenderer implements RenderingSupport {
 		
 		batch.begin();
 		
-		final SortedSet<AbstractMapRenderingHook> renderingHooks = GameData.get().mapRenderingHooks;
+		for (AbstractCustomRenderingHook hook : GameData.get().customRenderingHooks)
+			hook.render(this);
 		
-		if (map != null)
-			for (int cellY = mapVisibleMaxY; cellY >= mapVisibleMinY; cellY--)
-				for (int cellX = mapVisibleMinX; cellX <= mapVisibleMaxX; cellX++)
-					if (map.isValidCell(cellX, cellY))
-						for (MapRenderingHook hook : renderingHooks)
-							hook.renderCell(cellX, cellY, this);
-						
 		batch.end();
 	}
 	

@@ -35,9 +35,10 @@ iteratingSystem 'terrainFittingSystem', Family.all(AtMapCell).exclude(HasTerrain
 }
 
 //
-// Declare a hook into the map-rendering loop.
+// Declare a cell-rendering hook into the map-rendering loop.
+// This will be called every frame for every on-screen map-cell
 //
-renderHook 0, { cellX, cellY, support ->
+cellRenderHook 0, { cellX, cellY, support ->
 	for(def entity in data.map.getEntities(cellX, cellY, HasTerrainTile)) {
 		for(def tile in terrainMapper.get(entity).tiles)
 			support.renderTile cellX, cellY, tile

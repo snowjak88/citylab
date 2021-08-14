@@ -2,9 +2,12 @@ package org.snowjak.city.module
 
 import org.snowjak.city.GameData
 import org.snowjak.city.configuration.Configuration
-import org.snowjak.city.map.renderer.MapRenderingHook
-import org.snowjak.city.map.renderer.hooks.AbstractMapRenderingHook
-import org.snowjak.city.map.renderer.hooks.DelegatingMapRenderingHook
+import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook
+import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook
+import org.snowjak.city.map.renderer.hooks.CellRenderingHook
+import org.snowjak.city.map.renderer.hooks.CustomRenderingHook
+import org.snowjak.city.map.renderer.hooks.DelegatingCellRenderingHook
+import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
 import org.snowjak.city.map.tiles.TileSet
 import org.snowjak.city.service.ResourceService
 
@@ -37,10 +40,13 @@ public class Module {
 	
 	final GameData data = GameData.get()
 	final Map<String,EntitySystem> systems = [:]
-	final Set<AbstractMapRenderingHook> renderingHooks = []
+	final Set<AbstractCellRenderingHook> cellRenderingHooks = []
+	final Set<AbstractCustomRenderingHook> customRenderingHooks = []
 	final Binding binding = new Binding()
 	
 	def propertyMissing = { name ->
+		//
+		// Attempt to locate any missing properties in our Binding
 		binding[name]
 	}
 	
@@ -48,8 +54,12 @@ public class Module {
 		Gdx.app.getPreferences(Configuration.PREFERENCES_NAME).getString("$id.$name", defaultValue)
 	}
 	
-	public void renderHook(int order, MapRenderingHook hook) {
-		renderingHooks << new DelegatingMapRenderingHook(order, hook)
+	public void cellRenderHook(int priority, CellRenderingHook hook) {
+		cellRenderingHooks << new DelegatingCellRenderingHook(priority, hook)
+	}
+	
+	public void renderHook(int priority, CustomRenderingHook hook) {
+		customRenderingHooks << new DelegatingCustomRenderingHook(priority, hook)
 	}
 	
 	public void iteratingSystem(String id, Family family, Closure implementation) {

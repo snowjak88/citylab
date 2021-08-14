@@ -6,20 +6,14 @@ package org.snowjak.city.controller;
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-
 import org.snowjak.city.GameData;
 import org.snowjak.city.input.GameInputProcessor;
 import org.snowjak.city.input.MapClickEvent;
-import org.snowjak.city.input.MapHoverEvent;
 import org.snowjak.city.input.ScreenDragEndEvent;
 import org.snowjak.city.input.ScreenDragStartEvent;
 import org.snowjak.city.input.ScreenDragUpdateEvent;
 import org.snowjak.city.input.ScrollEvent;
 import org.snowjak.city.map.renderer.MapRenderer;
-import org.snowjak.city.map.renderer.RenderingSupport;
-import org.snowjak.city.map.renderer.hooks.AbstractMapRenderingHook;
 import org.snowjak.city.module.Module;
 
 import com.badlogic.ashley.core.Engine;
@@ -27,7 +21,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -45,8 +38,6 @@ import com.github.czyzby.autumn.mvc.stereotype.View;
 import com.github.czyzby.kiwi.log.Logger;
 import com.github.czyzby.kiwi.log.LoggerService;
 import com.github.czyzby.lml.parser.action.ActionContainer;
-
-import space.earlygrey.shapedrawer.ShapeDrawer;
 
 /**
  * Takes care of:
@@ -83,6 +74,7 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 		//
 		
 		renderer = new MapRenderer(data.map);
+		GameData.get().customRenderingHooks.add(renderer.MAP_RENDERING_HOOK);
 		
 		final Vector2 scratch = new Vector2();
 		scratch.set(0, 0);
