@@ -4,11 +4,11 @@
 package org.snowjak.city.service;
 
 import org.snowjak.city.CityGame;
+import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.module.Module;
 
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
-import com.github.czyzby.autumn.mvc.config.AutumnActionPriority;
 
 /**
  * @author snowjak88
@@ -30,7 +30,7 @@ public class ModuleService extends AbstractResourceService<Module, Module> {
 				".module.groovy");
 	}
 	
-	@Initiate(priority = AutumnActionPriority.VERY_LOW_PRIORITY)
+	@Initiate(priority = InitPriority.HIGH_PRIORITY)
 	@Override
 	public void init() {
 		

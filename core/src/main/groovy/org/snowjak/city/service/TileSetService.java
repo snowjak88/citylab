@@ -4,11 +4,11 @@
 package org.snowjak.city.service;
 
 import org.snowjak.city.CityGame;
+import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.map.tiles.TileSet;
 
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
-import com.github.czyzby.autumn.mvc.config.AutumnActionPriority;
 
 /**
  * Provides Tileset-related application-level services.
@@ -25,7 +25,7 @@ public class TileSetService extends AbstractResourceService<TileSet, TileSet> {
 				".tileset.groovy");
 	}
 	
-	@Initiate(priority = AutumnActionPriority.LOW_PRIORITY)
+	@Initiate(priority = InitPriority.VERY_HIGH_PRIORITY)
 	@Override
 	public void init() {
 		

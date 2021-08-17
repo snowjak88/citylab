@@ -12,6 +12,14 @@ buildscript {
 }
 
 allprojects {
+	repositories {
+		mavenLocal()
+		mavenCentral()
+		maven { url 'https://plugins.gradle.org/m2/' }
+		maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+		maven { url 'https://jitpack.io' }
+	}
+	
 	apply plugin: 'eclipse'
 	apply plugin: 'idea'
 	
@@ -20,8 +28,12 @@ allprojects {
 }
 
 configure(subprojects) {
-
+	
 	apply plugin: 'java-library'
+	sourceCompatibility = 8.0
+	compileJava {
+		options.incremental = true
+	}
 	
 	if(it.name == 'core') {
 		apply plugin: 'groovy'
@@ -31,24 +43,13 @@ configure(subprojects) {
 		}
 	}
 	
-	sourceCompatibility = 8.0
-	compileJava {
-		options.incremental = true
-	}
-	
 	dependencies {
 		implementation "org.codehaus.groovy:groovy-all:3.0.+"
 	}
 }
 
 subprojects {
-	repositories {
-		mavenLocal()
-		mavenCentral()
-		maven { url 'https://plugins.gradle.org/m2/' }
-		maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
-		maven { url 'https://jitpack.io' }
-	}
+	
 }
 
 eclipse.project.name = 'jCity' + '-root'

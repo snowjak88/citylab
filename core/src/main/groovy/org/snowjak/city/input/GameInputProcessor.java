@@ -10,7 +10,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.snowjak.city.controller.GameScreenController;
 import org.snowjak.city.util.UnregistrationHandle;
 
 import com.badlogic.gdx.Input;
@@ -27,6 +26,7 @@ import com.badlogic.gdx.utils.IntIntMap;
  */
 public class GameInputProcessor extends InputAdapter {
 	
+	@SuppressWarnings("rawtypes")
 	private final Map<Class<? extends AbstractInputEvent>, Collection<InputEventReceiver>> receiversByParameter = new HashMap<>();
 	private final Map<Class<AbstractInputEvent>, Collection<AbstractInputEvent>> eventPool = new HashMap<>();
 	

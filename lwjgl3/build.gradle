@@ -10,7 +10,7 @@ dependencies {
 	implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
 	implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
 	implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
-	implementation "de.tomgrill.gdxdialogs:gdx-dialogs-desktop:$dialogsVersion"
+	//implementation "de.tomgrill.gdxdialogs:gdx-dialogs-desktop:$dialogsVersion"
 	implementation "com.github.czyzby:gdx-autumn-fcs:$autumnVersion"
 }
 

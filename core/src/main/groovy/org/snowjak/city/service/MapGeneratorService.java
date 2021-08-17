@@ -4,12 +4,12 @@
 package org.snowjak.city.service;
 
 import org.snowjak.city.CityGame;
+import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.generator.support.MapGeneratorDsl;
 
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
-import com.github.czyzby.autumn.mvc.config.AutumnActionPriority;
 
 /**
  * Provides access by name to {@link MapGeneratorDsl map-generator scripts}.
@@ -26,7 +26,7 @@ public class MapGeneratorService extends AbstractResourceService<MapGenerator, M
 				".mapgen.groovy");
 	}
 	
-	@Initiate(priority = AutumnActionPriority.LOW_PRIORITY)
+	@Initiate(priority = InitPriority.VERY_HIGH_PRIORITY)
 	public void init() {
 		
 		initInternal();

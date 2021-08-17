@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.snowjak.city.controller;
+package org.snowjak.city.screens;
 
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.snowjak.city.GameData;
 import org.snowjak.city.input.GameInputProcessor;
-import org.snowjak.city.input.MapClickEvent;
 import org.snowjak.city.input.MapHoverEvent;
 import org.snowjak.city.input.ScreenDragEndEvent;
 import org.snowjak.city.input.ScreenDragStartEvent;
@@ -20,7 +19,6 @@ import org.snowjak.city.input.ScrollEvent;
 import org.snowjak.city.map.renderer.MapRenderer;
 import org.snowjak.city.map.renderer.RenderingSupport;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
-import org.snowjak.city.module.Module;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Gdx;
@@ -30,40 +28,28 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
-import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import com.github.czyzby.autumn.mvc.component.ui.controller.ViewController;
-import com.github.czyzby.autumn.mvc.component.ui.controller.ViewInitializer;
-import com.github.czyzby.autumn.mvc.component.ui.controller.ViewRenderer;
-import com.github.czyzby.autumn.mvc.component.ui.controller.ViewResizer;
-import com.github.czyzby.autumn.mvc.component.ui.controller.ViewShower;
-import com.github.czyzby.autumn.mvc.stereotype.View;
-import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
-import com.github.czyzby.lml.parser.action.ActionContainer;
+import com.github.czyzby.autumn.annotation.Component;
 
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
 /**
- * Takes care of:
- * 
- * <ul>
- * <li>Managing the game-display</li>
- * <li>Organizes input-handling for game-{@link Module}s.</li>
- * </ul>
+ * Presents the actual game-screen.
  * 
  * @author snowjak88
  *
  */
-@View(id = "gameScreen", value = "ui/templates/gameScreen.lml")
-public class GameScreenController implements ViewInitializer, ViewShower, ViewRenderer, ViewResizer, ActionContainer {
+@Component
+public class GameScreen extends AbstractGameScreen {
 	
-	private static final Logger LOG = LoggerService.forClass(GameScreenController.class);
+	public GameScreen(Stage stage) {
+		
+		super(stage);
+	}
 	
 	private GameInputProcessor inputProcessor;
 	private final Viewport viewport = new FitViewport(8, 8);
@@ -75,7 +61,15 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 	float minWorldX, minWorldY, maxWorldX, maxWorldY;
 	
 	@Override
-	public void initialize(Stage stage, ObjectMap<String, Actor> actorMappedByIds) {
+	protected Actor getRoot() {
+		
+		return null;
+	}
+	
+	@Override
+	public void show() {
+		
+		super.show();
 		
 		final GameData data = GameData.get();
 		
@@ -118,14 +112,15 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 			return renderer.viewportToMap(tmp);
 		});
 		
-		final InputHandler inputHandler = new InputHandler();
+		getStage().addAction(Actions
+				.run(() -> Gdx.app.getInput().setInputProcessor(new InputMultiplexer(getStage(), inputProcessor))));
+		
+		final GameScreenInputHandler inputHandler = new GameScreenInputHandler();
 		inputProcessor.register(ScreenDragStartEvent.class,
 				e -> inputHandler.dragStart(e.getX(), e.getY(), e.getButton()));
 		inputProcessor.register(ScreenDragUpdateEvent.class, e -> inputHandler.dragUpdate(e.getX(), e.getY()));
 		inputProcessor.register(ScreenDragEndEvent.class, e -> inputHandler.dragEnd(e.getX(), e.getY()));
 		inputProcessor.register(ScrollEvent.class, e -> inputHandler.scroll(e.getAmountX(), e.getAmountY()));
-		
-		inputProcessor.register(MapClickEvent.class, e -> LOG.info("Clicked the map at {0},{1}", e.getX(), e.getY()));
 		
 		final AtomicInteger hoverX = new AtomicInteger(0), hoverY = new AtomicInteger(0);
 		final AtomicBoolean hoverActive = new AtomicBoolean(false);
@@ -157,24 +152,19 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 		};
 		
 		GameData.get().customRenderingHooks.add(hoverHook);
-		
 	}
 	
 	@Override
-	public void show(Stage stage, Action action) {
-		
-		stage.addAction(Actions.sequence(action,
-				Actions.run(() -> Gdx.input.setInputProcessor(new InputMultiplexer(stage, inputProcessor)))));
-	}
-	
-	@Override
-	public void render(Stage stage, float delta) {
-		
-		stage.act(delta);
+	public void beforeStageAct(float delta) {
 		
 		final Engine entityEngine = GameData.get().entityEngine;
 		if (entityEngine != null)
 			entityEngine.update(delta);
+		
+	}
+	
+	@Override
+	public void renderBeforeStage(float delta) {
 		
 		if (renderer != null) {
 			viewport.apply();
@@ -185,31 +175,33 @@ public class GameScreenController implements ViewInitializer, ViewShower, ViewRe
 			
 			renderer.render();
 			
-			stage.getViewport().apply();
+			//
+			// Remember to re-apply the Stage's viewport.
+			getStage().getViewport().apply();
 		}
-		
-		stage.draw();
 	}
 	
 	@Override
-	public void resize(Stage stage, int width, int height) {
+	public void renderAfterStage(float delta) {
 		
+		//
+		// nothing to do here
+	}
+	
+	@Override
+	public void resize(int width, int height) {
+		
+		super.resize(width, height);
 		viewport.update(width, height);
-		stage.getViewport().update(width, height, true);
 	}
 	
-	@Override
-	public void hide(Stage stage, Action action) {
-		
-		stage.addAction(action);
-	}
-	
-	@Override
-	public void destroy(ViewController viewController) {
-		
-	}
-	
-	class InputHandler {
+	/**
+	 * Ad-hoc interpreter for input-events.
+	 * 
+	 * @author snowjak88
+	 *
+	 */
+	class GameScreenInputHandler {
 		
 		Vector2 scratch = new Vector2();
 		boolean ongoing = false;

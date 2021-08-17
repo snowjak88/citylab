@@ -89,39 +89,6 @@ public class ModuleLoader extends AsynchronousAssetLoader<Module, AssetLoaderPar
 	@Override
 	public Array<AssetDescriptor> getDependencies(String fileName, FileHandle file, AssetLoaderParameters parameter) {
 		
-//		final Array<AssetDescriptor> dependencies = new Array<>()
-//		
-//		try {
-//			final GroovyShell shell = new GroovyShell(this.getClass().getClassLoader(), config)
-//			final DelegatingScript moduleScript = (DelegatingScript) shell.parse(file.file())
-//			
-//			final Module module = new Module()
-//			
-//			def foundTileSetFiles = tilesetService.scanDirectoryForScripts()
-//			
-//			def tilesetProxy = new groovy.util.Proxy()
-//			tilesetProxy.wrap(tilesetService)
-//			tilesetProxy.metaClass."get" = {name, wait=false ->
-//				// Log the dependency
-//				def fh = foundTileSetFiles.find { tilesetService.getNameFromFileHandle(it) == name }
-//				if(fh != null) {
-//					println "Intercepting a dependency: $name --> ${fh.path()}"
-//					dependencies.add new AssetDescriptor(fh, TileSet)
-//				}
-//				// and return nothing
-//				null
-//			}
-//			
-//			module.tileSetService = tilesetProxy
-//			
-//			moduleScript.delegate = module
-//			moduleScript.run()
-//		} catch (IOException | CompilationFailedException e) {
-//			LOG.error(e, "Cannot load module \"{0}\" [{1}]", file.nameWithoutExtension(), file.path())
-//			return null
-//		}
-//		
-//		dependencies
 		null
 	}
 	

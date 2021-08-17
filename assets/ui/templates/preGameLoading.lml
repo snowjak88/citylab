@@ -1,8 +1,0 @@
-<!-- Going through LML tutorials is suggested before starting with Autumn MVC. If anything is unclear
-	in the .lml files, you should go through LML resources first. -->
-<window title="@pregame-loading-title" titleAlign="center">
-	<table oneColumn=true>
-		<progressBar id="loadingBar" animateDuration="0.4" fillX=true/>
-		<label id="loadingStatus" width=320/>
-	</table>
-</window>

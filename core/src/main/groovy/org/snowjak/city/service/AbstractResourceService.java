@@ -32,7 +32,6 @@ public abstract class AbstractResourceService<S, R> implements ResourceService<S
 	
 	private final Class<S> toLoadType;
 	private final ResourceConverter<S, R> resourceConverter;
-	// private final Lazy<GameAssetService> deferredAssetService;
 	private final FileHandle baseDirectory;
 	private final boolean includeSubdirectories;
 	private final String extension;
