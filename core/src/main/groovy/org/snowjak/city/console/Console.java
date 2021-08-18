@@ -6,6 +6,7 @@ package org.snowjak.city.console;
 import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.console.executors.AbstractConsoleExecutor;
 import org.snowjak.city.console.executors.StubExecutor;
+import org.snowjak.city.console.ui.ConsoleDisplay;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.Input;
@@ -50,6 +51,7 @@ public class Console {
 	 */
 	public static final int DEFAULT_ACTIVATION_CHARACTER = Input.Keys.GRAVE;
 	
+	private boolean isReady = false;
 	private boolean isHidden = true;
 	private int activationCharacter = DEFAULT_ACTIVATION_CHARACTER;
 	
@@ -66,6 +68,17 @@ public class Console {
 	public void init() {
 		
 		display.init();
+		isReady = true;
+	}
+	
+	/**
+	 * Indicates if this Console has been initialized yet.
+	 * 
+	 * @return
+	 */
+	public boolean isReady() {
+		
+		return isReady;
 	}
 	
 	/**

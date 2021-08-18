@@ -1,9 +1,11 @@
 /**
  * 
  */
-package org.snowjak.city.console;
+package org.snowjak.city.console.ui;
 
 import java.util.function.Consumer;
+
+import org.snowjak.city.console.Console;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;

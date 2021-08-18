@@ -6,11 +6,11 @@ package org.snowjak.city.screens.loadingtasks;
 import java.util.LinkedList;
 
 import org.snowjak.city.screens.LoadingScreen.LoadingTask;
+import org.snowjak.city.service.LoggerService;
 
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Inject;
 import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
 
 /**
  * Convenience {@link LoadingTask}. A composite of:

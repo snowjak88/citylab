@@ -9,13 +9,13 @@ import org.snowjak.city.GameData;
 import org.snowjak.city.module.Module;
 import org.snowjak.city.screens.LoadingScreen.LoadingTask;
 import org.snowjak.city.service.I18NService;
+import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.ModuleService;
 
 import com.badlogic.ashley.core.EntitySystem;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Inject;
 import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
 import com.google.common.util.concurrent.AtomicDouble;
 import com.google.common.util.concurrent.ListenableFuture;
 

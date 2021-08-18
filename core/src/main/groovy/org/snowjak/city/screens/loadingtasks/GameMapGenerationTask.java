@@ -11,12 +11,12 @@ import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.screens.LoadingScreen.LoadingTask;
 import org.snowjak.city.service.I18NService;
+import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.MapGeneratorService;
 
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Inject;
 import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
 import com.google.common.util.concurrent.AtomicDouble;
 import com.google.common.util.concurrent.ListenableFuture;
 

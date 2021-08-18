@@ -8,6 +8,7 @@ import org.snowjak.city.ecs.components.UpdatedMapCell;
 import org.snowjak.city.ecs.systems.MapCellUpdatingSystem;
 import org.snowjak.city.screens.LoadingScreen.LoadingTask;
 import org.snowjak.city.service.I18NService;
+import org.snowjak.city.service.LoggerService;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
@@ -15,7 +16,6 @@ import com.badlogic.ashley.core.EntitySystem;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Inject;
 import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
 import com.google.common.util.concurrent.AtomicDouble;
 import com.google.common.util.concurrent.ListenableFuture;
 

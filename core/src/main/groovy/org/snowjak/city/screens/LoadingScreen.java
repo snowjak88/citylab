@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
+import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -20,7 +21,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Align;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
 
 /**
  * Presents a loading screen. Describes what's currently being loaded.

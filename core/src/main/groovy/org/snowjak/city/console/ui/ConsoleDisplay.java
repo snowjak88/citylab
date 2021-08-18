@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.snowjak.city.console;
+package org.snowjak.city.console.ui;
 
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
@@ -9,6 +9,7 @@ import static org.snowjak.city.util.Util.min;
 import java.util.LinkedList;
 
 import org.snowjak.city.configuration.Configuration;
+import org.snowjak.city.console.Console;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.Input;
@@ -34,7 +35,7 @@ public class ConsoleDisplay {
 	/**
 	 * Console will display at most N lines of history.
 	 */
-	public static final int MAX_CONSOLE_ENTRIES = 64;
+	public static final int MAX_CONSOLE_ENTRIES = 1024;
 	/**
 	 * Console will permit at most N characters of input.
 	 */
@@ -98,13 +99,12 @@ public class ConsoleDisplay {
 						return scrolled(event, event.getStageX(), event.getStageY(), event.getScrollAmountX(),
 								event.getScrollAmountY());
 					default:
-						break;
 					}
 					
-					if (console.isHidden())
-						return false;
-					
 				}
+				
+				if (console.isHidden())
+					return false;
 				
 				return super.handle(e);
 			}
@@ -151,8 +151,17 @@ public class ConsoleDisplay {
 			public boolean keyTyped(InputEvent event, char character) {
 				
 				if (event.getKeyCode() == console.getActivationCharacter()) {
+					
 					console.toggleHidden();
 					stage.getRoot().setVisible(!console.isHidden());
+					
+					if (console.isHidden())
+						stage.unfocusAll();
+					else {
+						stage.setKeyboardFocus(inputTextArea);
+						stage.setScrollFocus(scrollPane);
+					}
+					
 					event.cancel();
 					
 					return true;
@@ -196,9 +205,13 @@ public class ConsoleDisplay {
 		root.setFillParent(true);
 		
 		stage.getRoot().addActor(root);
-		stage.setKeyboardFocus(inputTextArea);
 	}
 	
+	/**
+	 * Write the given text, creating a new current-last-line of the console.
+	 * 
+	 * @param text
+	 */
 	public void addConsoleEntry(String text) {
 		
 		nextConsoleLine();
@@ -206,6 +219,11 @@ public class ConsoleDisplay {
 		currentConsoleLine.setText(text);
 	}
 	
+	/**
+	 * Append the given text to the current-last-line of the console.
+	 * 
+	 * @param text
+	 */
 	public void appendConsoleEntry(String text) {
 		
 		if (currentConsoleLine == null)

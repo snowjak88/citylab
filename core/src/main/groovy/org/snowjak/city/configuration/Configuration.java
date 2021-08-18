@@ -1,6 +1,8 @@
 package org.snowjak.city.configuration;
 
 import org.snowjak.city.CityGame;
+import org.snowjak.city.console.Console;
+import org.snowjak.city.console.loggers.ConsoleLoggerFactory;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.generator.MapGeneratorLoader;
 import org.snowjak.city.map.tiles.TileSet;
@@ -8,11 +10,12 @@ import org.snowjak.city.map.tiles.TileSetLoader;
 import org.snowjak.city.module.Module;
 import org.snowjak.city.module.ModuleLoader;
 import org.snowjak.city.service.GameAssetService;
-import org.snowjak.city.service.SkinService;
+import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.TileSetService;
 
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
+import com.github.czyzby.kiwi.log.Logger;
 
 /**
  * Thanks to the Component annotation, this class will be automatically found
@@ -22,6 +25,8 @@ import com.github.czyzby.autumn.annotation.Initiate;
  */
 @Component
 public class Configuration {
+	
+	private static final Logger LOG = LoggerService.forClass(Configuration.class);
 	
 	/**
 	 * The Gdx-managed Preferences file is named so.
@@ -37,17 +42,9 @@ public class Configuration {
 	 *
 	 * @param scaleService
 	 *            contains current GUI scale.
-	 * @param skinService
-	 *            contains GUI skin.
 	 */
 	@Initiate(priority = InitPriority.HIGHEST_PRIORITY)
-	public void initiateConfiguration(SkinService skinService, final GameAssetService assetService,
-			final TileSetService tilesetService) {
-		
-		addCustomAssetLoaders(assetService, tilesetService);
-	}
-	
-	private void addCustomAssetLoaders(GameAssetService assetService, TileSetService tilesetService) {
+	public void configureAssetLoaders(final GameAssetService assetService, final TileSetService tilesetService) {
 		
 		final TileSetLoader tileSetLoader = new TileSetLoader(CityGame.RESOLVER);
 		assetService.setLoader(TileSet.class, tileSetLoader);
@@ -57,5 +54,12 @@ public class Configuration {
 		
 		final ModuleLoader moduleLoader = new ModuleLoader(CityGame.RESOLVER, tilesetService);
 		assetService.setLoader(Module.class, moduleLoader);
+	}
+	
+	@Initiate(priority = InitPriority.HIGHEST_PRIORITY)
+	public void redirectLoggerToConsole(final Console console) {
+		
+		LOG.info("Redirecting logging to in-game console ...");
+		ConsoleLoggerFactory.get().setConsole(console);
 	}
 }

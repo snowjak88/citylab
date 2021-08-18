@@ -14,7 +14,6 @@ import java.util.Set;
 import com.badlogic.gdx.files.FileHandle;
 import com.github.czyzby.autumn.annotation.Initiate;
 import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
 
 /**
  * @author snowjak88

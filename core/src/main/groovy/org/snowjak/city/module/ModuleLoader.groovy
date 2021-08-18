@@ -10,6 +10,7 @@ import org.snowjak.city.GameData;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileSet;
+import org.snowjak.city.service.LoggerService
 import org.snowjak.city.service.TileSetService;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
@@ -20,7 +21,6 @@ import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;
 import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
 
 /**
  * @author snowjak88
