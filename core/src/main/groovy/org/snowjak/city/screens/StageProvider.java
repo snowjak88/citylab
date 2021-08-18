@@ -3,10 +3,9 @@
  */
 package org.snowjak.city.screens;
 
-import org.snowjak.city.CityGame;
-
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
+import com.github.czyzby.autumn.annotation.Inject;
 import com.github.czyzby.autumn.annotation.Provider;
 import com.github.czyzby.autumn.provider.DependencyProvider;
 
@@ -17,6 +16,9 @@ import com.github.czyzby.autumn.provider.DependencyProvider;
 @Provider
 public class StageProvider implements DependencyProvider<Stage> {
 	
+	@Inject(newInstance = true)
+	private Viewport viewport;
+	
 	@Override
 	public Class<Stage> getDependencyType() {
 		
@@ -26,7 +28,7 @@ public class StageProvider implements DependencyProvider<Stage> {
 	@Override
 	public Stage provide() {
 		
-		return new Stage(new FitViewport(CityGame.WIDTH, CityGame.HEIGHT));
+		return new Stage(viewport);
 	}
 	
 }

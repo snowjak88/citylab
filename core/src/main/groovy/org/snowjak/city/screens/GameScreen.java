@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.snowjak.city.GameData;
+import org.snowjak.city.configuration.InitPriority;
+import org.snowjak.city.console.Console;
 import org.snowjak.city.input.GameInputProcessor;
 import org.snowjak.city.input.MapHoverEvent;
 import org.snowjak.city.input.ScreenDragEndEvent;
@@ -22,19 +24,18 @@ import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.ashley.core.Engine;
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.github.czyzby.autumn.annotation.Component;
+import com.github.czyzby.autumn.annotation.Initiate;
 import com.github.czyzby.kiwi.util.gdx.GdxUtilities;
 
 import space.earlygrey.shapedrawer.ShapeDrawer;
@@ -48,19 +49,36 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 @Component
 public class GameScreen extends AbstractGameScreen {
 	
-	public GameScreen(SkinService skinService, Stage stage) {
+	public GameScreen(Console console, SkinService skinService, Stage stage) {
 		
-		super(skinService, stage);
+		super(console, skinService, stage);
 	}
 	
 	private GameInputProcessor inputProcessor;
 	private final Viewport viewport = new FitViewport(8, 8);
 	
-	private MapRenderer renderer;
-	
 	private float cameraOffsetX, cameraOffsetY;
 	
+	private MapRenderer renderer;
 	float minWorldX, minWorldY, maxWorldX, maxWorldY;
+	
+	@Initiate(priority = InitPriority.LOWEST_PRIORITY)
+	public void init() {
+		
+		//
+		// Set up the base map-control input-receivers.
+		//
+		inputProcessor = new GameInputProcessor((s) -> {
+			//
+			// Screen- to viewport-coordinates ...
+			final Vector2 tmp = new Vector2(s);
+			viewport.unproject(tmp);
+			
+			//
+			// ... then viewport- to map-coordinates ...
+			return renderer.viewportToMap(tmp);
+		});
+	}
 	
 	@Override
 	protected Actor getRoot() {
@@ -100,23 +118,6 @@ public class GameScreen extends AbstractGameScreen {
 		maxWorldX = max(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
 		maxWorldY = max(worldBound1.y, worldBound2.y, worldBound3.y, worldBound4.y);
 		
-		//
-		// Register the base map-control input-receivers.
-		//
-		inputProcessor = new GameInputProcessor((s) -> {
-			//
-			// Screen- to viewport-coordinates ...
-			final Vector2 tmp = new Vector2(s);
-			viewport.unproject(tmp);
-			
-			//
-			// ... then viewport- to map-coordinates ...
-			return renderer.viewportToMap(tmp);
-		});
-		
-		getStage().addAction(Actions
-				.run(() -> Gdx.app.getInput().setInputProcessor(new InputMultiplexer(getStage(), inputProcessor))));
-		
 		final GameScreenInputHandler inputHandler = new GameScreenInputHandler();
 		inputProcessor.register(ScreenDragStartEvent.class,
 				e -> inputHandler.dragStart(e.getX(), e.getY(), e.getButton()));
@@ -154,6 +155,12 @@ public class GameScreen extends AbstractGameScreen {
 		};
 		
 		GameData.get().customRenderingHooks.add(hoverHook);
+	}
+	
+	@Override
+	protected InputProcessor getInputProcessor() {
+		
+		return inputProcessor;
 	}
 	
 	@Override

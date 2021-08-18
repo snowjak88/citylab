@@ -4,6 +4,7 @@
 package org.snowjak.city.screens;
 
 import org.snowjak.city.configuration.Configuration;
+import org.snowjak.city.console.Console;
 import org.snowjak.city.screens.loadingtasks.NewGameSetupTask;
 import org.snowjak.city.screens.menupages.GameSetupMenuPage;
 import org.snowjak.city.screens.menupages.MainMenuPage;
@@ -59,9 +60,9 @@ public class MainMenuScreen extends AbstractGameScreen {
 	private final Container<Actor> pageContainer = new Container<>();
 	private MainMenuPage currentPage = null;
 	
-	public MainMenuScreen(SkinService skinService, Stage stage) {
+	public MainMenuScreen(Console console, SkinService skinService, Stage stage) {
 		
-		super(skinService, stage);
+		super(console, skinService, stage);
 		this.skinService = skinService;
 	}
 	

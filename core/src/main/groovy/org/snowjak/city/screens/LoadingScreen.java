@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.snowjak.city.configuration.Configuration;
+import org.snowjak.city.console.Console;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -45,9 +46,9 @@ public class LoadingScreen extends AbstractGameScreen {
 	
 	private boolean isInitiated = false, invokedComplete = false;
 	
-	public LoadingScreen(SkinService skinService, Stage stage) {
+	public LoadingScreen(Console console, SkinService skinService, Stage stage) {
 		
-		super(skinService, stage);
+		super(console, skinService, stage);
 		
 		this.skinService = skinService;
 	}

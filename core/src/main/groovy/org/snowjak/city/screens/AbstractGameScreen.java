@@ -4,6 +4,7 @@
 package org.snowjak.city.screens;
 
 import org.snowjak.city.configuration.Configuration;
+import org.snowjak.city.console.Console;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.Game;
@@ -27,6 +28,7 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	
 	public static final float SCREEN_FADE_TIME = 0.4f;
 	
+	private final Console console;
 	private final SkinService skinService;
 	private final Stage stage;
 	private Actor root;
@@ -36,8 +38,9 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	
 	private Game game;
 	
-	public AbstractGameScreen(SkinService skinService, Stage stage) {
+	public AbstractGameScreen(Console console, SkinService skinService, Stage stage) {
 		
+		this.console = console;
 		this.stage = stage;
 		this.skinService = skinService;
 	}
@@ -56,31 +59,22 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	/**
 	 * Performs the following steps:
 	 * <ol>
-	 * <li>Sets the configured {@link Stage} as the active
-	 * {@link InputProcessor}</li>
+	 * <li>Sets up an {@link InputMultiplexer} between {@link #getInputProcessor()
+	 * your screen's InputProcessor} and the Stage</li>
 	 * <li>Calls {@link #getRoot()} to get this screen's root {@link Actor}</li>
 	 * <li>Schedules that root to fade in over {@link #SCREEN_FADE_TIME} seconds
 	 * </li>
 	 * </ol>
-	 * 
-	 * If you need to set up an {@link InputMultiplexer} between your own
-	 * {@link InputProcessor} and the Stage, you should override this method:
-	 * 
-	 * <pre>
-	 * 
-	 * &#64;Override
-	 * public void show() {
-	 * 	
-	 * 	super.show();
-	 * 	
-	 * 	Gdx.input.setInputProcessor(new InputMultiplexer(getStage(), myInputProcessor));
-	 * }
-	 * </pre>
 	 */
 	@Override
 	public void show() {
 		
-		Gdx.input.setInputProcessor(stage);
+		final InputProcessor implementationInputProcessor = getInputProcessor();
+		if (implementationInputProcessor == null)
+			Gdx.input.setInputProcessor(new InputMultiplexer(console.getInputProcessor(), stage));
+		else
+			Gdx.input.setInputProcessor(
+					new InputMultiplexer(console.getInputProcessor(), stage, implementationInputProcessor));
 		
 		skin = skinService.getSkin(Configuration.SKIN_NAME);
 		if (skinService.getSkin(Configuration.SKIN_NAME).has("background", Color.class))
@@ -95,6 +89,21 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 			
 			root.addAction(Actions.fadeIn(SCREEN_FADE_TIME));
 		}
+	}
+	
+	/**
+	 * If your implementation needs to define its own {@link InputProcessor}, it
+	 * should override this method.
+	 * <p>
+	 * The default implementation simply returns {@code null} (signifying no such
+	 * InputProcessor).
+	 * </p>
+	 * 
+	 * @return
+	 */
+	protected InputProcessor getInputProcessor() {
+		
+		return null;
 	}
 	
 	/**
@@ -122,6 +131,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		else
 			GdxUtilities.clearScreen();
 		
+		console.act(delta);
+		
 		beforeStageAct(delta);
 		
 		stage.act(delta);
@@ -131,6 +142,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		stage.draw();
 		
 		renderAfterStage(delta);
+		
+		console.render();
 	}
 	
 	public abstract void beforeStageAct(float delta);

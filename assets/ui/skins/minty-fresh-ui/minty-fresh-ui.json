@@ -15,6 +15,9 @@ com.badlogic.gdx.graphics.g2d.BitmapFont: {
 	white-bold: {
 		file: font-white-bold-export.fnt
 	}
+	mono: {
+		file: IBMPlexMono-Regular.fnt
+	}
 }
 com.badlogic.gdx.graphics.Color: {
 	black: {
@@ -59,6 +62,12 @@ com.badlogic.gdx.graphics.Color: {
 		b: 1
 		a: 1
 	}
+	console-background: {
+		r: 1
+		g: 1
+		b: 1
+		a: 0.75
+	}
 }
 com.badlogic.gdx.scenes.scene2d.ui.Skin$TintedDrawable: {
 	black: {
@@ -76,6 +85,10 @@ com.badlogic.gdx.scenes.scene2d.ui.Skin$TintedDrawable: {
 	panel: {
 		name: white
 		color: panel
+	}
+	console-background: {
+		name: white
+		color: console-background
 	}
 }
 com.badlogic.gdx.scenes.scene2d.utils.TiledDrawable: {
@@ -175,6 +188,9 @@ com.badlogic.gdx.scenes.scene2d.ui.Label$LabelStyle: {
 	}
 	white-bold: {
 		font: white-bold
+	}
+	console: {
+		font: mono
 	}
 }
 com.badlogic.gdx.scenes.scene2d.ui.List$ListStyle: {
