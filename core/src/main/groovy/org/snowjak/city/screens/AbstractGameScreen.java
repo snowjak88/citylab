@@ -3,15 +3,20 @@
  */
 package org.snowjak.city.screens;
 
+import org.snowjak.city.configuration.Configuration;
+import org.snowjak.city.service.SkinService;
+
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.github.czyzby.kiwi.util.gdx.GdxUtilities;
 
 /**
@@ -22,14 +27,19 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	
 	public static final float SCREEN_FADE_TIME = 0.4f;
 	
+	private final SkinService skinService;
 	private final Stage stage;
 	private Actor root;
 	
+	private Skin skin;
+	private Color backgroundColor;
+	
 	private Game game;
 	
-	public AbstractGameScreen(Stage stage) {
+	public AbstractGameScreen(SkinService skinService, Stage stage) {
 		
 		this.stage = stage;
+		this.skinService = skinService;
 	}
 	
 	public void setGame(Game game) {
@@ -72,6 +82,12 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		
 		Gdx.input.setInputProcessor(stage);
 		
+		skin = skinService.getSkin(Configuration.SKIN_NAME);
+		if (skinService.getSkin(Configuration.SKIN_NAME).has("background", Color.class))
+			backgroundColor = skin.get("background", Color.class);
+		else
+			backgroundColor = null;
+		
 		root = getRoot();
 		if (root != null) {
 			stage.getRoot().addActor(root);
@@ -101,7 +117,10 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	@Override
 	public void render(float delta) {
 		
-		GdxUtilities.clearScreen();
+		if (backgroundColor != null)
+			GdxUtilities.clearScreen(backgroundColor.r, backgroundColor.g, backgroundColor.b);
+		else
+			GdxUtilities.clearScreen();
 		
 		beforeStageAct(delta);
 		

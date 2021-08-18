@@ -13,9 +13,6 @@ import org.snowjak.city.service.TileSetService;
 
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
-import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.log.LoggerService;
-import com.kotcrab.vis.ui.VisUI;
 
 /**
  * Thanks to the Component annotation, this class will be automatically found
@@ -26,12 +23,12 @@ import com.kotcrab.vis.ui.VisUI;
 @Component
 public class Configuration {
 	
-	private static final Logger LOG = LoggerService.forClass(Configuration.class);
-	
 	/**
 	 * The Gdx-managed Preferences file is named so.
 	 */
 	public static final String PREFERENCES_NAME = "jCity";
+	
+	public static final String SKIN_NAME = "minty-fresh-ui";
 	
 	/**
 	 * Thanks to the Initiate annotation, this method will be automatically invoked
@@ -46,10 +43,6 @@ public class Configuration {
 	@Initiate(priority = InitPriority.HIGHEST_PRIORITY)
 	public void initiateConfiguration(SkinService skinService, final GameAssetService assetService,
 			final TileSetService tilesetService) {
-		
-		VisUI.load();
-		
-		skinService.addSkin("default", VisUI.getSkin());
 		
 		addCustomAssetLoaders(assetService, tilesetService);
 	}

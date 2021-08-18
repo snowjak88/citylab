@@ -6,6 +6,7 @@ package org.snowjak.city.screens.menupages;
 import java.util.stream.Collectors;
 
 import org.snowjak.city.GameData;
+import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.screens.MainMenuScreen;
@@ -14,19 +15,18 @@ import org.snowjak.city.service.MapGeneratorService;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
+import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Array;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
 import com.github.czyzby.autumn.annotation.Inject;
-import com.kotcrab.vis.ui.building.StandardTableBuilder;
-import com.kotcrab.vis.ui.widget.VisSelectBox;
-import com.kotcrab.vis.ui.widget.VisTextButton;
-import com.kotcrab.vis.ui.widget.spinner.IntSpinnerModel;
-import com.kotcrab.vis.ui.widget.spinner.Spinner;
 
 /**
  * @author snowjak88
@@ -45,48 +45,141 @@ public class GameSetupMenuPage implements MainMenuPage {
 	private MapGeneratorService mapGeneratorService;
 	
 	private Table root;
-	private Spinner mapWidthSpinner, mapHeightSpinner;
-	private VisSelectBox<MapGenerator> mapGeneratorSelection;
-	private VisTextButton startGameButton;
+	
+	private TextField mapWidthField, mapHeightField;
+	private Button mapWidthIncrease, mapWidthDecrease, mapHeightIncrease, mapHeightDecrease;
+	
+	private SelectBox<MapGenerator> mapGeneratorSelection;
+	private TextButton startGameButton;
 	
 	private Runnable onGameStart;
 	
 	@Initiate(priority = InitPriority.LOW_PRIORITY)
 	public void init() {
 		
-		final Skin defaultSkin = skinService.getSkin("default");
+		final Skin defaultSkin = skinService.getSkin(Configuration.SKIN_NAME);
 		
 		final GameData.GameParameters param = GameData.get().parameters;
 		
-		mapWidthSpinner = new Spinner(i18nService.get("menu-gamesetup-map-width"),
-				new IntSpinnerModel(64, 64, 1024, 64));
-		mapWidthSpinner.addListener(new ChangeListener() {
+		mapWidthField = new TextField("64", defaultSkin);
+		mapWidthIncrease = new Button(defaultSkin, "plus");
+		mapWidthDecrease = new Button(defaultSkin, "minus");
+		
+		mapWidthField.setProgrammaticChangeEvents(true);
+		mapWidthField.addListener(new ChangeListener() {
 			
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				
-				final IntSpinnerModel model = (IntSpinnerModel) ((Spinner) actor).getModel();
-				param.mapWidth = model.getValue();
-				
-				checkStartGameButton();
+				final String newText = ((TextField) event.getTarget()).getText();
+				if (newText.isEmpty())
+					return;
+				try {
+					final int newValue = Integer.parseInt(newText);
+					
+					param.mapWidth = newValue;
+				} catch (NumberFormatException e) {
+					event.cancel();
+				}
 			}
 		});
 		
-		mapHeightSpinner = new Spinner(i18nService.get("menu-gamesetup-map-height"),
-				new IntSpinnerModel(64, 64, 1024, 64));
-		mapHeightSpinner.addListener(new ChangeListener() {
+		mapWidthIncrease.addListener(new ChangeListener() {
 			
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				
-				final IntSpinnerModel model = (IntSpinnerModel) ((Spinner) actor).getModel();
-				param.mapHeight = model.getValue();
+				final String width = mapWidthField.getText();
+				if (width.isEmpty()) {
+					mapWidthField.setText("64");
+					return;
+				}
+				int widthValue = Integer.parseInt(width);
+				if (widthValue >= 960)
+					widthValue = 960;
 				
-				checkStartGameButton();
+				mapWidthField.setText(Integer.toString(widthValue + 64));
 			}
 		});
 		
-		mapGeneratorSelection = new VisSelectBox<MapGenerator>() {
+		mapWidthDecrease.addListener(new ChangeListener() {
+			
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				
+				final String width = mapWidthField.getText();
+				if (width.isEmpty()) {
+					mapWidthField.setText("64");
+					return;
+				}
+				int widthValue = Integer.parseInt(width);
+				if (widthValue <= 128)
+					widthValue = 128;
+				
+				mapWidthField.setText(Integer.toString(widthValue - 64));
+			}
+		});
+		
+		mapHeightField = new TextField("64", defaultSkin);
+		mapHeightIncrease = new Button(defaultSkin, "plus");
+		mapHeightDecrease = new Button(defaultSkin, "minus");
+		
+		mapHeightField.setProgrammaticChangeEvents(true);
+		mapHeightField.addListener(new ChangeListener() {
+			
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				
+				final String newText = ((TextField) event.getTarget()).getText();
+				if (newText.isEmpty())
+					return;
+				try {
+					final int newValue = Integer.parseInt(newText);
+					
+					param.mapHeight = newValue;
+				} catch (NumberFormatException e) {
+					event.cancel();
+				}
+			}
+		});
+		
+		mapHeightIncrease.addListener(new ChangeListener() {
+			
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				
+				final String width = mapHeightField.getText();
+				if (width.isEmpty()) {
+					mapHeightField.setText("64");
+					return;
+				}
+				int widthValue = Integer.parseInt(width);
+				if (widthValue >= 960)
+					widthValue = 960;
+				
+				mapHeightField.setText(Integer.toString(widthValue + 64));
+			}
+		});
+		
+		mapHeightDecrease.addListener(new ChangeListener() {
+			
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				
+				final String width = mapHeightField.getText();
+				if (width.isEmpty()) {
+					mapHeightField.setText("64");
+					return;
+				}
+				int widthValue = Integer.parseInt(width);
+				if (widthValue <= 128)
+					widthValue = 128;
+				
+				mapHeightField.setText(Integer.toString(widthValue - 64));
+			}
+		});
+		
+		mapGeneratorSelection = new SelectBox<MapGenerator>(defaultSkin) {
 			
 			@Override
 			protected String toString(MapGenerator item) {
@@ -101,14 +194,15 @@ public class GameSetupMenuPage implements MainMenuPage {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				
-				param.selectedMapGenerator = ((VisSelectBox<MapGenerator>) actor).getSelected();
+				param.selectedMapGenerator = ((SelectBox<MapGenerator>) actor).getSelected();
 				param.selectedMapGeneratorName = null;
 				
 				checkStartGameButton();
 			}
 		});
 		
-		startGameButton = new VisTextButton(i18nService.get("menu-gamesetup-start"), new ChangeListener() {
+		startGameButton = new TextButton(i18nService.get("menu-gamesetup-start"), defaultSkin);
+		startGameButton.addListener(new ChangeListener() {
 			
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
@@ -118,17 +212,28 @@ public class GameSetupMenuPage implements MainMenuPage {
 			}
 		});
 		
+		final HorizontalGroup mapWidthButtons = new HorizontalGroup();
+		mapWidthButtons.addActor(mapWidthDecrease);
+		mapWidthButtons.addActor(mapWidthIncrease);
+		
+		final HorizontalGroup mapHeightButtons = new HorizontalGroup();
+		mapHeightButtons.addActor(mapHeightDecrease);
+		mapHeightButtons.addActor(mapHeightIncrease);
+		
 		//@formatter:off
-		root = new StandardTableBuilder()
-				.append(mapWidthSpinner)
-			.row()
-				.append(mapHeightSpinner)
-			.row()
-				.append(new Label(i18nService.get("menu-gamesetup-map-generator"), defaultSkin))
-				.append(mapGeneratorSelection)
-			.row()
-				.append(startGameButton)
-			.build();
+		root = new Table(defaultSkin);
+		root.row().spaceBottom(15).spaceRight(5);
+		root.add(i18nService.get("menu-gamesetup-map-width")).right().expandX();
+		root.add(mapWidthField);
+		root.add( mapWidthButtons).left();
+		root.row().spaceBottom(15).spaceRight(5);
+		root.add(i18nService.get("menu-gamesetup-map-height")).right().expandX();
+		root.add(mapHeightField, mapHeightButtons);
+		root.row().spaceBottom(15).spaceRight(5);
+		root.add(i18nService.get("menu-gamesetup-map-generator"));
+		root.add(mapGeneratorSelection).colspan(2).fillX();
+		root.row().spaceBottom(15).spaceRight(5);
+		root.add(startGameButton).colspan(3).right();
 		//@formatter:on
 		
 		checkStartGameButton();
@@ -143,9 +248,15 @@ public class GameSetupMenuPage implements MainMenuPage {
 		
 		boolean isValid = true;
 		
-		if (((IntSpinnerModel) mapWidthSpinner.getModel()).getValue() <= 0)
+		int mapWidth = 0, mapHeight = 0;
+		try {
+			mapWidth = Integer.parseInt(mapWidthField.getText());
+			mapHeight = Integer.parseInt(mapHeightField.getText());
+		} catch (NumberFormatException e) {
 			isValid = false;
-		if (((IntSpinnerModel) mapHeightSpinner.getModel()).getValue() <= 0)
+		}
+		
+		if ((mapWidth <= 0) || (mapHeight <= 0))
 			isValid = false;
 		if (mapGeneratorSelection.getSelected() == null)
 			isValid = false;

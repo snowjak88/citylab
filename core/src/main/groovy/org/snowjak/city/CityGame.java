@@ -12,8 +12,6 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
 import com.badlogic.gdx.assets.loaders.resolvers.LocalFileHandleResolver;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.github.czyzby.autumn.context.ContextDestroyer;
 import com.github.czyzby.autumn.context.ContextInitializer;
 import com.github.czyzby.autumn.scanner.ClassScanner;
@@ -31,6 +29,11 @@ public class CityGame extends Game {
 	 * The internal I18N bundle has this base-name
 	 */
 	public static final String INTERNAL_BUNDLE_BASE = "i18n/bundle";
+	
+	/**
+	 * Directory holding internal skin-definitions.
+	 */
+	public static final String INTERNAL_SKIN_BASE = "ui/skins/";
 	
 	/**
 	 * Directory holding external I18N bundles
@@ -98,7 +101,10 @@ public class CityGame extends Game {
 		destroyer = initializer.initiate();
 		
 		//
-		// Set the very first Screen instance -- the loading screen!
+		// Set the very first Screen instance -- the loading screen, currently
+		// configured to wait until the GameAssetService has finished, and then switch
+		// to the Main-Menu screen.
+		//
 		loadingScreen.setLoadingTasks(assetServiceLoadingTask);
 		loadingScreen.setLoadingCompleteAction(() -> loadingScreen.changeScreen(mainMenuScreen));
 		setScreen(loadingScreen);

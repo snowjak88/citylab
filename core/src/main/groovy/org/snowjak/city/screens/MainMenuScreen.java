@@ -3,23 +3,25 @@
  */
 package org.snowjak.city.screens;
 
+import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.screens.loadingtasks.NewGameSetupTask;
 import org.snowjak.city.screens.menupages.GameSetupMenuPage;
 import org.snowjak.city.screens.menupages.MainMenuPage;
 import org.snowjak.city.service.I18NService;
+import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Container;
-import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.utils.Align;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Inject;
-import com.kotcrab.vis.ui.widget.VisTextButton;
 
 /**
  * Presents the main-menu.
@@ -40,6 +42,8 @@ public class MainMenuScreen extends AbstractGameScreen {
 	@Inject
 	private I18NService i18nService;
 	
+	private final SkinService skinService;
+	
 	@Inject
 	private GameSetupMenuPage gameSetupMenuPage;
 	
@@ -55,27 +59,25 @@ public class MainMenuScreen extends AbstractGameScreen {
 	private final Container<Actor> pageContainer = new Container<>();
 	private MainMenuPage currentPage = null;
 	
-	public MainMenuScreen(Stage stage) {
+	public MainMenuScreen(SkinService skinService, Stage stage) {
 		
-		super(stage);
+		super(skinService, stage);
+		this.skinService = skinService;
 	}
 	
 	@Override
 	protected Actor getRoot() {
 		
 		final VerticalGroup leftHandMenuGroup = new VerticalGroup();
-		leftHandMenuGroup.align(Align.right);
-		
-		pageContainer.fill();
-		
-		final HorizontalGroup root = new HorizontalGroup();
-		root.setFillParent(true);
-		root.align(Align.center);
-		root.addActor(leftHandMenuGroup);
-		root.addActor(pageContainer);
+		leftHandMenuGroup.columnCenter().padTop(200).padLeft(100).space(15);
 		
 		leftHandMenuGroup.addActor(getMenuButton("menu-gamesetup", gameSetupMenuPage));
 		leftHandMenuGroup.addActor(getMenuButton("menu-quit", () -> Gdx.app.exit()));
+		
+		final Table root = new Table();
+		root.center().setFillParent(true);
+		root.add(leftHandMenuGroup).growY().center();
+		root.add(pageContainer).grow().center();
 		
 		gameSetupMenuPage.setOnGameStart(() -> {
 			loadingScreen.setLoadingTasks(newGameSetupLoadingTask);
@@ -101,11 +103,14 @@ public class MainMenuScreen extends AbstractGameScreen {
 		
 	}
 	
-	private VisTextButton getMenuButton(String textKey, MainMenuPage page) {
+	private TextButton getMenuButton(String textKey, MainMenuPage page) {
 		
 		final MainMenuScreen thisScreen = this;
 		
-		return new VisTextButton(i18nService.get(textKey), new ChangeListener() {
+		final Skin skin = skinService.getSkin(Configuration.SKIN_NAME);
+		
+		final TextButton button = new TextButton(i18nService.get(textKey), skin);
+		button.addListener(new ChangeListener() {
 			
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
@@ -122,11 +127,15 @@ public class MainMenuScreen extends AbstractGameScreen {
 				}));
 			}
 		});
+		return button;
 	}
 	
-	private VisTextButton getMenuButton(String textKey, Runnable action) {
+	private TextButton getMenuButton(String textKey, Runnable action) {
 		
-		return new VisTextButton(i18nService.get(textKey), new ChangeListener() {
+		final Skin skin = skinService.getSkin(Configuration.SKIN_NAME);
+		
+		final TextButton button = new TextButton(i18nService.get(textKey), skin);
+		button.addListener(new ChangeListener() {
 			
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
@@ -134,5 +143,6 @@ public class MainMenuScreen extends AbstractGameScreen {
 				action.run();
 			}
 		});
+		return button;
 	}
 }

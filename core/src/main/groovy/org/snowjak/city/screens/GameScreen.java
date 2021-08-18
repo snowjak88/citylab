@@ -19,6 +19,7 @@ import org.snowjak.city.input.ScrollEvent;
 import org.snowjak.city.map.renderer.MapRenderer;
 import org.snowjak.city.map.renderer.RenderingSupport;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
+import org.snowjak.city.service.SkinService;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Gdx;
@@ -34,6 +35,7 @@ import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.github.czyzby.autumn.annotation.Component;
+import com.github.czyzby.kiwi.util.gdx.GdxUtilities;
 
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
@@ -46,9 +48,9 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 @Component
 public class GameScreen extends AbstractGameScreen {
 	
-	public GameScreen(Stage stage) {
+	public GameScreen(SkinService skinService, Stage stage) {
 		
-		super(stage);
+		super(skinService, stage);
 	}
 	
 	private GameInputProcessor inputProcessor;
@@ -165,6 +167,8 @@ public class GameScreen extends AbstractGameScreen {
 	
 	@Override
 	public void renderBeforeStage(float delta) {
+		
+		GdxUtilities.clearScreen();
 		
 		if (renderer != null) {
 			viewport.apply();

@@ -19,6 +19,8 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.github.czyzby.autumn.annotation.Component;
+import com.github.czyzby.kiwi.log.Logger;
+import com.github.czyzby.kiwi.log.LoggerService;
 
 /**
  * Upgrades the stock {@link AssetManager} to support customized load-failure
@@ -30,7 +32,9 @@ import com.github.czyzby.autumn.annotation.Component;
 @Component
 public class GameAssetService extends AssetManager {
 	
-	private final Map<Class<?>, Map<Class<? extends RuntimeException>, BiConsumer<AssetDescriptor<?>, RuntimeException>>> exceptionHandlers = new LinkedHashMap<>();
+	private static final Logger LOG = LoggerService.forClass(GameAssetService.class);
+	
+	private final Map<Class<?>, Map<Class<? extends Throwable>, BiConsumer<AssetDescriptor<?>, Throwable>>> exceptionHandlers = new LinkedHashMap<>();
 	private final List<Runnable> onLoadActions = new LinkedList<>();
 	
 	private final List<LoadFailureBean> loadFailures = new LinkedList<>();
@@ -48,12 +52,17 @@ public class GameAssetService extends AssetManager {
 	 * @param assetType
 	 * @param exceptionHandler
 	 */
-	public <T, E extends RuntimeException> void addFailureHandler(Class<T> assetType, Class<E> exceptionType,
-			BiConsumer<AssetDescriptor<?>, RuntimeException> exceptionHandler) {
+	public <T, E extends Throwable> void addFailureHandler(Class<T> assetType, Class<E> exceptionType,
+			BiConsumer<AssetDescriptor<?>, Throwable> exceptionHandler) {
 		
 		exceptionHandlers.computeIfAbsent(assetType, (a) -> new LinkedHashMap<>()).put(exceptionType, exceptionHandler);
 	}
 	
+	/**
+	 * Add an action that will be executed once all queued assets are fully loaded.
+	 * 
+	 * @param action
+	 */
 	public void addOnLoadAction(Runnable action) {
 		
 		onLoadActions.add(action);
@@ -114,57 +123,65 @@ public class GameAssetService extends AssetManager {
 	@Override
 	protected void taskFailed(@SuppressWarnings("rawtypes") AssetDescriptor assetDesc, RuntimeException ex) {
 		
-		final RuntimeException exception;
-		Throwable t = ex;
-		while (t.getCause() != null && t instanceof RuntimeException)
-			t = t.getCause();
-		
-		if (t instanceof GdxRuntimeException)
-			t = ex;
-		exception = (RuntimeException) t;
-		
-		loadFailures.add(new LoadFailureBean(assetDesc.type, assetDesc.file, exception));
-		
-		if (exceptionHandlers.containsKey(assetDesc.type))
-			//
-			// We have an exception-handler that matches this asset-type
-			handleForAssetType(assetDesc, exception, exceptionHandlers.get(assetDesc.type));
-		
-		else {
+		try {
+			LOG.info("Captured load-task failure: {0} while loading {1}", ex.getClass().getSimpleName(),
+					assetDesc.fileName);
 			
-			final Map<Class<? extends RuntimeException>, BiConsumer<AssetDescriptor<?>, RuntimeException>> handlers = exceptionHandlers
-					.entrySet().stream().filter(e -> e.getKey().isAssignableFrom(assetDesc.type)).findFirst()
-					.map(Entry::getValue).orElse(null);
+			LOG.info("Drilling down to capture root exception ...");
+			Throwable t = ex;
+			while (t.getCause() != null) {
+				LOG.debug("Drilling down past {0} ...", t.getClass().getSimpleName());
+				t = t.getCause();
+			}
+			LOG.info("Root exception is {0}: {1}", t.getClass().getSimpleName(), t.getMessage());
 			
-			if (handlers != null)
+			loadFailures.add(new LoadFailureBean(assetDesc.type, assetDesc.file, t));
+			
+			if (exceptionHandlers.containsKey(assetDesc.type))
 				//
-				// We have an exception handler for a superclass of this asset-type
-				handleForAssetType(assetDesc, exception, handlers);
-			else
-				//
-				// No valid exception-handlers. Just throw it.
-				throw ex;
+				// We have an exception-handler that matches this asset-type
+				handleForAssetType(assetDesc, t, exceptionHandlers.get(assetDesc.type));
+			
+			else {
+				
+				final Map<Class<? extends Throwable>, BiConsumer<AssetDescriptor<?>, Throwable>> handlers = exceptionHandlers
+						.entrySet().stream().filter(e -> e.getKey().isAssignableFrom(assetDesc.type)).findFirst()
+						.map(Entry::getValue).orElse(null);
+				
+				if (handlers != null)
+					//
+					// We have an exception handler for a superclass of this asset-type
+					handleForAssetType(assetDesc, t, handlers);
+				else
+					//
+					// No valid exception-handlers. Just throw it.
+					throw ex;
+			}
+			
+		} catch (Throwable t) {
+			throw new GdxRuntimeException("Uh oh -- unhandled resource-loading exception!", t);
 		}
 	}
 	
-	private void handleForAssetType(@SuppressWarnings("rawtypes") AssetDescriptor assetDesc, RuntimeException ex,
-			Map<Class<? extends RuntimeException>, BiConsumer<AssetDescriptor<?>, RuntimeException>> exceptionHandlers) {
+	private void handleForAssetType(@SuppressWarnings("rawtypes") AssetDescriptor assetDesc, Throwable t,
+			Map<Class<? extends Throwable>, BiConsumer<AssetDescriptor<?>, Throwable>> exceptionHandlers)
+			throws Throwable {
 		
 		//
 		// Look for exception-handlers that match the exception-class
-		if (exceptionHandlers.containsKey(ex.getClass()))
-			exceptionHandlers.get(ex.getClass()).accept(assetDesc, ex);
+		if (exceptionHandlers.containsKey(t.getClass()))
+			exceptionHandlers.get(t.getClass()).accept(assetDesc, t);
 			
 		//
 		// Look for the first exception-handler that handles a superclass of this
 		// exception-class
-		final BiConsumer<AssetDescriptor<?>, RuntimeException> exceptionHandler = exceptionHandlers.entrySet().stream()
-				.filter(e -> e.getKey().isAssignableFrom(ex.getClass())).findFirst().map(Entry::getValue).orElse(null);
+		final BiConsumer<AssetDescriptor<?>, Throwable> exceptionHandler = exceptionHandlers.entrySet().stream()
+				.filter(e -> e.getKey().isAssignableFrom(t.getClass())).findFirst().map(Entry::getValue).orElse(null);
 		
 		if (exceptionHandler != null)
-			exceptionHandler.accept(assetDesc, ex);
+			exceptionHandler.accept(assetDesc, t);
 		else
-			throw ex;
+			throw t;
 	}
 	
 	/**
@@ -180,9 +197,9 @@ public class GameAssetService extends AssetManager {
 		
 		private final Class<?> assetType;
 		private final FileHandle file;
-		private final RuntimeException exception;
+		private final Throwable exception;
 		
-		public LoadFailureBean(Class<?> assetType, FileHandle file, RuntimeException exception) {
+		public LoadFailureBean(Class<?> assetType, FileHandle file, Throwable exception) {
 			
 			this.assetType = assetType;
 			this.file = file;
@@ -199,7 +216,7 @@ public class GameAssetService extends AssetManager {
 			return file;
 		}
 		
-		public RuntimeException getException() {
+		public Throwable getException() {
 			
 			return exception;
 		}

@@ -38,7 +38,7 @@ public abstract class AbstractResourceService<S, R> implements ResourceService<S
 	
 	private final Map<String, FileHandle> scriptFiles = new HashMap<>();
 	private final Map<String, R> resources = new HashMap<>();
-	private final Map<String, RuntimeException> failedResources = new HashMap<>();
+	private final Map<String, Throwable> failedResources = new HashMap<>();
 	
 	private final GameAssetService assetService;
 	
@@ -67,7 +67,7 @@ public abstract class AbstractResourceService<S, R> implements ResourceService<S
 	 * @return a list of those resources that failed to load, along with their
 	 *         corresponding exceptions
 	 */
-	public Map<String, RuntimeException> getLoadFailures() {
+	public Map<String, Throwable> getLoadFailures() {
 		
 		return Collections.unmodifiableMap(failedResources);
 	}
@@ -134,7 +134,7 @@ public abstract class AbstractResourceService<S, R> implements ResourceService<S
 		
 		LOG.info("Initializing ...");
 		
-		assetService.addFailureHandler(toLoadType, RuntimeException.class,
+		assetService.addFailureHandler(toLoadType, Throwable.class,
 				(a, e) -> failedResources.put(getNameFromFileHandle(a.file), e));
 		
 		scanDirectoryForScripts().forEach(f -> {

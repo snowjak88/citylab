@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -14,10 +15,9 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Align;
 import com.github.czyzby.autumn.annotation.Component;
-import com.github.czyzby.autumn.annotation.Inject;
 import com.github.czyzby.kiwi.log.Logger;
 import com.github.czyzby.kiwi.log.LoggerService;
 
@@ -32,8 +32,7 @@ public class LoadingScreen extends AbstractGameScreen {
 	
 	private static final Logger LOG = LoggerService.forClass(LoadingScreen.class);
 	
-	@Inject
-	private SkinService skinService;
+	private final SkinService skinService;
 	
 	private final LinkedList<LoadingTask> loadingTasks = new LinkedList<>();
 	private float loadingTaskCount;
@@ -46,26 +45,30 @@ public class LoadingScreen extends AbstractGameScreen {
 	
 	private boolean isInitiated = false, invokedComplete = false;
 	
-	public LoadingScreen(Stage stage) {
+	public LoadingScreen(SkinService skinService, Stage stage) {
 		
-		super(stage);
+		super(skinService, stage);
+		
+		this.skinService = skinService;
 	}
 	
 	@Override
 	protected Actor getRoot() {
 		
-		final Skin defaultSkin = skinService.getSkin("default");
+		final Skin defaultSkin = skinService.getSkin(Configuration.SKIN_NAME);
 		
 		taskDescription = new Label("", defaultSkin);
 		taskDescription.setAlignment(Align.center);
 		
 		progressBar = new ProgressBar(0f, 1f, 0.1f, false, defaultSkin);
-		progressBar.setAnimateDuration(0.1f);
+		progressBar.setAnimateDuration(0.25f);
 		
-		final VerticalGroup root = new VerticalGroup();
+		final Table root = new Table();
 		root.setFillParent(true);
-		root.addActor(taskDescription);
-		root.addActor(progressBar);
+		root.center();
+		
+		root.add(taskDescription);
+		root.add(progressBar);
 		
 		return root;
 	}
