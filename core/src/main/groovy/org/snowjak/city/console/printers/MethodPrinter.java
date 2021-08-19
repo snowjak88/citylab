@@ -48,26 +48,26 @@ public class MethodPrinter extends AbstractPrinter<Method> {
 		
 		final Actor returnType;
 		if (obj.getReturnType().equals(Void.class))
-			returnType = getDisplay().getPrintFor("void").get(0);
+			returnType = getNewLabel("void");
 		else
 			returnType = getDisplay().getPrintFor(obj.getReturnType()).get(0);
 		
 		actors.add(returnType);
 		
-		actors.add(getDisplay().getPrintFor(" " + obj.getName() + "(").get(0));
+		actors.add(getNewLabel(" " + obj.getName() + "("));
 		
 		int parameterIndex = 0;
 		for (Class<?> p : obj.getParameterTypes()) {
 			if (parameterIndex > 0)
-				actors.add(getDisplay().getPrintFor(",").get(0));
-			actors.add(getDisplay().getPrintFor(" ").get(0));
+				actors.add(getNewLabel(","));
+			actors.add(getNewLabel(" "));
 			
 			actors.add(getDisplay().getPrintFor(p).get(0));
 			
 			final Parameter param = obj.getParameters()[parameterIndex];
-			actors.add(getDisplay().getPrintFor(" " + param.getName()).get(0));
+			actors.add(getNewLabel(" " + param.getName()));
 		}
-		actors.add(getDisplay().getPrintFor(" )").get(0));
+		actors.add(getNewLabel(" )"));
 		
 		return actors;
 	}

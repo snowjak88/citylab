@@ -9,6 +9,7 @@ import java.util.List;
 import org.snowjak.city.console.ui.ConsoleDisplay;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 
 /**
@@ -34,6 +35,8 @@ public class BasicPrinter extends AbstractPrinter<CharSequence> {
 	public List<Actor> print(CharSequence obj) {
 		
 		final String string = obj.toString();
-		return Arrays.asList(getNewLabel(string));
+		final Label label = getNewLabel(string);
+		label.setWrap(true);
+		return Arrays.asList(label);
 	}
 }

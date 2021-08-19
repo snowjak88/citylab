@@ -62,12 +62,11 @@ public class TypePrinter extends AbstractPrinter<Class<?>> {
 		
 		result.add(simpleNameLabel);
 		if (obj.isArray())
-			result.add(getDisplay().getPrintFor("[[]").get(0));
+			result.add(getNewLabel("[]"));
 		
 		if (!(obj.isPrimitive() || (obj.isArray() && obj.getComponentType().isArray())))
 			simpleNameLabel.addListener(new TextTooltip(toExamine.getName(), getSkin()));
 		
 		return result;
 	}
-	
 }

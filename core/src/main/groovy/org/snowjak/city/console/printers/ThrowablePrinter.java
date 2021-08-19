@@ -4,7 +4,7 @@
 package org.snowjak.city.console.printers;
 
 import java.io.PrintWriter;
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.codehaus.groovy.runtime.StringBufferWriter;
@@ -44,13 +44,20 @@ public class ThrowablePrinter extends AbstractPrinter<Throwable> {
 	@Override
 	public List<Actor> print(Throwable obj) {
 		
-		getDisplay().addConsoleEntry(getNewLabel("[" + obj.getClass().getSimpleName() + "]: " + obj.getMessage()));
+		final List<Actor> result = new LinkedList<>();
+		final Label messageLine = getNewLabel("[" + obj.getClass().getSimpleName() + "]: " + obj.getMessage());
+		messageLine.setWrap(true);
+		result.add(messageLine);
 		
 		final StringBuffer b = new StringBuffer();
 		try (PrintWriter bw = new PrintWriter(new StringBufferWriter(b))) {
 			obj.printStackTrace(bw);
 		}
-		return Arrays.asList(getNewLabel(b.toString()));
+		final Label stackTraceLabel = getNewLabel(b.toString());
+		stackTraceLabel.setWrap(true);
+		result.add(stackTraceLabel);
+		
+		return result;
 	}
 	
 	@Override

@@ -29,7 +29,6 @@ import com.badlogic.gdx.scenes.scene2d.Event;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -62,12 +61,6 @@ public class ConsoleDisplay {
 			 * 2.0 == "half size")
 			 */
 			MAXIMUM_ZOOM = 2f;
-	
-	/**
-	 * Console will permit at most N columns per line of the console-history (i.e.,
-	 * a Table) before wrapping to another line.
-	 */
-	private static final int MAX_CONSOLE_COLUMNS = 16;
 	
 	private final Console console;
 	private final SkinService skinService;
@@ -247,13 +240,15 @@ public class ConsoleDisplay {
 	
 	public void addConsoleEntry(List<Actor> actors) {
 		
-		if (consoleEntriesTable.getRows() >= MAX_CONSOLE_ENTRIES)
+		if (consoleEntries.size() >= MAX_CONSOLE_ENTRIES)
 			consoleEntries.pop().forEach(Actor::remove);
 		
+		final Table group = new Table();
+		group.row().left();
+		for (Actor actor : actors)
+			group.add(actor);
+		
 		consoleEntriesTable.row().left();
-		final HorizontalGroup group = new HorizontalGroup();
-		group.grow();
-		actors.forEach(group::addActor);
 		consoleEntriesTable.add(group);
 		consoleEntries.addLast(actors);
 		

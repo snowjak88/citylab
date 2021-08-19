@@ -96,7 +96,7 @@ public abstract class AbstractPrinter<T> {
 	
 	/**
 	 * Get a basic {@link Label} containing the specified text, and outfitted with
-	 * the correct style.
+	 * the correct style. Does <em>not</em> perform automatic line-wrapping.
 	 * 
 	 * @param text
 	 * @return
@@ -104,7 +104,7 @@ public abstract class AbstractPrinter<T> {
 	protected Label getNewLabel(String text) {
 		
 		final Label newLabel = new Label(text, getLabelStyle());
-		newLabel.setWrap(true);
+		newLabel.setWrap(false);
 		newLabel.setFontScale(getDisplay().getScale());
 		
 		return newLabel;
@@ -112,7 +112,7 @@ public abstract class AbstractPrinter<T> {
 	
 	/**
 	 * Get a basic {@link Label} containing the specified text, and outfitted with
-	 * the correct style.
+	 * the correct style. Does <em>not</em> perform automatic line-wrapping.
 	 * 
 	 * @param text
 	 * @param color
@@ -121,7 +121,7 @@ public abstract class AbstractPrinter<T> {
 	protected Label getNewLabel(String text, Color color) {
 		
 		final Label newLabel = new Label(text, getWhiteLabelStyle());
-		newLabel.setWrap(true);
+		newLabel.setWrap(false);
 		newLabel.setFontScale(getDisplay().getScale());
 		newLabel.setColor(color);
 		
