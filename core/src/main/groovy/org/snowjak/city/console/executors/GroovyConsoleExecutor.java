@@ -18,6 +18,8 @@ import groovy.util.DelegatingScript;
  */
 public class GroovyConsoleExecutor extends AbstractConsoleExecutor {
 	
+	private final StringBuffer multiLineCommand;
+	
 	private final ConsoleModel model;
 	private final Binding binding = new Binding();
 	private final GroovyShell shell;
@@ -26,6 +28,8 @@ public class GroovyConsoleExecutor extends AbstractConsoleExecutor {
 		
 		super(console);
 		this.model = model;
+		
+		this.multiLineCommand = new StringBuffer();
 		
 		//
 		// Set up our PrintStream to capture normal output
@@ -42,9 +46,30 @@ public class GroovyConsoleExecutor extends AbstractConsoleExecutor {
 		
 		try {
 			
-			getConsole().println("> " + command);
+			if (multiLineCommand.length() > 0)
+				getConsole().println(command);
+			else
+				getConsole().println("> ", command);
 			
-			final DelegatingScript commandScript = (DelegatingScript) shell.parse(command);
+			if (command.endsWith("\\")) {
+				multiLineCommand.append("\n");
+				final String trimmedCommand = command.substring(0, command.lastIndexOf("\\"));
+				multiLineCommand.append(trimmedCommand);
+				
+				return;
+			}
+			
+			final String toExecute;
+			if (multiLineCommand.length() > 0) {
+				multiLineCommand.append("\n");
+				multiLineCommand.append(command);
+				toExecute = multiLineCommand.toString();
+				multiLineCommand.setLength(0);
+				
+			} else
+				toExecute = command;
+			
+			final DelegatingScript commandScript = (DelegatingScript) shell.parse(toExecute);
 			commandScript.setDelegate(model);
 			
 			final Object returnValue = commandScript.run();
