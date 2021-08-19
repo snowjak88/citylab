@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 
 /**
  * Prints {@link Throwable}s as:
@@ -46,16 +47,20 @@ public class ThrowablePrinter extends AbstractPrinter<Throwable> {
 		
 		final List<Actor> result = new LinkedList<>();
 		final Label messageLine = getNewLabel("[" + obj.getClass().getSimpleName() + "]: " + obj.getMessage());
-		messageLine.setWrap(true);
-		result.add(messageLine);
+		final Table messageRow = new Table();
+		messageRow.row();
+		messageRow.add(messageLine);
+		result.add(messageRow);
 		
 		final StringBuffer b = new StringBuffer();
 		try (PrintWriter bw = new PrintWriter(new StringBufferWriter(b))) {
 			obj.printStackTrace(bw);
 		}
-		final Label stackTraceLabel = getNewLabel(b.toString());
-		stackTraceLabel.setWrap(true);
-		result.add(stackTraceLabel);
+		final Label stackTraceLabel = getNewLabel(b.toString().replaceAll("\t", "    "));
+		final Table stackTraceRow = new Table();
+		stackTraceRow.row();
+		stackTraceRow.add(stackTraceLabel);
+		result.add(stackTraceRow);
 		
 		return result;
 	}

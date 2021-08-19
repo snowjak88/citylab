@@ -6,7 +6,6 @@ package org.snowjak.city.console.ui;
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,6 +28,7 @@ import com.badlogic.gdx.scenes.scene2d.Event;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -73,7 +73,7 @@ public class ConsoleDisplay {
 	private ScrollPane scrollPane;
 	private Table consoleEntriesTable;
 	
-	private final LinkedList<List<Actor>> consoleEntries = new LinkedList<>();
+	private final LinkedList<LinkedList<Actor>> consoleEntries = new LinkedList<>();
 	
 	private final Set<AbstractPrinter<?>> printers = new LinkedHashSet<>();
 	private BasicPrinter basicPrinter;
@@ -204,7 +204,6 @@ public class ConsoleDisplay {
 		consoleEntriesTable.bottom().left();
 		
 		scrollPane = new ScrollPane(consoleEntriesTable);
-		scrollPane.setScrollingDisabled(true, false);
 		scrollPane.setScrollbarsVisible(true);
 		scrollPane.setFadeScrollBars(false);
 		
@@ -229,42 +228,153 @@ public class ConsoleDisplay {
 	}
 	
 	/**
-	 * Add the given {@link Actor} to the end of the console.
+	 * Write the given values to the console and start a new line afterwards.
 	 * 
-	 * @param actor
+	 * @param values
 	 */
-	public void addConsoleEntry(Actor actor) {
+	public void println(Object... values) {
 		
-		addConsoleEntry(Arrays.asList(actor));
-	}
-	
-	public void addConsoleEntry(List<Actor> actors) {
-		
-		if (consoleEntries.size() >= MAX_CONSOLE_ENTRIES)
-			consoleEntries.pop().forEach(Actor::remove);
-		
-		final Table group = new Table();
-		group.row().left();
-		for (Actor actor : actors)
-			group.add(actor);
-		
-		consoleEntriesTable.row().left();
-		consoleEntriesTable.add(group);
-		consoleEntries.addLast(actors);
-		
-		scrollPane.setScrollPercentY(100);
-		scrollPane.updateVisualScroll();
+		print(values);
+		newLine();
 	}
 	
 	/**
-	 * Delegates to {@link #getPrintFor(Object)} and prints its results to the
-	 * console.
+	 * Write the given values to the console.
 	 * 
-	 * @param obj
+	 * @param values
 	 */
-	public <T> void print(T obj) {
+	public void print(Object... values) {
 		
-		addConsoleEntry(getPrintFor(obj));
+		for (Object value : values) {
+			if (value instanceof String) {
+				//
+				// We need to account for newline characters in this String.
+				final String string = (String) value;
+				
+				final String[] lines = string.split("\n");
+				for (int i = 0; i < lines.length; i++) {
+					
+					//
+					// If the last Actor on the current line is a Label,
+					// let's append this text to it.
+					//
+					// Otherwise, we need to create a new Label for this line.
+					//
+					final Actor lastActor = getPreviousActor();
+					if (lastActor != null && lastActor instanceof Label) {
+						((Label) lastActor).getText().append(lines[i]);
+						((Label) lastActor).invalidate();
+					} else
+						basicPrinter.print(lines[i]).forEach(this::appendToConsole);
+					
+					if (i < lines.length - 1)
+						addNewConsoleLine();
+				}
+				
+				if (string.endsWith("\n"))
+					newLine();
+				
+			} else
+				//
+				// For anything that isn't a String, we can handle it more gracefully.
+				// Just convert it using one of our printers, and add the resulting Actors to
+				// the current line.
+				getPrintFor(value).forEach(this::appendToConsole);
+			
+		}
+	}
+	
+	/**
+	 * End the current console-line and start a new one. Equivalent to sending
+	 * {@link #writeToConsole(Object...) writeToConsole("\n")}.
+	 */
+	public void newLine() {
+		
+		addNewConsoleLine();
+	}
+	
+	/**
+	 * Remove old console-entries until the console is down to the right size.
+	 */
+	private void checkConsoleSize() {
+		
+		while (consoleEntries.size() >= MAX_CONSOLE_ENTRIES)
+			consoleEntries.pop().forEach(Actor::remove);
+	}
+	
+	/**
+	 * Start a new line on the console and return it.
+	 * 
+	 * @return
+	 */
+	private Table addNewConsoleLine() {
+		
+		checkConsoleSize();
+		
+		final Table newLine = new Table();
+		newLine.row().left().fill();
+		
+		consoleEntriesTable.row().left();
+		consoleEntriesTable.add(newLine);
+		
+		scrollPane.setScrollPercentY(100);
+		scrollPane.updateVisualScroll();
+		
+		consoleEntries.add(new LinkedList<>());
+		
+		return newLine;
+	}
+	
+	/**
+	 * Get the last Actor on the current line, or null if the current line is empty.
+	 * 
+	 * @return
+	 */
+	private Actor getPreviousActor() {
+		
+		if (consoleEntries.isEmpty() || consoleEntries.getLast().isEmpty())
+			return null;
+		
+		return consoleEntries.getLast().getLast();
+	}
+	
+	/**
+	 * Append the given Actor to the end of the current line.
+	 * <p>
+	 * If {@code actor} is a Table, we automatically start a new line, make the
+	 * Table its own line, and start another new line.
+	 * </p>
+	 * 
+	 * @param actor
+	 */
+	private void appendToConsole(Actor actor) {
+		
+		if (actor instanceof Table) {
+			
+			if (consoleEntries.isEmpty()) {
+				consoleEntriesTable.row().left();
+				consoleEntriesTable.add(actor).fill();
+				
+				scrollPane.setScrollPercentY(100);
+				scrollPane.updateVisualScroll();
+				
+				consoleEntries.add(new LinkedList<>());
+				
+				addNewConsoleLine();
+			}
+			
+		} else {
+			if (consoleEntries.isEmpty())
+				addNewConsoleLine().add(actor);
+			else {
+				final int lastRowIndex = consoleEntries.size() - 1;
+				
+				final Table lastRow = (Table) consoleEntriesTable.getChild(lastRowIndex);
+				lastRow.add(actor).fill();
+			}
+		}
+		
+		consoleEntries.getLast().add(actor);
 	}
 	
 	/**

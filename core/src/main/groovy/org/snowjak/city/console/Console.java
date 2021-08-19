@@ -5,7 +5,8 @@ package org.snowjak.city.console;
 
 import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.console.executors.AbstractConsoleExecutor;
-import org.snowjak.city.console.executors.StubExecutor;
+import org.snowjak.city.console.executors.GroovyConsoleExecutor;
+import org.snowjak.city.console.model.ConsoleModel;
 import org.snowjak.city.console.ui.ConsoleDisplay;
 import org.snowjak.city.service.SkinService;
 
@@ -55,13 +56,15 @@ public class Console {
 	private boolean isHidden = true;
 	private int activationCharacter = DEFAULT_ACTIVATION_CHARACTER;
 	
+	private ConsoleModel model;
 	private final ConsoleDisplay display;
 	private final AbstractConsoleExecutor executor;
 	
 	public Console(SkinService skinService, Viewport viewport) {
 		
+		this.model = new ConsoleModel();
 		this.display = new ConsoleDisplay(this, skinService, viewport);
-		this.executor = new StubExecutor(this);
+		this.executor = new GroovyConsoleExecutor(this, model, new ConsolePrintStream(this));
 	}
 	
 	@Initiate(priority = InitPriority.LOW_PRIORITY)
@@ -81,10 +84,16 @@ public class Console {
 		return isReady;
 	}
 	
-	public void print(Object obj) {
+	public void println(Object... values) {
 		
 		if (isReady())
-			display.print(obj);
+			display.println(values);
+	}
+	
+	public void print(Object... values) {
+		
+		if (isReady())
+			display.print(values);
 	}
 	
 	/**

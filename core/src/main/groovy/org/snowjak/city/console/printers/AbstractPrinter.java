@@ -50,12 +50,6 @@ public abstract class AbstractPrinter<T> {
 	 */
 	public abstract boolean canPrint(Object obj);
 	
-	/**
-	 * Print the given object -- converting it into one or more Actors (each of
-	 * which will occupy a separate entry on the console).
-	 * 
-	 * @param obj
-	 */
 	public abstract List<Actor> print(T obj);
 	
 	/**

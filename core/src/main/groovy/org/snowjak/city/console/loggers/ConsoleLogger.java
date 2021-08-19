@@ -4,6 +4,7 @@
 package org.snowjak.city.console.loggers;
 
 import org.snowjak.city.console.Console;
+import org.snowjak.city.console.ConsolePrintStream;
 
 import com.badlogic.gdx.Application;
 import com.github.czyzby.kiwi.log.LoggerService;
@@ -19,24 +20,28 @@ import com.github.czyzby.kiwi.log.impl.DefaultLogger;
 public class ConsoleLogger extends DefaultLogger {
 	
 	private Console console;
+	private ConsolePrintStream printStream;
 	
 	public ConsoleLogger(Console console, LoggerService service, Class<?> forClass) {
 		
 		super(service, forClass);
 		
-		this.console = console;
+		setConsole(console);
 	}
 	
 	public void setConsole(Console console) {
 		
 		this.console = console;
+		
+		if (this.console != null)
+			this.printStream = new ConsolePrintStream(console);
 	}
 	
 	@Override
 	protected void logDebug(String tag, String message) {
 		
 		if (console != null && console.isReady())
-			console.print(tag + ": " + message);
+			printStream.println(tag + ": " + message);
 		else
 			super.logDebug(tag, message);
 	}
@@ -45,8 +50,8 @@ public class ConsoleLogger extends DefaultLogger {
 	protected void logDebug(String tag, String message, Throwable exception) {
 		
 		if (console != null && console.isReady()) {
-			console.print(tag + ": " + message);
-			console.print(exception.getClass().getName() + ": " + exception.getMessage());
+			printStream.println(tag + ": " + message);
+			printStream.println(exception.getClass().getName() + ": " + exception.getMessage());
 		} else
 			super.logDebug(tag, message, exception);
 	}
@@ -55,7 +60,7 @@ public class ConsoleLogger extends DefaultLogger {
 	protected void logInfo(String tag, String message) {
 		
 		if (console != null && console.isReady())
-			console.print(tag + ": " + message);
+			printStream.println(tag + ": " + message);
 		else
 			super.logInfo(tag, message);
 	}
@@ -64,8 +69,8 @@ public class ConsoleLogger extends DefaultLogger {
 	protected void logInfo(String tag, String message, Throwable exception) {
 		
 		if (console != null && console.isReady()) {
-			console.print(tag + ": " + message);
-			console.print(exception.getClass().getName() + ": " + exception.getMessage());
+			printStream.println(tag + ": " + message);
+			printStream.println(exception.getClass().getName() + ": " + exception.getMessage());
 		} else
 			super.logInfo(tag, message, exception);
 	}
@@ -74,7 +79,7 @@ public class ConsoleLogger extends DefaultLogger {
 	protected void logError(String tag, String message) {
 		
 		if (console != null && console.isReady())
-			console.print(tag + ": " + message);
+			printStream.println(tag + ": " + message);
 		else
 			super.logError(tag, message);
 	}
@@ -83,8 +88,8 @@ public class ConsoleLogger extends DefaultLogger {
 	protected void logError(String tag, String message, Throwable exception) {
 		
 		if (console != null && console.isReady()) {
-			console.print(tag + ": " + message);
-			console.print(exception.getClass().getName() + ": " + exception.getMessage());
+			printStream.println(tag + ": " + message);
+			printStream.println(exception.getClass().getName() + ": " + exception.getMessage());
 		} else
 			super.logError(tag, message, exception);
 	}
