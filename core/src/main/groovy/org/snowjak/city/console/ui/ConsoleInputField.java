@@ -3,6 +3,7 @@
  */
 package org.snowjak.city.console.ui;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.snowjak.city.console.Console;
@@ -32,10 +33,11 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextArea;
 public class ConsoleInputField extends TextArea {
 	
 	private final Console console;
-	private final Consumer<String> commandConsumer, completerConsumer;
+	private final Consumer<String> commandConsumer;
+	BiConsumer<InputEvent, String> completerConsumer;
 	
-	public ConsoleInputField(Console console, Consumer<String> commandConsumer, Consumer<String> completerConsumer,
-			String text, Skin skin, String styleName) {
+	public ConsoleInputField(Console console, Consumer<String> commandConsumer,
+			BiConsumer<InputEvent, String> completerConsumer, String text, Skin skin, String styleName) {
 		
 		super(text, skin, styleName);
 		
@@ -44,8 +46,8 @@ public class ConsoleInputField extends TextArea {
 		this.completerConsumer = completerConsumer;
 	}
 	
-	public ConsoleInputField(Console console, Consumer<String> commandConsumer, Consumer<String> completerConsumer,
-			String text, Skin skin) {
+	public ConsoleInputField(Console console, Consumer<String> commandConsumer,
+			BiConsumer<InputEvent, String> completerConsumer, String text, Skin skin) {
 		
 		super(text, skin);
 		
@@ -54,8 +56,8 @@ public class ConsoleInputField extends TextArea {
 		this.completerConsumer = completerConsumer;
 	}
 	
-	public ConsoleInputField(Console console, Consumer<String> commandConsumer, Consumer<String> completerConsumer,
-			String text, TextFieldStyle style) {
+	public ConsoleInputField(Console console, Consumer<String> commandConsumer,
+			BiConsumer<InputEvent, String> completerConsumer, String text, TextFieldStyle style) {
 		
 		super(text, style);
 		
@@ -87,7 +89,7 @@ public class ConsoleInputField extends TextArea {
 				return true;
 				
 			} else if (event.getKeyCode() == Input.Keys.TAB) {
-				completerConsumer.accept(getText());
+				completerConsumer.accept(event, getText());
 				return true;
 				
 			} else if (event.getKeyCode() == console.getActivationCharacter()) {

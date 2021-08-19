@@ -3,7 +3,12 @@
  */
 package org.snowjak.city.console;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.snowjak.city.configuration.InitPriority;
+import org.snowjak.city.console.completers.ConsoleWordCompleter;
+import org.snowjak.city.console.completers.StubWordCompleter;
 import org.snowjak.city.console.executors.AbstractConsoleExecutor;
 import org.snowjak.city.console.executors.GroovyConsoleExecutor;
 import org.snowjak.city.console.model.ConsoleModel;
@@ -58,12 +63,14 @@ public class Console {
 	
 	private ConsoleModel model;
 	private final ConsoleDisplay display;
+	private final ConsoleWordCompleter completer;
 	private final AbstractConsoleExecutor executor;
 	
 	public Console(SkinService skinService, Viewport viewport) {
 		
 		this.model = new ConsoleModel();
 		this.display = new ConsoleDisplay(this, skinService, viewport);
+		this.completer = new StubWordCompleter();
 		this.executor = new GroovyConsoleExecutor(this, model, new ConsolePrintStream(this));
 	}
 	
@@ -105,6 +112,20 @@ public class Console {
 		
 		if (executor != null)
 			executor.execute(commandText);
+	}
+	
+	/**
+	 * Run the given text through the configured command-completer.
+	 * 
+	 * @param commandText
+	 * @return
+	 */
+	public List<String> complete(String commandText) {
+		
+		if (completer != null)
+			return completer.complete(commandText);
+		
+		return Collections.emptyList();
 	}
 	
 	public void act(float delta) {

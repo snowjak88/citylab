@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.snowjak.city.console;
+package org.snowjak.city.console.completers;
 
 import java.util.List;
 

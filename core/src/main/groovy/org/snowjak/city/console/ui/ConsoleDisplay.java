@@ -33,7 +33,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextArea;
+import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.FocusListener;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 /**
@@ -72,6 +74,9 @@ public class ConsoleDisplay {
 	private TextArea inputTextArea;
 	private ScrollPane scrollPane;
 	private Table consoleEntriesTable;
+	private Window completionWindow;
+	private ScrollPane completionScrollPane;
+	private com.badlogic.gdx.scenes.scene2d.ui.List<String> completionList;
 	
 	private final LinkedList<LinkedList<Actor>> consoleEntries = new LinkedList<>();
 	
@@ -79,6 +84,7 @@ public class ConsoleDisplay {
 	private BasicPrinter basicPrinter;
 	
 	private float zoom = 1;
+	private boolean handledCompletionsCancellation = false;
 	
 	public ConsoleDisplay(Console console, SkinService skinService, Viewport viewport) {
 		
@@ -207,8 +213,8 @@ public class ConsoleDisplay {
 		scrollPane.setScrollbarsVisible(true);
 		scrollPane.setFadeScrollBars(false);
 		
-		inputTextArea = new ConsoleInputField(console, (c) -> console.execute(c),
-				(c) -> { print("Trying to complete [" + c + "] ..."); }, "", skin);
+		inputTextArea = new ConsoleInputField(console, (c) -> console.execute(c), this::handleShowingCompletions, "",
+				skin);
 		inputTextArea.setMaxLength(4096);
 		inputTextArea.setPrefRows(1.5f);
 		inputTextArea.setFocusTraversal(false);
@@ -224,7 +230,39 @@ public class ConsoleDisplay {
 		
 		root.setFillParent(true);
 		
+		completionList = new com.badlogic.gdx.scenes.scene2d.ui.List<>(skin);
+		completionList.addListener(new InputListener() {
+			
+			@Override
+			public boolean keyTyped(InputEvent event, char character) {
+				
+				if (event.getKeyCode() == Input.Keys.ENTER || event.getKeyCode() == Input.Keys.NUMPAD_ENTER) {
+					handleSelectingCompletion(event, completionList.getSelected());
+					return true;
+				}
+				return false;
+			}
+		});
+		completionList.addListener(new FocusListener() {
+			
+			@Override
+			public void keyboardFocusChanged(FocusEvent event, Actor actor, boolean focused) {
+				
+				if (!focused && !handledCompletionsCancellation) {
+					handleCancellingCompletion();
+					event.cancel();
+				}
+			}
+		});
+		completionScrollPane = new ScrollPane(completionList, skin);
+		completionScrollPane.setScrollbarsVisible(true);
+		completionScrollPane.setFadeScrollBars(true);
+		completionWindow = new Window("", skin);
+		completionWindow.add(completionScrollPane);
+		completionWindow.setVisible(false);
+		
 		stage.getRoot().addActor(root);
+		stage.getRoot().addActor(completionWindow);
 	}
 	
 	/**
@@ -317,7 +355,7 @@ public class ConsoleDisplay {
 		consoleEntriesTable.row().left();
 		consoleEntriesTable.add(newLine);
 		
-		scrollPane.setScrollPercentY(100);
+		scrollPane.setScrollPercentY(1f);
 		scrollPane.updateVisualScroll();
 		
 		consoleEntries.add(new LinkedList<>());
@@ -355,7 +393,7 @@ public class ConsoleDisplay {
 				consoleEntriesTable.row().left();
 				consoleEntriesTable.add(actor).fill();
 				
-				scrollPane.setScrollPercentY(100);
+				scrollPane.setScrollPercentY(1f);
 				scrollPane.updateVisualScroll();
 				
 				consoleEntries.add(new LinkedList<>());
@@ -409,6 +447,57 @@ public class ConsoleDisplay {
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * Implements the event-handler for performing completions.
+	 * 
+	 * @param event
+	 * @param command
+	 */
+	private void handleShowingCompletions(InputEvent event, String command) {
+		
+		final List<String> completions = console.complete(command);
+		
+		completionList.setItems(completions.toArray(new String[0]));
+		completionScrollPane.setScrollPercentY(0);
+		completionScrollPane.updateVisualScroll();
+		completionWindow.invalidate();
+		completionWindow.setVisible(true);
+		completionWindow.setX(inputTextArea.getCursorX());
+		completionWindow.setY(inputTextArea.getCursorY() + 20);
+		stage.setKeyboardFocus(completionList);
+		
+		handledCompletionsCancellation = false;
+	}
+	
+	/**
+	 * Implements the event-handler for cancelling completions. (Hides the window,
+	 * and -- importantly -- stops the focus-lost event from recurring infinitely.)
+	 */
+	private void handleCancellingCompletion() {
+		
+		handledCompletionsCancellation = true;
+		hideCompletionWindow();
+	}
+	
+	/**
+	 * Implements the event-handler for selecting a completion.
+	 * 
+	 * @param event
+	 * @param selectedCompletion
+	 */
+	private void handleSelectingCompletion(InputEvent event, String selectedCompletion) {
+		
+		hideCompletionWindow();
+		inputTextArea.setText(selectedCompletion);
+		inputTextArea.setCursorPosition(selectedCompletion.length());
+	}
+	
+	private void hideCompletionWindow() {
+		
+		completionWindow.setVisible(false);
+		stage.setKeyboardFocus(inputTextArea);
 	}
 	
 	private void adjustZoomLevel() {
