@@ -42,6 +42,12 @@ public class LoggerService extends com.github.czyzby.kiwi.log.LoggerService {
 		return INSTANCE.getLoggerForClass(forClass);
 	}
 	
+	private LoggerService() {
+		
+		super();
+		setUseSimpleClassNames(true);
+	}
+	
 	@Override
 	public Logger getLoggerForClass(Class<?> forClass) {
 		

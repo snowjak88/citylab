@@ -81,14 +81,10 @@ public class Console {
 		return isReady;
 	}
 	
-	/**
-	 * Write the given text to the console.
-	 * 
-	 * @param message
-	 */
-	public void write(String message) {
+	public void print(Object obj) {
 		
-		this.display.addConsoleEntry(message);
+		if (isReady())
+			display.print(obj);
 	}
 	
 	/**

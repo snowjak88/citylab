@@ -36,7 +36,7 @@ public class ConsoleLogger extends DefaultLogger {
 	protected void logDebug(String tag, String message) {
 		
 		if (console != null && console.isReady())
-			console.write(tag + message);
+			console.print(tag + ": " + message);
 		else
 			super.logDebug(tag, message);
 	}
@@ -45,8 +45,8 @@ public class ConsoleLogger extends DefaultLogger {
 	protected void logDebug(String tag, String message, Throwable exception) {
 		
 		if (console != null && console.isReady()) {
-			console.write(tag + message);
-			console.write(exception.getClass().getName() + ": " + exception.getMessage());
+			console.print(tag + ": " + message);
+			console.print(exception.getClass().getName() + ": " + exception.getMessage());
 		} else
 			super.logDebug(tag, message, exception);
 	}
@@ -55,7 +55,7 @@ public class ConsoleLogger extends DefaultLogger {
 	protected void logInfo(String tag, String message) {
 		
 		if (console != null && console.isReady())
-			console.write(tag + message);
+			console.print(tag + ": " + message);
 		else
 			super.logInfo(tag, message);
 	}
@@ -64,8 +64,8 @@ public class ConsoleLogger extends DefaultLogger {
 	protected void logInfo(String tag, String message, Throwable exception) {
 		
 		if (console != null && console.isReady()) {
-			console.write(tag + message);
-			console.write(exception.getClass().getName() + ": " + exception.getMessage());
+			console.print(tag + ": " + message);
+			console.print(exception.getClass().getName() + ": " + exception.getMessage());
 		} else
 			super.logInfo(tag, message, exception);
 	}
@@ -74,7 +74,7 @@ public class ConsoleLogger extends DefaultLogger {
 	protected void logError(String tag, String message) {
 		
 		if (console != null && console.isReady())
-			console.write(tag + message);
+			console.print(tag + ": " + message);
 		else
 			super.logError(tag, message);
 	}
@@ -83,8 +83,8 @@ public class ConsoleLogger extends DefaultLogger {
 	protected void logError(String tag, String message, Throwable exception) {
 		
 		if (console != null && console.isReady()) {
-			console.write(tag + message);
-			console.write(exception.getClass().getName() + ": " + exception.getMessage());
+			console.print(tag + ": " + message);
+			console.print(exception.getClass().getName() + ": " + exception.getMessage());
 		} else
 			super.logError(tag, message, exception);
 	}

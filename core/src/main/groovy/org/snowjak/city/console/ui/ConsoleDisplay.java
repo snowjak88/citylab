@@ -6,19 +6,30 @@ package org.snowjak.city.console.ui;
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
+import org.snowjak.city.console.printers.AbstractPrinter;
+import org.snowjak.city.console.printers.BasicPrinter;
+import org.snowjak.city.console.printers.MethodPrinter;
+import org.snowjak.city.console.printers.ThrowablePrinter;
+import org.snowjak.city.console.printers.TypePrinter;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Event;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -52,6 +63,12 @@ public class ConsoleDisplay {
 			 */
 			MAXIMUM_ZOOM = 2f;
 	
+	/**
+	 * Console will permit at most N columns per line of the console-history (i.e.,
+	 * a Table) before wrapping to another line.
+	 */
+	private static final int MAX_CONSOLE_COLUMNS = 16;
+	
 	private final Console console;
 	private final SkinService skinService;
 	
@@ -63,8 +80,10 @@ public class ConsoleDisplay {
 	private ScrollPane scrollPane;
 	private Table consoleEntriesTable;
 	
-	private final LinkedList<Label> consoleLines = new LinkedList<>();
-	private Label currentConsoleLine;
+	private final LinkedList<List<Actor>> consoleEntries = new LinkedList<>();
+	
+	private final Set<AbstractPrinter<?>> printers = new LinkedHashSet<>();
+	private BasicPrinter basicPrinter;
 	
 	private float zoom = 1;
 	
@@ -179,6 +198,15 @@ public class ConsoleDisplay {
 		
 		skin = skinService.getSkin(Configuration.SKIN_NAME);
 		
+		basicPrinter = new BasicPrinter(this, skin);
+		
+		//
+		// Add default printers
+		printers.add(basicPrinter);
+		printers.add(new ThrowablePrinter(this, skin));
+		printers.add(new TypePrinter(this, skin));
+		printers.add(new MethodPrinter(this, skin));
+		
 		consoleEntriesTable = new Table(skin);
 		consoleEntriesTable.bottom().left();
 		
@@ -188,7 +216,7 @@ public class ConsoleDisplay {
 		scrollPane.setFadeScrollBars(false);
 		
 		inputTextArea = new ConsoleInputField(console, (c) -> console.execute(c),
-				(c) -> { addConsoleEntry("Trying to complete [" + c + "] ..."); }, "", skin);
+				(c) -> { print("Trying to complete [" + c + "] ..."); }, "", skin);
 		inputTextArea.setMaxLength(4096);
 		inputTextArea.setPrefRows(1.5f);
 		inputTextArea.setFocusTraversal(false);
@@ -208,54 +236,87 @@ public class ConsoleDisplay {
 	}
 	
 	/**
-	 * Write the given text, creating a new current-last-line of the console.
+	 * Add the given {@link Actor} to the end of the console.
 	 * 
-	 * @param text
+	 * @param actor
 	 */
-	public void addConsoleEntry(String text) {
+	public void addConsoleEntry(Actor actor) {
 		
-		nextConsoleLine();
-		
-		currentConsoleLine.setText(text);
+		addConsoleEntry(Arrays.asList(actor));
 	}
 	
-	/**
-	 * Append the given text to the current-last-line of the console.
-	 * 
-	 * @param text
-	 */
-	public void appendConsoleEntry(String text) {
-		
-		if (currentConsoleLine == null)
-			nextConsoleLine();
-		
-		currentConsoleLine.setText(currentConsoleLine.getText().append(text));
-	}
-	
-	private void nextConsoleLine() {
+	public void addConsoleEntry(List<Actor> actors) {
 		
 		if (consoleEntriesTable.getRows() >= MAX_CONSOLE_ENTRIES)
-			consoleLines.pop().remove();
+			consoleEntries.pop().forEach(Actor::remove);
 		
-		currentConsoleLine = new Label("", skin, "console");
-		currentConsoleLine.setWrap(true);
-		currentConsoleLine.setFontScale(getFontScale());
-		
-		consoleEntriesTable.row().growX();
-		consoleEntriesTable.add(currentConsoleLine);
-		consoleLines.addLast(currentConsoleLine);
+		consoleEntriesTable.row().left();
+		final HorizontalGroup group = new HorizontalGroup();
+		group.grow();
+		actors.forEach(group::addActor);
+		consoleEntriesTable.add(group);
+		consoleEntries.addLast(actors);
 		
 		scrollPane.setScrollPercentY(100);
 		scrollPane.updateVisualScroll();
 	}
 	
-	private void adjustZoomLevel() {
+	/**
+	 * Delegates to {@link #getPrintFor(Object)} and prints its results to the
+	 * console.
+	 * 
+	 * @param obj
+	 */
+	public <T> void print(T obj) {
 		
-		for (Label consoleEntry : consoleLines)
-			consoleEntry.setFontScale(getFontScale());
+		addConsoleEntry(getPrintFor(obj));
 	}
 	
-	private float getFontScale() {
+	/**
+	 * Determine how the given object would print.
+	 * <p>
+	 * If any of the configured {@link AbstractPrinter}s
+	 * {@link AbstractPrinter#canPrint(Object) can print} this object, then this
+	 * method uses the first such printer it finds.
+	 * </p>
+	 * <p>
+	 * Otherwise, it simply prints this object's {@link Object#toString()
+	 * toString()}.
+	 * </p>
+	 * 
+	 * @param <T>
+	 * @param obj
+	 * @return a list of Actors that together constitute the printed version of this
+	 *         object
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> List<Actor> getPrintFor(T obj) {
+		
+		final List<Actor> result;
+		if (obj instanceof CharSequence)
+			result = basicPrinter.print((CharSequence) obj);
+		else {
+			final Optional<AbstractPrinter<?>> printer = printers.stream().filter(p -> p.canPrint(obj)).findAny();
+			if (printer.isPresent()) {
+				result = ((AbstractPrinter<T>) printer.get()).print(obj);
+			} else
+				result = basicPrinter.print(obj.toString());
+		}
+		
+		return result;
+	}
+	
+	private void adjustZoomLevel() {
+		
+		consoleEntries.forEach(l -> l.forEach(a -> a.setScale(getScale())));
+	}
+	
+	/**
+	 * Scaleable Actors should try to scale themselves by this multiplier.
+	 * 
+	 * @return
+	 */
+	public float getScale() {
 		
 		return 1f / zoom;
 	}
@@ -287,5 +348,10 @@ public class ConsoleDisplay {
 	public InputProcessor getInputProcessor() {
 		
 		return stage;
+	}
+	
+	public Skin getSkin() {
+		
+		return skin;
 	}
 }

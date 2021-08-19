@@ -18,6 +18,9 @@ com.badlogic.gdx.graphics.g2d.BitmapFont: {
 	mono: {
 		file: IBMPlexMono-Regular.fnt
 	}
+	mono-white: {
+		file: IBMPlexMono-Regular-white.fnt
+	}
 }
 com.badlogic.gdx.graphics.Color: {
 	black: {
@@ -191,6 +194,9 @@ com.badlogic.gdx.scenes.scene2d.ui.Label$LabelStyle: {
 	}
 	console: {
 		font: mono
+	}
+	console-white: {
+		font: mono-white
 	}
 }
 com.badlogic.gdx.scenes.scene2d.ui.List$ListStyle: {
