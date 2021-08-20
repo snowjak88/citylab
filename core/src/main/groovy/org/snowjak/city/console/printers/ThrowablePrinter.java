@@ -39,7 +39,7 @@ public class ThrowablePrinter extends AbstractPrinter<Throwable> {
 	@Override
 	public boolean canPrint(Object obj) {
 		
-		return (obj instanceof Throwable);
+		return Throwable.class.isAssignableFrom(obj.getClass());
 	}
 	
 	@Override

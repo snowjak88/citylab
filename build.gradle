@@ -31,15 +31,13 @@ configure(subprojects) {
 	
 	apply plugin: 'java-library'
 	sourceCompatibility = 8.0
-	compileJava {
-		options.incremental = true
-	}
 	
 	if(it.name == 'core') {
 		apply plugin: 'groovy'
 		
 		compileGroovy {
 			options.incremental = true
+			options.compilerArgs << '-parameters'
 		}
 	}
 	

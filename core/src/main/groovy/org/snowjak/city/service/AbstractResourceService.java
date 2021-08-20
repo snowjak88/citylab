@@ -25,7 +25,7 @@ public abstract class AbstractResourceService<S, R> implements ResourceService<S
 	 * {@link ResourceConverter} that simply converts a resource into itself. Useful
 	 * where your resource-loader yields a useful resource already.
 	 */
-	public static final ResourceConverter<?, ?> IDENTITY_RESOURCE_CONVERTER = (s) -> s;
+	protected static final ResourceConverter<?, ?> IDENTITY_RESOURCE_CONVERTER = (s) -> s;
 	
 	private static final Logger LOG = LoggerService.forClass(AbstractResourceService.class);
 	

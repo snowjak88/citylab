@@ -7,8 +7,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.snowjak.city.console.ui.ConsoleDisplay;
 
@@ -42,6 +44,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
  */
 public class ObjectPrinter extends AbstractPrinter<Object> {
 	
+	private Object object;
+	
 	/**
 	 * @param display
 	 * @param skin
@@ -72,8 +76,14 @@ public class ObjectPrinter extends AbstractPrinter<Object> {
 		row.add(getNewLabel(" {"));
 		result.add(row);
 		
+		final Set<Field> fields = new LinkedHashSet<>();
+		for (Field f : clazz.getDeclaredFields())
+			fields.add(f);
+		for (Field f : clazz.getFields())
+			fields.add(f);
+		
 		boolean addedField = false;
-		for (Field f : clazz.getDeclaredFields()) {
+		for (Field f : fields) {
 			
 			if (!getDisplay().hasPrinterFor(f))
 				continue;
@@ -91,7 +101,13 @@ public class ObjectPrinter extends AbstractPrinter<Object> {
 		if (clazz.getDeclaredMethods().length > 0 && addedField)
 			result.add(asRow(getNewLabel(" ")));
 		
-		for (Method m : clazz.getDeclaredMethods()) {
+		final Set<Method> methods = new LinkedHashSet<>();
+		for (Method m : clazz.getDeclaredMethods())
+			methods.add(m);
+		for (Method m : clazz.getMethods())
+			methods.add(m);
+		
+		for (Method m : methods) {
 			
 			if (!getDisplay().hasPrinterFor(m))
 				continue;

@@ -27,7 +27,7 @@ public class BasicPrinter extends AbstractPrinter<CharSequence> {
 	@Override
 	public boolean canPrint(Object obj) {
 		
-		return (obj == null || obj instanceof CharSequence);
+		return (obj == null || CharSequence.class.isAssignableFrom(obj.getClass()));
 	}
 	
 	@Override
