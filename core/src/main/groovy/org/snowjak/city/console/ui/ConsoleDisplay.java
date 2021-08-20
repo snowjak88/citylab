@@ -17,6 +17,8 @@ import org.snowjak.city.console.Console;
 import org.snowjak.city.console.printers.AbstractPrinter;
 import org.snowjak.city.console.printers.BasicPrinter;
 import org.snowjak.city.console.printers.MethodPrinter;
+import org.snowjak.city.console.printers.ObjectPrinter;
+import org.snowjak.city.console.printers.FieldPrinter;
 import org.snowjak.city.console.printers.ThrowablePrinter;
 import org.snowjak.city.console.printers.TypePrinter;
 import org.snowjak.city.service.SkinService;
@@ -202,9 +204,11 @@ public class ConsoleDisplay {
 		//
 		// Add default printers
 		printers.add(basicPrinter);
+		printers.add(new ObjectPrinter(this, skin));
+		printers.add(new MethodPrinter(this, skin));
+		printers.add(new FieldPrinter(this, skin));
 		printers.add(new ThrowablePrinter(this, skin));
 		printers.add(new TypePrinter(this, skin));
-		printers.add(new MethodPrinter(this, skin));
 		
 		consoleEntriesTable = new Table(skin);
 		consoleEntriesTable.bottom().left();
@@ -389,17 +393,15 @@ public class ConsoleDisplay {
 		
 		if (actor instanceof Table) {
 			
-			if (consoleEntries.isEmpty()) {
-				consoleEntriesTable.row().left();
-				consoleEntriesTable.add(actor).fill();
-				
-				scrollPane.setScrollPercentY(1f);
-				scrollPane.updateVisualScroll();
-				
-				consoleEntries.add(new LinkedList<>());
-				
-				addNewConsoleLine();
-			}
+			consoleEntriesTable.row().left();
+			consoleEntriesTable.add(actor);
+			
+			scrollPane.setScrollPercentY(1f);
+			scrollPane.updateVisualScroll();
+			
+			consoleEntries.add(new LinkedList<>());
+			
+			addNewConsoleLine();
 			
 		} else {
 			if (consoleEntries.isEmpty())
@@ -413,6 +415,21 @@ public class ConsoleDisplay {
 		}
 		
 		consoleEntries.getLast().add(actor);
+	}
+	
+	/**
+	 * Get a {@link AbstractPrinter printer} that
+	 * {@link AbstractPrinter#canPrint(Object) can print} the given object.
+	 * 
+	 * @param <T>
+	 * @param <P>
+	 * @param obj
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public <T, P extends AbstractPrinter<T>> Optional<P> getPrinterFor(T obj) {
+		
+		return (Optional<P>) printers.stream().filter(p -> p.canPrint(obj)).findAny();
 	}
 	
 	/**
@@ -432,21 +449,40 @@ public class ConsoleDisplay {
 	 * @return a list of Actors that together constitute the printed version of this
 	 *         object
 	 */
-	@SuppressWarnings("unchecked")
 	public <T> List<Actor> getPrintFor(T obj) {
 		
 		final List<Actor> result;
 		if (obj instanceof CharSequence)
 			result = basicPrinter.print((CharSequence) obj);
 		else {
-			final Optional<AbstractPrinter<?>> printer = printers.stream().filter(p -> p.canPrint(obj)).findAny();
+			final Optional<AbstractPrinter<T>> printer = getPrinterFor(obj);
 			if (printer.isPresent()) {
-				result = ((AbstractPrinter<T>) printer.get()).print(obj);
+				result = printer.get().print(obj);
 			} else
 				result = basicPrinter.print(obj.toString());
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * Determines if this console-display is outfitted with a {@link AbstractPrinter
+	 * printer} compatible with the given object.
+	 * <p>
+	 * If the given obj would require the use of the "fallback printing method"
+	 * (i.e., {@link Object#toString()}), this returns {@code false}.
+	 * </p>
+	 * 
+	 * @param <T>
+	 * @param obj
+	 * @return
+	 */
+	public <T> boolean hasPrinterFor(T obj) {
+		
+		if (obj instanceof CharSequence)
+			return true;
+		
+		return getPrinterFor(obj).isPresent();
 	}
 	
 	/**

@@ -27,13 +27,17 @@ public class BasicPrinter extends AbstractPrinter<CharSequence> {
 	@Override
 	public boolean canPrint(Object obj) {
 		
-		return (obj instanceof CharSequence);
+		return (obj == null || obj instanceof CharSequence);
 	}
 	
 	@Override
 	public List<Actor> print(CharSequence obj) {
 		
-		final String string = obj.toString();
+		final String string;
+		if (obj == null)
+			string = "null";
+		else
+			string = obj.toString();
 		return Arrays.asList(getNewLabel(string));
 	}
 }

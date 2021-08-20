@@ -8,9 +8,8 @@ import org.snowjak.city.console.Console;
 import org.snowjak.city.console.ConsolePrintStream;
 import org.snowjak.city.console.model.ConsoleModel;
 
-import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
-import groovy.util.DelegatingScript;
+import groovy.lang.Script;
 
 /**
  * @author snowjak88
@@ -21,21 +20,22 @@ public class GroovyConsoleExecutor extends AbstractConsoleExecutor {
 	private final StringBuffer multiLineCommand;
 	
 	private final ConsoleModel model;
-	private final Binding binding = new Binding();
 	private final GroovyShell shell;
 	
-	public GroovyConsoleExecutor(Console console, ConsoleModel model, ConsolePrintStream printStream) {
+	public GroovyConsoleExecutor(Console console, ConsoleModel model,
+			ConsolePrintStream printStream) {
 		
 		super(console);
-		this.model = model;
 		
 		this.multiLineCommand = new StringBuffer();
 		
+		this.model = model;
+		
 		//
 		// Set up our PrintStream to capture normal output
-		binding.setProperty("out", printStream);
+		model.setProperty("out", printStream);
 		
-		shell = new GroovyShell(binding, getCompilerConfig());
+		shell = new GroovyShell(model, getCompilerConfig());
 	}
 	
 	@Override
@@ -69,8 +69,7 @@ public class GroovyConsoleExecutor extends AbstractConsoleExecutor {
 			} else
 				toExecute = command;
 			
-			final DelegatingScript commandScript = (DelegatingScript) shell.parse(toExecute);
-			commandScript.setDelegate(model);
+			final Script commandScript = shell.parse(toExecute);
 			
 			final Object returnValue = commandScript.run();
 			
@@ -84,8 +83,6 @@ public class GroovyConsoleExecutor extends AbstractConsoleExecutor {
 	
 	protected CompilerConfiguration getCompilerConfig() {
 		
-		final CompilerConfiguration config = new CompilerConfiguration();
-		config.setScriptBaseClass(DelegatingScript.class.getName());
-		return config;
+		return new CompilerConfiguration();
 	}
 }

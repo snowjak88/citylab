@@ -4,6 +4,7 @@
 package org.snowjak.city.console.printers;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,13 +39,27 @@ public class MethodPrinter extends AbstractPrinter<Method> {
 	@Override
 	public boolean canPrint(Object obj) {
 		
-		return (obj instanceof Method);
+		if (obj == null)
+			return false;
+		
+		if (!(obj instanceof Method))
+			return false;
+		
+		final Method m = (Method) obj;
+		return Modifier.isPublic(m.getModifiers());
 	}
 	
 	@Override
 	public List<Actor> print(Method obj) {
 		
 		final List<Actor> actors = new LinkedList<>();
+		
+		if (Modifier.isAbstract(obj.getModifiers()))
+			actors.add(getNewLabel("abstract "));
+		if (Modifier.isStatic(obj.getModifiers()))
+			actors.add(getNewLabel("static "));
+		if (Modifier.isFinal(obj.getModifiers()))
+			actors.add(getNewLabel("final "));
 		
 		final Actor returnType;
 		if (obj.getReturnType().equals(Void.class))

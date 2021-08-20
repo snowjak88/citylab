@@ -13,6 +13,7 @@ import org.snowjak.city.console.executors.AbstractConsoleExecutor;
 import org.snowjak.city.console.executors.GroovyConsoleExecutor;
 import org.snowjak.city.console.model.ConsoleModel;
 import org.snowjak.city.console.ui.ConsoleDisplay;
+import org.snowjak.city.service.ModuleService;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.Input;
@@ -61,17 +62,15 @@ public class Console {
 	private boolean isHidden = true;
 	private int activationCharacter = DEFAULT_ACTIVATION_CHARACTER;
 	
-	private ConsoleModel model;
 	private final ConsoleDisplay display;
 	private final ConsoleWordCompleter completer;
 	private final AbstractConsoleExecutor executor;
 	
-	public Console(SkinService skinService, Viewport viewport) {
+	public Console(ModuleService moduleService, SkinService skinService, Viewport viewport) {
 		
-		this.model = new ConsoleModel();
 		this.display = new ConsoleDisplay(this, skinService, viewport);
 		this.completer = new StubWordCompleter();
-		this.executor = new GroovyConsoleExecutor(this, model, new ConsolePrintStream(this));
+		this.executor = new GroovyConsoleExecutor(this, new ConsoleModel(moduleService), new ConsolePrintStream(this));
 	}
 	
 	@Initiate(priority = InitPriority.LOW_PRIORITY)

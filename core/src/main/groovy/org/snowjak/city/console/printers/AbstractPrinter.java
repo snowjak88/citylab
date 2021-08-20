@@ -12,10 +12,15 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 
 /**
  * Allows a Console to intelligently print something. A "smart
  * Object.toString()".
+ * <p>
+ * Takes an object of some type, and transforms it into a sequence of
+ * {@link Actor}s.
+ * </p>
  * 
  * @author snowjak88
  *
@@ -120,5 +125,33 @@ public abstract class AbstractPrinter<T> {
 		newLabel.setColor(color);
 		
 		return newLabel;
+	}
+	
+	/**
+	 * Create a new {@link Table} to package all these {@link Actor}s together as a
+	 * single row.
+	 * 
+	 * @param actors
+	 * @return
+	 */
+	protected Table asRow(List<Actor> actors) {
+		
+		return asRow(actors.toArray(new Actor[0]));
+	}
+	
+	/**
+	 * Create a new {@link Table} to package all these {@link Actor}s together as a
+	 * single row.
+	 * 
+	 * @param actors
+	 * @return
+	 */
+	protected Table asRow(Actor... actors) {
+		
+		final Table table = new Table(getSkin());
+		table.row().left();
+		for (Actor actor : actors)
+			table.add(actor).fill();
+		return table;
 	}
 }
