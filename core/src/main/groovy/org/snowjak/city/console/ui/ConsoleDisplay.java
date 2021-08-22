@@ -16,12 +16,7 @@ import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.console.printers.AbstractPrinter;
 import org.snowjak.city.console.printers.BasicPrinter;
-import org.snowjak.city.console.printers.FieldPrinter;
-import org.snowjak.city.console.printers.IterablePrinter;
-import org.snowjak.city.console.printers.MethodPrinter;
-import org.snowjak.city.console.printers.ObjectPrinter;
 import org.snowjak.city.console.printers.ThrowablePrinter;
-import org.snowjak.city.console.printers.TypePrinter;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.Input;
@@ -205,8 +200,8 @@ public class ConsoleDisplay {
 		//
 		// Add default printers
 		// Note that we go from more- to less-specific
-		printers.add(basicPrinter);
-//		printers.add(new ThrowablePrinter(this, skin));
+		printers.add(new ThrowablePrinter(this, skin));
+		printers.add(basicPrinter);		
 //		printers.add(new MethodPrinter(this, skin));
 //		printers.add(new FieldPrinter(this, skin));
 //		printers.add(new TypePrinter(this, skin));

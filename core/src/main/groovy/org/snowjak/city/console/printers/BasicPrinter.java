@@ -58,7 +58,7 @@ public class BasicPrinter extends AbstractPrinter<Object> {
 		final Class<?> clazz = obj.getClass();
 		
 		if (CharSequence.class.isAssignableFrom(clazz))
-			return Arrays.asList(getNewLabel("\"" + ((CharSequence) obj).toString() + "\""));
+			return Arrays.asList(getNewLabel(((CharSequence) obj).toString()));
 		
 		if (clazz.isPrimitive()) {
 			final String s;
