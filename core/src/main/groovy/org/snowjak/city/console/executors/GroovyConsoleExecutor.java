@@ -74,7 +74,7 @@ public class GroovyConsoleExecutor extends AbstractConsoleExecutor {
 			final Object returnValue = commandScript.run();
 			
 			if (returnValue != null)
-				getConsole().println("Return: ", returnValue);
+				getConsole().println(returnValue);
 			
 		} catch (Throwable t) {
 			getConsole().println(t);

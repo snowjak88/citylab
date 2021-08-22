@@ -29,7 +29,7 @@ public abstract class AbstractPrinter<T> {
 	
 	private final ConsoleDisplay display;
 	private final Skin skin;
-	private final LabelStyle labelStyle, whiteLabelStyle;
+	private final LabelStyle labelStyle, whiteLabelStyle, italicLabelStyle, whiteItalicLabelStyle;
 	
 	public AbstractPrinter(ConsoleDisplay display, Skin skin) {
 		
@@ -45,6 +45,16 @@ public abstract class AbstractPrinter<T> {
 			whiteLabelStyle = skin.get("console-white", LabelStyle.class);
 		else
 			whiteLabelStyle = skin.get(LabelStyle.class);
+		
+		if (skin.has("console-italic", LabelStyle.class))
+			italicLabelStyle = skin.get("console-italic", LabelStyle.class);
+		else
+			italicLabelStyle = labelStyle;
+		
+		if (skin.has("console-italic-white", LabelStyle.class))
+			whiteItalicLabelStyle = skin.get("console-italic-white", LabelStyle.class);
+		else
+			whiteItalicLabelStyle = whiteLabelStyle;
 	}
 	
 	/**
@@ -82,6 +92,17 @@ public abstract class AbstractPrinter<T> {
 	}
 	
 	/**
+	 * The active Skin's {@code "console-italic"} Label-style, or
+	 * {@link #getLabelStyle()} as a fallback.
+	 * 
+	 * @return
+	 */
+	protected LabelStyle getItalicLabelStyle() {
+		
+		return italicLabelStyle;
+	}
+	
+	/**
 	 * The active Skin's {@code "console-white"} Label-style (suitable for tinting
 	 * via {@link Label#setColor(Color) Label.setColor()}, or {@code "default"} as a
 	 * fallback.
@@ -91,6 +112,18 @@ public abstract class AbstractPrinter<T> {
 	protected LabelStyle getWhiteLabelStyle() {
 		
 		return whiteLabelStyle;
+	}
+	
+	/**
+	 * The active Skin's {@code "console-italic-white"} Label-style (suitable for
+	 * tinting via {@link Label#setColor(Color) Label.setColor()}, or
+	 * {@link #getWhiteLabelStyle()} as a fallback.
+	 * 
+	 * @return
+	 */
+	protected LabelStyle getWhiteItalicLabelStyle() {
+		
+		return whiteItalicLabelStyle;
 	}
 	
 	/**

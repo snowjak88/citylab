@@ -206,12 +206,12 @@ public class ConsoleDisplay {
 		// Add default printers
 		// Note that we go from more- to less-specific
 		printers.add(basicPrinter);
-		printers.add(new ThrowablePrinter(this, skin));
-		printers.add(new MethodPrinter(this, skin));
-		printers.add(new FieldPrinter(this, skin));
-		printers.add(new TypePrinter(this, skin));
-		printers.add(new IterablePrinter(this, skin));
-		printers.add(new ObjectPrinter(this, skin));
+//		printers.add(new ThrowablePrinter(this, skin));
+//		printers.add(new MethodPrinter(this, skin));
+//		printers.add(new FieldPrinter(this, skin));
+//		printers.add(new TypePrinter(this, skin));
+//		printers.add(new IterablePrinter(this, skin));
+//		printers.add(new ObjectPrinter(this, skin));
 		
 		consoleEntriesTable = new Table(skin);
 		consoleEntriesTable.bottom().left();
