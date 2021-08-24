@@ -9,6 +9,8 @@ import org.codehaus.groovy.control.CompilationFailedException
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.CompilationCustomizer
 import org.codehaus.groovy.control.customizers.ImportCustomizer
+import org.codehaus.groovy.control.customizers.SecureASTCustomizer
+import org.codehaus.groovy.syntax.Types
 import org.snowjak.city.service.GameAssetService
 
 import com.badlogic.gdx.assets.AssetDescriptor
@@ -212,7 +214,16 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 	 */
 	protected CompilerConfiguration getDefaultCompilerConfiguration() {
 		
-		new CompilerConfiguration()
+		final config = new CompilerConfiguration()
+		
+		final secureCustomizer = new SecureASTCustomizer()
+		secureCustomizer.disallowedTokens = [
+			Types.KEYWORD_PACKAGE,
+			Types.KEYWORD_IMPORT
+		]
+		
+		config.addCompilationCustomizers secureCustomizer
+		config
 	}
 	
 	/**
