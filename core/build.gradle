@@ -7,7 +7,7 @@ dependencies {
 	api "com.badlogicgames.gdx:gdx:$gdxVersion"
 	api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
 	api "com.badlogicgames.ashley:ashley:$ashleyVersion"
-	api "com.badlogicgames.gdx:gdx-ai:$aiVersion"
+	//api "com.badlogicgames.gdx:gdx-ai:$aiVersion"
 	api "com.sudoplay.joise:joise:$joiseVersion"
 	api "com.rafaskoberg.gdx:typing-label:$typingLabelVersion"
 	api "com.github.tommyettinger:regexodus:$regExodusVersion"

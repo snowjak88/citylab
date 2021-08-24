@@ -8,7 +8,7 @@ import org.snowjak.city.map.generator.MapGeneratorLoader;
 import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.map.tiles.TileSetLoader;
 import org.snowjak.city.module.Module;
-import org.snowjak.city.module.ModuleLoader;
+import org.snowjak.city.module.ModuleResourceLoader;
 import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.TileSetService;
@@ -52,8 +52,10 @@ public class Configuration {
 		final MapGeneratorLoader mapGeneratorLoader = new MapGeneratorLoader(CityGame.RESOLVER);
 		assetService.setLoader(MapGenerator.class, mapGeneratorLoader);
 		
-		final ModuleLoader moduleLoader = new ModuleLoader(CityGame.RESOLVER, tilesetService);
+		final ModuleResourceLoader moduleLoader = new ModuleResourceLoader(tilesetService, assetService,
+				CityGame.RESOLVER);
 		assetService.setLoader(Module.class, moduleLoader);
+		assetService.addScriptedResourceLoader(Module.class, moduleLoader);
 	}
 	
 	@Initiate(priority = InitPriority.HIGHEST_PRIORITY)

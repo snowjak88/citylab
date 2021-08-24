@@ -5,16 +5,23 @@ package org.snowjak.city.service;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 import org.snowjak.city.CityGame;
+import org.snowjak.city.resources.ScriptedResource;
+import org.snowjak.city.resources.ScriptedResourceLoader;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
+import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.GdxRuntimeException;
@@ -33,14 +40,33 @@ public class GameAssetService extends AssetManager {
 	
 	private static final Logger LOG = LoggerService.forClass(GameAssetService.class);
 	
+	private final Map<Class<?>, ScriptedResourceLoader<?, ?>> scriptResourceLoaders = new LinkedHashMap<>();
+	private final Map<Class<?>, Set<String>> pendingResourceLoads = new LinkedHashMap<>();
+	private final AtomicInteger pendingResourceLoadsCount = new AtomicInteger();
+	private final Map<Class<?>, Map<String, FileHandle>> scriptedResourceIDs = new LinkedHashMap<>();
+	
 	private final Map<Class<?>, Map<Class<? extends Throwable>, BiConsumer<AssetDescriptor<?>, Throwable>>> exceptionHandlers = new LinkedHashMap<>();
-	private final List<Runnable> onLoadActions = new LinkedList<>();
+	private final LinkedList<Runnable> onLoadActions = new LinkedList<>();
 	
 	private final List<LoadFailureBean> loadFailures = new LinkedList<>();
 	
 	public GameAssetService() {
 		
 		super(CityGame.RESOLVER);
+	}
+	
+	/**
+	 * Register a new {@link ScriptedResourceLoader} with this asset manager.
+	 * 
+	 * @param <R>
+	 * @param <S>
+	 * @param resourceType
+	 * @param loader
+	 */
+	public <R extends ScriptedResource, P extends AssetLoaderParameters<R>, S extends ScriptedResourceLoader<R, P>> void addScriptedResourceLoader(
+			Class<R> resourceType, S loader) {
+		
+		scriptResourceLoaders.put(resourceType, loader);
 	}
 	
 	/**
@@ -58,20 +84,39 @@ public class GameAssetService extends AssetManager {
 	}
 	
 	/**
+	 * Queue the given asset for loading.
+	 * <p>
+	 * If the given asset is one of the established {@link ScriptedResource} types,
+	 * then some special behavior takes over:
+	 * <ol>
+	 * <li>This resource is installed into a special "pending" list internally</li>
+	 * <li>At the next call to {@link #update()}, this "pending" list is checked. If
+	 * the resource's scripted dependencies are all loaded, then this resource is
+	 * itself submitted to the AssetManager for loading.</li>
+	 * </ol>
+	 * </p>
+	 */
+	@Override
+	public synchronized <T> void load(String fileName, Class<T> type) {
+		
+		if (scriptResourceLoaders.containsKey(type)) {
+			pendingResourceLoads.computeIfAbsent(type, (t) -> new LinkedHashSet<>()).add(fileName);
+			pendingResourceLoadsCount.incrementAndGet();
+		} else
+			super.load(fileName, type);
+	}
+	
+	/**
 	 * Add an action that will be executed once all queued assets are fully loaded.
 	 * 
 	 * @param action
 	 */
 	public void addOnLoadAction(Runnable action) {
 		
-		onLoadActions.add(action);
+		if (action != null)
+			onLoadActions.add(action);
 	}
 	
-	/**
-	 * Alias for {@link #getProgress()}.
-	 * 
-	 * @return
-	 */
 	public float getLoadingProgress() {
 		
 		return super.getProgress();
@@ -80,23 +125,97 @@ public class GameAssetService extends AssetManager {
 	@Override
 	public synchronized boolean update() {
 		
-		final boolean isLoaded = super.update();
+		final boolean isAssetsLoaded = super.update();
 		
-		if (isLoaded)
+		final boolean allResourcesLoaded = pendingResourceLoadsCount.get() == 0;
+		
+		if (isAssetsLoaded)
+			updatePendingResourceLoads();
+		
+		final boolean isComplete = isAssetsLoaded && allResourcesLoaded;
+		if (isComplete)
 			doOnLoadActions();
 		
-		return isLoaded;
+		return isComplete;
 	}
 	
 	@Override
 	public boolean update(int millis) {
 		
-		final boolean isLoaded = super.update(millis);
+		final boolean isAssetsLoaded = super.update(millis);
 		
-		if (isLoaded)
+		final boolean allResourcesLoaded = pendingResourceLoadsCount.get() == 0;
+		
+		if (isAssetsLoaded)
+			updatePendingResourceLoads();
+		
+		final boolean isComplete = isAssetsLoaded && allResourcesLoaded;
+		if (isComplete)
 			doOnLoadActions();
 		
-		return isLoaded;
+		return isComplete;
+	}
+	
+	private boolean updatePendingResourceLoads() {
+		
+		boolean resourceScheduled = false;
+		
+		for (Entry<Class<?>, Set<String>> pendingResourceLoad : pendingResourceLoads.entrySet()) {
+			final Class<?> pendingType = pendingResourceLoad.getKey();
+			final Set<String> fileNames = pendingResourceLoad.getValue();
+			
+			final Iterator<String> fileNameIterator = fileNames.iterator();
+			while (fileNameIterator.hasNext()) {
+				
+				final String fileName = fileNameIterator.next();
+				
+				//
+				// For the given pending resource, see if it has any resource-dependencies that
+				// aren't loaded.
+				//
+				final ScriptedResourceLoader<?, ?> loader = scriptResourceLoaders.get(pendingType);
+				final FileHandle fileHandle = loader.resolve(fileName);
+				
+				boolean anyNotLoaded = false;
+				for (Entry<Class<?>, Set<String>> scriptedDependencies : loader.getScriptedDependencies(fileName)
+						.entrySet()) {
+					
+					final Class<?> dependencyType = scriptedDependencies.getKey();
+					for (String dependencyID : scriptedDependencies.getValue()) {
+						final FileHandle dependencyFile = scriptedResourceIDs
+								.computeIfAbsent(dependencyType, (t) -> new LinkedHashMap<>()).get(dependencyID);
+						if (dependencyFile == null || !super.isLoaded(dependencyFile.path(), dependencyType)) {
+							anyNotLoaded = true;
+							break;
+						}
+					}
+					
+					if (anyNotLoaded)
+						break;
+				}
+				
+				//
+				// If any aren't loaded, then this pending resource can't become non-pending.
+				if (anyNotLoaded)
+					continue;
+					
+				//
+				// Make sure we can reference this resource by its ID.
+				final String resourceID = loader.getResourceID(fileHandle);
+				scriptedResourceIDs.computeIfAbsent(pendingType, (t) -> new LinkedHashMap<>()).put(resourceID,
+						fileHandle);
+				
+				//
+				// Schedule this resource for loading.
+				fileNameIterator.remove();
+				pendingResourceLoadsCount.decrementAndGet();
+				super.load(fileName, pendingType);
+				resourceScheduled = true;
+				
+			}
+		}
+		
+		return resourceScheduled;
 	}
 	
 	@Override
@@ -113,10 +232,8 @@ public class GameAssetService extends AssetManager {
 	
 	private void doOnLoadActions() {
 		
-		for (Runnable action : onLoadActions)
-			if (action != null)
-				action.run();
-		onLoadActions.clear();
+		while (!onLoadActions.isEmpty())
+			onLoadActions.pop().run();
 	}
 	
 	@Override
