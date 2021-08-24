@@ -12,6 +12,7 @@ import java.util.Map;
 import org.snowjak.city.CityGame;
 import org.snowjak.city.configuration.InitPriority;
 
+import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.github.czyzby.autumn.annotation.Component;
@@ -33,6 +34,9 @@ public class SkinService {
 	
 	@Inject
 	private GameAssetService assetService;
+	
+	@Inject
+	private FileHandleResolver resolver;
 	
 	private final Map<String, Skin> skins = new LinkedHashMap<>();
 	private final Map<String, FileHandle> loadedSkins = new LinkedHashMap<>();
@@ -65,7 +69,7 @@ public class SkinService {
 		
 		LOG.info("Initializing ...");
 		
-		scanForSkins(CityGame.RESOLVER.resolve(CityGame.INTERNAL_SKIN_BASE));
+		scanForSkins(resolver.resolve(CityGame.INTERNAL_SKIN_BASE));
 		
 		LOG.info("Finished initialization.");
 	}

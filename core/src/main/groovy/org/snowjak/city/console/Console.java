@@ -13,7 +13,7 @@ import org.snowjak.city.console.executors.AbstractConsoleExecutor;
 import org.snowjak.city.console.executors.GroovyConsoleExecutor;
 import org.snowjak.city.console.model.ConsoleModel;
 import org.snowjak.city.console.ui.ConsoleDisplay;
-import org.snowjak.city.service.ModuleService;
+import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.Input;
@@ -66,11 +66,11 @@ public class Console {
 	private final ConsoleWordCompleter completer;
 	private final AbstractConsoleExecutor executor;
 	
-	public Console(ModuleService moduleService, SkinService skinService, Viewport viewport) {
+	public Console(GameAssetService assetService, SkinService skinService, Viewport viewport) {
 		
 		this.display = new ConsoleDisplay(this, skinService, viewport);
 		this.completer = new StubWordCompleter();
-		this.executor = new GroovyConsoleExecutor(this, new ConsoleModel(moduleService), new ConsolePrintStream(this));
+		this.executor = new GroovyConsoleExecutor(this, new ConsoleModel(assetService), new ConsolePrintStream(this));
 	}
 	
 	@Initiate(priority = InitPriority.LOW_PRIORITY)

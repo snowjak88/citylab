@@ -180,6 +180,8 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		r.setShell shell
 		r.binding.variables.putAll providedObjects
 		
+		r.setAssets assetService
+		
 		script.setDelegate r
 		
 		script.run()
@@ -256,4 +258,9 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 	 * @return
 	 */
 	protected abstract R newInstance()
+	
+	/**
+	 * @return this resource's Class
+	 */
+	public abstract Class<R> getResourceType()
 }

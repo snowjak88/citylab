@@ -16,21 +16,30 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
-import org.snowjak.city.CityGame;
 import org.snowjak.city.resources.ScriptedResource;
 import org.snowjak.city.resources.ScriptedResourceLoader;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.assets.loaders.AssetLoader;
+import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.kiwi.log.Logger;
 
 /**
- * Upgrades the stock {@link AssetManager} to support customized load-failure
- * handling.
+ * Upgrades the stock {@link AssetManager} to support:
+ * <ul>
+ * <li>customized load-failure handling by
+ * {@link #addFailureHandler(Class, Class, BiConsumer) registering load-failure
+ * handlers}</li>
+ * <li>Support for loading {@link ScriptedResource}s in order of their
+ * dependencies</li>
+ * <li>Support for referencing loaded {@link ScriptedResource}s by their
+ * {@link ScriptedResource#getId() ID}s</li>
+ * </ul>
  * 
  * @author snowjak88
  *
@@ -50,23 +59,20 @@ public class GameAssetService extends AssetManager {
 	
 	private final List<LoadFailureBean> loadFailures = new LinkedList<>();
 	
-	public GameAssetService() {
+	public GameAssetService(FileHandleResolver resolver) {
 		
-		super(CityGame.RESOLVER);
+		super(resolver);
 	}
 	
-	/**
-	 * Register a new {@link ScriptedResourceLoader} with this asset manager.
-	 * 
-	 * @param <R>
-	 * @param <S>
-	 * @param resourceType
-	 * @param loader
-	 */
-	public <R extends ScriptedResource, P extends AssetLoaderParameters<R>, S extends ScriptedResourceLoader<R, P>> void addScriptedResourceLoader(
-			Class<R> resourceType, S loader) {
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public synchronized <T, P extends AssetLoaderParameters<T>> void setLoader(Class<T> type, String suffix,
+			AssetLoader<T, P> loader) {
 		
-		scriptResourceLoaders.put(resourceType, loader);
+		if (ScriptedResourceLoader.class.isAssignableFrom(loader.getClass()))
+			scriptResourceLoaders.put((Class<ScriptedResource>) type, (ScriptedResourceLoader) loader);
+		
+		super.setLoader(type, suffix, loader);
 	}
 	
 	/**
@@ -120,6 +126,57 @@ public class GameAssetService extends AssetManager {
 	public float getLoadingProgress() {
 		
 		return super.getProgress();
+	}
+	
+	/**
+	 * Get all successfully-loaded {@link ScriptedResource}s of the given type.
+	 * 
+	 * @param <T>
+	 * @param type
+	 * @return
+	 */
+	public <T extends ScriptedResource> Collection<T> getAllByType(Class<T> type) {
+		
+		final List<T> result = new LinkedList<>();
+		for (FileHandle resourceFile : scriptedResourceIDs.get(type).values())
+			if (isLoaded(resourceFile.path(), type))
+				result.add(get(resourceFile.path(), type));
+			
+		return result;
+	}
+	
+	/**
+	 * Get the given {@link ScriptedResource} by ID.
+	 * 
+	 * @param <T>
+	 * @param id
+	 * @param type
+	 * @return {@code null} if the given ID is unknown, or if the given
+	 *         ScriptedResource is not loaded
+	 */
+	public <T extends ScriptedResource> T getByID(String id, Class<T> type) {
+		
+		final FileHandle scriptedResourceFile = getFileByID(id, type);
+		if (scriptedResourceFile == null)
+			return null;
+		
+		if (!isLoaded(scriptedResourceFile.path(), type))
+			return null;
+		
+		return get(scriptedResourceFile.path(), type);
+	}
+	
+	/**
+	 * Get the {@link FileHandle} associated with the given
+	 * {@link ScriptedResource}.
+	 * 
+	 * @param id
+	 * @param type
+	 * @return {@code null} if the given ID is unknown
+	 */
+	public FileHandle getFileByID(String id, Class<? extends ScriptedResource> type) {
+		
+		return scriptedResourceIDs.get(type).get(id);
 	}
 	
 	@Override

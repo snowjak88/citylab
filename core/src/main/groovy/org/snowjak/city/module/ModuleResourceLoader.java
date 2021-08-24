@@ -12,10 +12,10 @@ import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.module.ModuleResourceLoader.ModuleResourceLoaderParameters;
 import org.snowjak.city.resources.ScriptedResourceLoader;
 import org.snowjak.city.service.GameAssetService;
-import org.snowjak.city.service.TileSetService;
 
 import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
+import com.github.czyzby.autumn.annotation.Component;
 
 import groovy.util.DelegatingScript;
 
@@ -23,16 +23,12 @@ import groovy.util.DelegatingScript;
  * @author snowjak88
  *
  */
+@Component
 public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleResourceLoaderParameters> {
 	
-	private final TileSetService tilesetService;
-	
-	public ModuleResourceLoader(TileSetService tilesetService, GameAssetService assetService,
-			FileHandleResolver resolver) {
+	public ModuleResourceLoader(GameAssetService assetService, FileHandleResolver resolver) {
 		
 		super(assetService, resolver);
-		
-		this.tilesetService = tilesetService;
 	}
 	
 	@Override
@@ -55,7 +51,13 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 	@Override
 	protected Module newInstance() {
 		
-		return new Module(tilesetService);
+		return new Module();
+	}
+	
+	@Override
+	public Class<Module> getResourceType() {
+		
+		return Module.class;
 	}
 	
 	public static class ModuleResourceLoaderParameters extends AssetLoaderParameters<Module> {

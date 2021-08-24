@@ -15,11 +15,13 @@ import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.github.czyzby.autumn.annotation.Component;
 
 /**
  * @author snowjak88
  *
  */
+@Component
 public class TileSetResourceLoader extends ScriptedResourceLoader<TileSet, TileSetResourceLoaderParameter> {
 	
 	public TileSetResourceLoader(GameAssetService assetService, FileHandleResolver resolver) {
@@ -77,6 +79,12 @@ public class TileSetResourceLoader extends ScriptedResourceLoader<TileSet, TileS
 	protected TileSet newInstance() {
 		
 		return new TileSet();
+	}
+	
+	@Override
+	public Class<TileSet> getResourceType() {
+		
+		return TileSet.class;
 	}
 	
 	public static class TileSetResourceLoaderParameter extends AssetLoaderParameters<TileSet> {

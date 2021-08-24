@@ -86,7 +86,7 @@ public abstract class AbstractResourceService<S, R> implements ResourceService<S
 	@Override
 	public R get(String name) {
 		
-		return get(name, true);
+		return get(name, false);
 	}
 	
 	/**

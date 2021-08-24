@@ -5,6 +5,8 @@ package org.snowjak.city.resources
 
 import java.util.function.Consumer
 
+import org.snowjak.city.service.GameAssetService
+
 import com.badlogic.gdx.files.FileHandle
 
 /**
@@ -39,6 +41,8 @@ public abstract class ScriptedResource {
 	FileHandle scriptDirectory
 	GroovyShell shell
 	
+	GameAssetService assets
+	
 	final Binding binding = new Binding()
 	final Map<String,Set<String>> imports = [:]
 	final Map<String,Object> providedObjects = [:]
@@ -58,7 +62,7 @@ public abstract class ScriptedResource {
 	 * @param id
 	 */
 	public void dependsOn(String id) {
-		dependsOn id, this.class
+		dependsOn this.class, id
 	}
 	
 	/**
@@ -66,7 +70,8 @@ public abstract class ScriptedResource {
 	 * This resource should not be loaded until the named resource is itself loaded.
 	 * @param moduleID
 	 */
-	public <T extends ScriptedResource> void dependsOn(String id, Class<T> resourceType) {
+	public <T extends ScriptedResource> void dependsOn(Class<T> resourceType, String id) {
+		
 		addScriptedDependency resourceType, id
 	}
 	
@@ -224,6 +229,7 @@ public abstract class ScriptedResource {
 			r.providedObjects.putAll providedObjects
 			r.scriptDirectory = handle.parent()
 			r.shell = shell
+			r.assets = assets
 			
 			script.setDelegate r
 		}, script

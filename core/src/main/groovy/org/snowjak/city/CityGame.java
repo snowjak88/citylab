@@ -1,7 +1,6 @@
 package org.snowjak.city;
 
-import org.apache.groovy.util.Maps;
-import org.snowjak.city.configuration.MatchingFileHandleResolver;
+import org.snowjak.city.configuration.processors.InjectAllAnnotationProcessor;
 import org.snowjak.city.screens.AbstractGameScreen;
 import org.snowjak.city.screens.LoadingScreen;
 import org.snowjak.city.screens.MainMenuScreen;
@@ -9,9 +8,6 @@ import org.snowjak.city.screens.loadingtasks.AssetServiceLoadingTask;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.assets.loaders.FileHandleResolver;
-import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver;
-import com.badlogic.gdx.assets.loaders.resolvers.LocalFileHandleResolver;
 import com.github.czyzby.autumn.context.ContextDestroyer;
 import com.github.czyzby.autumn.context.ContextInitializer;
 import com.github.czyzby.autumn.scanner.ClassScanner;
@@ -45,23 +41,6 @@ public class CityGame extends Game {
 	 */
 	public static final String EXTERNAL_ROOT_MAP_GENERATORS = "data/map-generators/";
 	
-	/**
-	 * Directory holding module-definition scripts
-	 */
-	public static final String EXTERNAL_ROOT_MODULES = "data/modules/";
-	
-	/**
-	 * Directory holding tileset-definition scripts
-	 */
-	public static final String EXTERNAL_ROOT_TILESETS = "data/tilesets/";
-	
-	/**
-	 * Application-specific {@link FileHandleResolver}, configured to handle
-	 * internal- and external-resources equally well.
-	 */
-	public static final FileHandleResolver RESOLVER = new MatchingFileHandleResolver(
-			Maps.of("^/?data/.*", new LocalFileHandleResolver()), new InternalFileHandleResolver());
-	
 	//
 	//
 	//
@@ -86,6 +65,10 @@ public class CityGame extends Game {
 		
 		// Preparing Autumn context:
 		final ContextInitializer initializer = new ContextInitializer();
+		
+		//
+		// Registering custom annotation processors.
+		initializer.addProcessor(new InjectAllAnnotationProcessor());
 		
 		// Registering platform-specific scanner. Starting to scan classes from Root:
 		initializer.scan(CityGame.class, scanner);

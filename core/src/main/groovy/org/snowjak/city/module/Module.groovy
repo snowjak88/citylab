@@ -11,7 +11,6 @@ import org.snowjak.city.map.renderer.hooks.CustomRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
 import org.snowjak.city.resources.ScriptedResource
-import org.snowjak.city.service.TileSetService
 
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.EntitySystem
@@ -44,12 +43,8 @@ public class Module extends ScriptedResource {
 	final Set<AbstractCellRenderingHook> cellRenderingHooks = []
 	final Set<AbstractCustomRenderingHook> customRenderingHooks = []
 	
-	private final TileSetService tileSetService
-	
-	Module(TileSetService tileSetService) {
+	Module() {
 		super()
-		
-		this.tileSetService = tileSetService
 	}
 	
 	/**
@@ -101,7 +96,7 @@ public class Module extends ScriptedResource {
 	@Override
 	protected ScriptedResource executeInclude(FileHandle includeHandle, Consumer<ScriptedResource> configurer, DelegatingScript script) {
 		
-		final module = new Module(tileSetService)
+		final module = new Module()
 		configurer.accept module
 		
 		script.run()

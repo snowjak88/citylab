@@ -5,9 +5,13 @@ description = 'Handles fitting terrain-tiles to the map.'
 // Get the configured tile-set name to use for the landscape,
 // with a pre-programmed fallback
 tilesetName = preference('tileset-name', 'default-landscape.tileset')
+
+dependsOn TileSet, 'default'
+
 //
 // Get that tileset from the tile-set service.
-tileset = tileSetService.get(tilesetName)
+//tileset = tileSetService.get(tilesetName)
+tileset = assets.getByID 'default', TileSet
 
 //
 // This module's systems need this Component-class.

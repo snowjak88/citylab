@@ -3,14 +3,15 @@
  */
 package org.snowjak.city.screens.loadingtasks;
 
+import java.util.Collection;
 import java.util.Map;
 
 import org.snowjak.city.GameData;
 import org.snowjak.city.module.Module;
 import org.snowjak.city.screens.LoadingScreen.LoadingTask;
+import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
-import org.snowjak.city.service.ModuleService;
 
 import com.badlogic.ashley.core.EntitySystem;
 import com.github.czyzby.autumn.annotation.Component;
@@ -38,7 +39,7 @@ public class GameModulesInitializationTask implements LoadingTask {
 	private I18NService i18nService;
 	
 	@Inject
-	private ModuleService moduleService;
+	private GameAssetService assetService;
 	
 	private ListenableFuture<?> taskFuture = null;
 	
@@ -84,12 +85,11 @@ public class GameModulesInitializationTask implements LoadingTask {
 			
 			final GameData data = GameData.get();
 			
-			final double progressStep = 1d / (double) moduleService.getLoadedNames().size();
-			for (String moduleName : moduleService.getLoadedNames()) {
+			final Collection<Module> allModules = assetService.getAllByType(Module.class);
+			final double progressStep = 1d / (double) allModules.size();
+			for (Module module : allModules) {
 				
-				LOG.info("Initializing module \"{0}\"", moduleName);
-				
-				final Module module = moduleService.get(moduleName);
+				LOG.info("Initializing module \"{0}\"", module.getId());
 				
 				//
 				// Register rendering hooks with the main GameData instance
@@ -115,7 +115,7 @@ public class GameModulesInitializationTask implements LoadingTask {
 					}
 				}
 				
-				LOG.info("Done initializing module \"{0}\".", moduleName);
+				LOG.info("Done initializing module \"{0}\".", module.getId());
 				progress.addAndGet(progressStep);
 			}
 		});

@@ -3,7 +3,7 @@
  */
 package org.snowjak.city.console.model
 
-import org.snowjak.city.service.ModuleService
+import org.snowjak.city.service.GameAssetService
 
 /**
  * Presents an interface to the application's data-structures that console-users can interact with.
@@ -14,12 +14,12 @@ class ConsoleModel extends Binding {
 	
 	private final Set<String> protectedVariableNames = []
 	
-	public ConsoleModel(final ModuleService moduleService) {
+	public ConsoleModel(final GameAssetService assetService) {
 		
 		super()
 		
-		variables['modules'] = moduleService
-		protectedVariableNames << 'modules'
+		variables['assets'] = assetService
+		protectedVariableNames << 'assets'
 	}
 	
 	@Override
