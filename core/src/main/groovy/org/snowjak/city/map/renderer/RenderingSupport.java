@@ -3,16 +3,11 @@
  */
 package org.snowjak.city.map.renderer;
 
-import java.util.function.Consumer;
-
-import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileCorner;
+import org.snowjak.city.map.tiles.Tile;
 
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
-
-import space.earlygrey.shapedrawer.ShapeDrawer;
 
 /**
  * @author snowjak88

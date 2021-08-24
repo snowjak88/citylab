@@ -53,14 +53,6 @@ public class Module extends ScriptedResource {
 	}
 	
 	/**
-	 * Indicates that this Module depends on another Module (given by {@code moduleID}). This Module should not be loaded until the named Module is itself loaded.
-	 * @param moduleID
-	 */
-	public void dependsOn(String moduleID) {
-		dependsOn moduleID, Module
-	}
-	
-	/**
 	 * Get the preference named "[module-id].[name]" from the game's preferences file.
 	 * If that preference cannot be found, uses {@code defaultValue} as a fallback.
 	 * 

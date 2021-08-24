@@ -6,7 +6,7 @@ import org.snowjak.city.console.loggers.ConsoleLoggerFactory;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.generator.MapGeneratorLoader;
 import org.snowjak.city.map.tiles.TileSet;
-import org.snowjak.city.map.tiles.TileSetLoader;
+import org.snowjak.city.map.tiles.TileSetResourceLoader;
 import org.snowjak.city.module.Module;
 import org.snowjak.city.module.ModuleResourceLoader;
 import org.snowjak.city.service.GameAssetService;
@@ -46,7 +46,7 @@ public class Configuration {
 	@Initiate(priority = InitPriority.HIGHEST_PRIORITY)
 	public void configureAssetLoaders(final GameAssetService assetService, final TileSetService tilesetService) {
 		
-		final TileSetLoader tileSetLoader = new TileSetLoader(CityGame.RESOLVER);
+		final TileSetResourceLoader tileSetLoader = new TileSetResourceLoader(assetService, CityGame.RESOLVER);
 		assetService.setLoader(TileSet.class, tileSetLoader);
 		
 		final MapGeneratorLoader mapGeneratorLoader = new MapGeneratorLoader(CityGame.RESOLVER);

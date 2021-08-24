@@ -197,10 +197,23 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 			addCompilationCustomizer(file, importCustomizer)
 		}
 		
-		if(!dependencyMode)
+		if(!dependencyMode) {
 			this.providedObjects.putAll r.providedObjects
+			afterLoad r, assetService
+		}
 		
 		r
+	}
+	
+	/**
+	 * This method is called after this resource is fully loaded. Override this to perform all
+	 * post-load processing -- e.g., inserting required assets into your resource.
+	 * <p>
+	 * The default implementation does nothing.
+	 * </p>
+	 * @param resource
+	 */
+	protected void afterLoad(R resource, GameAssetService assetService) {
 	}
 	
 	/**

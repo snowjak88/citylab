@@ -54,6 +54,14 @@ public abstract class ScriptedResource {
 	}
 	
 	/**
+	 * Indicates that this resource depends on another resource of the same type (given by {@code id}). This resource should not be loaded until the named resource is itself loaded.
+	 * @param id
+	 */
+	public void dependsOn(String id) {
+		dependsOn id, this.class
+	}
+	
+	/**
 	 * Indicates that this resource depends on another resource(given by {@code id}).
 	 * This resource should not be loaded until the named resource is itself loaded.
 	 * @param moduleID
@@ -101,6 +109,23 @@ public abstract class ScriptedResource {
 	public Map<String, Class<?>> getAssetDependencies() {
 		
 		Collections.unmodifiableMap(assetDependencies)
+	}
+	
+	/**
+	 * Get a {@link FileHandle} to a child (file or directory) of the current script's directory.
+	 * @param name
+	 * @return
+	 */
+	public FileHandle file(String name) {
+		scriptDirectory.child(name)
+	}
+	
+	public void setFolder(FileHandle folder) {
+		this.folder = folder
+	}
+	
+	public void setFolder(String folder) {
+		this.folder = file(folder)
 	}
 	
 	/**
@@ -193,7 +218,7 @@ public abstract class ScriptedResource {
 		
 		final script = (DelegatingScript) shell.parse(handle.file())
 		
-		executeInclude handle, { r ->
+		def included = executeInclude handle, { r ->
 			r.binding.variables.putAll binding.variables
 			r.dependencyCheckingMode = dependencyCheckingMode
 			r.providedObjects.putAll providedObjects
@@ -202,6 +227,14 @@ public abstract class ScriptedResource {
 			
 			script.setDelegate r
 		}, script
+		
+		if(dependencyCheckingMode) {
+			this.assetDependencies.putAll included.assetDependencies
+			included.scriptedDependencies.each { type, ids -> this.scriptedDependencies.computeIfAbsent(type, {t -> new LinkedHashSet<>()}).addAll ids }
+			included.imports.each { name ,aliases -> this.imports.computeIfAbsent(name, {n -> new LinkedHashSet<>()} ).addAll aliases }
+		} else
+			this.providedObjects.putAll included.providedObjects
+		
 		
 		script.getBinding().getVariables().forEach({k, v -> this.getBinding().setVariable((String) k, v)})
 	}

@@ -12,14 +12,14 @@ tileset = tileSetService.get(tilesetName)
 //
 // This module's systems need this Component-class.
 //
-class HasTerrainTile implements Component {
+class IsTerrainTile implements Component {
 	
 	List<Tile> tiles = []
 }
 
 //
 // ComponentMappers make us faster at querying and retrieving Components from entities
-terrainMapper = ComponentMapper.getFor(HasTerrainTile)
+terrainMapper = ComponentMapper.getFor(IsTerrainTile)
 atCellMapper = ComponentMapper.getFor(AtMapCell)
 
 //
@@ -33,7 +33,7 @@ include 'systems.groovy'
 // This will be called every frame for every on-screen map-cell
 //
 cellRenderHook 0, { cellX, cellY, support ->
-	for(def entity in data.map.getEntities(cellX, cellY, HasTerrainTile)) {
+	for(def entity in data.map.getEntities(cellX, cellY, IsTerrainTile)) {
 		for(def tile in terrainMapper.get(entity).tiles)
 			support.renderTile cellX, cellY, tile
 	}
