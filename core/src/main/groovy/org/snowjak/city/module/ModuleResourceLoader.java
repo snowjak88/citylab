@@ -12,6 +12,7 @@ import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.module.ModuleResourceLoader.ModuleResourceLoaderParameters;
 import org.snowjak.city.resources.ScriptedResourceLoader;
 import org.snowjak.city.service.GameAssetService;
+import org.snowjak.city.service.PreferencesService;
 
 import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
@@ -26,9 +27,14 @@ import groovy.util.DelegatingScript;
 @Component
 public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleResourceLoaderParameters> {
 	
-	public ModuleResourceLoader(GameAssetService assetService, FileHandleResolver resolver) {
+	private final PreferencesService preferencesService;
+	
+	public ModuleResourceLoader(PreferencesService preferencesService, GameAssetService assetService,
+			FileHandleResolver resolver) {
 		
 		super(assetService, resolver);
+		
+		this.preferencesService = preferencesService;
 	}
 	
 	@Override
@@ -51,7 +57,7 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 	@Override
 	protected Module newInstance() {
 		
-		return new Module();
+		return new Module(preferencesService);
 	}
 	
 	@Override

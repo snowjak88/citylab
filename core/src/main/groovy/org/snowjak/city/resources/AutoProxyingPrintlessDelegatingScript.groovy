@@ -1,12 +1,34 @@
+package org.snowjak.city.resources
+
+
 /**
  * A version of {@link DelegatingScript} that automatically catches all
  * missing-property and -method exceptions and converts them to "dummy"
  * invocations.
  */
-package org.snowjak.city.resources
-
-
-public abstract class AutoProxyingDelegatingScript extends DelegatingScript {
+public abstract class AutoProxyingPrintlessDelegatingScript extends DelegatingScript {
+	
+	
+	
+	@Override
+	public void println() {
+	}
+	
+	@Override
+	public void print(Object value) {
+	}
+	
+	@Override
+	public void println(Object value) {
+	}
+	
+	@Override
+	public void printf(String format, Object value) {
+	}
+	
+	@Override
+	public void printf(String format, Object[] values) {
+	}
 	
 	@Override
 	public Object invokeMethod(String name, Object args) {

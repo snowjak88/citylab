@@ -11,6 +11,8 @@ import org.snowjak.city.map.renderer.hooks.CustomRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
 import org.snowjak.city.resources.ScriptedResource
+import org.snowjak.city.service.PreferencesService
+import org.snowjak.city.service.PreferencesService.ScopedPreferences
 
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.EntitySystem
@@ -38,25 +40,26 @@ public class Module extends ScriptedResource {
 	
 	String description
 	
+	private PreferencesService preferencesService
 	final GameData data = GameData.get()
 	final Map<String,EntitySystem> systems = [:]
 	final Set<AbstractCellRenderingHook> cellRenderingHooks = []
 	final Set<AbstractCustomRenderingHook> customRenderingHooks = []
 	
-	Module() {
+	Module(PreferencesService preferencesService) {
 		super()
+		this.preferencesService = preferencesService
 	}
 	
 	/**
-	 * Get the preference named "[module-id].[name]" from the game's preferences file.
-	 * If that preference cannot be found, uses {@code defaultValue} as a fallback.
-	 * 
-	 * @param name
-	 * @param defaultValue
-	 * @return
+	 * Get the {@link ScopedPreferences} instance named "{@code [module-id]}"
+	 * from the game's preferences file.
+	 * <p>
+	 * Ensure that you set [id] before attempting to get this instance.
+	 * </p>
 	 */
-	public String preference(String name, String defaultValue = "") {
-		Gdx.app.getPreferences(Configuration.PREFERENCES_NAME).getString("$id.$name", defaultValue)
+	public ScopedPreferences preferences() {
+		preferencesService.get(id)
 	}
 	
 	public void cellRenderHook(int priority, CellRenderingHook hook) {
@@ -96,7 +99,7 @@ public class Module extends ScriptedResource {
 	@Override
 	protected ScriptedResource executeInclude(FileHandle includeHandle, Consumer<ScriptedResource> configurer, DelegatingScript script) {
 		
-		final module = new Module()
+		final module = new Module(preferencesService)
 		configurer.accept module
 		
 		script.run()

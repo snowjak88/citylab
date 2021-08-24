@@ -166,7 +166,7 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		} )
 		
 		if(dependencyMode)
-			config.scriptBaseClass = AutoProxyingDelegatingScript.name
+			config.scriptBaseClass = AutoProxyingPrintlessDelegatingScript.name
 		else
 			config.scriptBaseClass = DelegatingScript.name
 		
@@ -200,7 +200,9 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		}
 		
 		if(!dependencyMode) {
+			r.binding.variables.putAll r.providedObjects
 			this.providedObjects.putAll r.providedObjects
+			
 			afterLoad r, assetService
 		}
 		

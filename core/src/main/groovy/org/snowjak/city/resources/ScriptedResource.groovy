@@ -6,8 +6,10 @@ package org.snowjak.city.resources
 import java.util.function.Consumer
 
 import org.snowjak.city.service.GameAssetService
+import org.snowjak.city.service.LoggerService
 
 import com.badlogic.gdx.files.FileHandle
+import com.github.czyzby.kiwi.log.Logger
 
 /**
  * All resources that are configured by Groovy scripts extend this. This class
@@ -35,6 +37,8 @@ import com.badlogic.gdx.files.FileHandle
  *
  */
 public abstract class ScriptedResource {
+	
+	public final Logger log = LoggerService.forClass(this.class)
 	
 	String id
 	boolean dependencyCheckingMode = false
@@ -77,7 +81,29 @@ public abstract class ScriptedResource {
 	
 	/**
 	 * Indicates that this resource provides an object under the given name to all
-	 * subsequently-loaded resources of this same type.
+	 * subsequently-loaded resources.
+	 * <p>
+	 * This value will be available to subsequently-loaded resources of the same type,
+	 * simply as injected variables.
+	 * </p>
+	 * <p>
+	 * This value will also be available to resources of other types. Supposing that you have
+	 * a script for a resource of type {@code MyResource}:
+	 * <pre>
+	 * [myResource.groovy]
+	 *    ...
+	 *    id = 'myResource'
+	 *    provides myVariable as 'provision'
+	 *    ...
+	 *    
+	 * [somewhere else]
+	 *    ...
+	 *    def r = assets.getByID( 'myResource', MyResourceType )
+	 *    def variable = r.provision
+	 *    ...
+	 * </pre>
+	 * In plain-old-Java, you'll want to refer to this resource's {@link Binding}.
+	 * </p>
 	 * @param value
 	 */
 	public ProvidesBuilder provides(Object value) {
@@ -123,14 +149,6 @@ public abstract class ScriptedResource {
 	 */
 	public FileHandle file(String name) {
 		scriptDirectory.child(name)
-	}
-	
-	public void setFolder(FileHandle folder) {
-		this.folder = folder
-	}
-	
-	public void setFolder(String folder) {
-		this.folder = file(folder)
 	}
 	
 	/**
@@ -279,4 +297,5 @@ public abstract class ScriptedResource {
 	 * @return the new resource instance after script execution
 	 */
 	protected abstract ScriptedResource executeInclude(FileHandle includeHandle, Consumer<ScriptedResource> configurer, DelegatingScript script)
+	
 }

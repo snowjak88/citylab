@@ -59,6 +59,17 @@ class TileSet extends ScriptedResource implements Disposable {
 		tiles.each { it.validate() }
 	}
 	
+	//
+	// You can set the [folder] property either with a FileHandle, or with a String
+	//
+	public void setFolder(FileHandle folder) {
+		this.folder = folder
+	}
+	
+	public void setFolder(String folder) {
+		this.folder = file(folder)
+	}
+	
 	/**
 	 * Add a new tile definition. Implicitly calls {@link #next()} after the tile is defined.
 	 * @param script
