@@ -59,6 +59,10 @@ public class GameAssetService extends AssetManager {
 	
 	private final List<LoadFailureBean> loadFailures = new LinkedList<>();
 	
+	private int iterationsWithoutResourceScheduled = 0;
+	
+	private boolean throwUnhandledExceptions = true;
+	
 	public GameAssetService(FileHandleResolver resolver) {
 		
 		super(resolver);
@@ -87,6 +91,28 @@ public class GameAssetService extends AssetManager {
 			BiConsumer<AssetDescriptor<?>, Throwable> exceptionHandler) {
 		
 		exceptionHandlers.computeIfAbsent(assetType, (a) -> new LinkedHashMap<>()).put(exceptionType, exceptionHandler);
+	}
+	
+	/**
+	 * When a resource-loading exception is caught, should it be re-thrown if there
+	 * are no exception-handlers registered to handle it?
+	 * 
+	 * @return
+	 */
+	public boolean isThrowUnhandledExceptions() {
+		
+		return throwUnhandledExceptions;
+	}
+	
+	/**
+	 * Sets whether uncaught resource-loading exceptions should be re-thrown if they
+	 * have no matching registered exception-handlers.
+	 * 
+	 * @param throwUnhandledExceptions
+	 */
+	public void setThrowUnhandledExceptions(boolean throwUnhandledExceptions) {
+		
+		this.throwUnhandledExceptions = throwUnhandledExceptions;
 	}
 	
 	/**
@@ -182,40 +208,53 @@ public class GameAssetService extends AssetManager {
 	@Override
 	public synchronized boolean update() {
 		
-		final boolean isAssetsLoaded = super.update();
-		
-		final boolean allResourcesLoaded = pendingResourceLoadsCount.get() == 0;
-		
-		if (isAssetsLoaded)
-			updatePendingResourceLoads();
-		
-		final boolean isComplete = isAssetsLoaded && allResourcesLoaded;
-		if (isComplete)
-			doOnLoadActions();
-		
-		return isComplete;
+		return updateResources(super.update());
 	}
 	
 	@Override
 	public boolean update(int millis) {
 		
-		final boolean isAssetsLoaded = super.update(millis);
+		return updateResources(super.update(millis));
+	}
+	
+	private boolean updateResources(boolean isAssetsLoaded) {
 		
 		final boolean allResourcesLoaded = pendingResourceLoadsCount.get() == 0;
 		
-		if (isAssetsLoaded)
-			updatePendingResourceLoads();
+		if (isAssetsLoaded) {
+			final boolean atLeastOneScheduled = updatePendingResourceLoads();
+			
+			if (!atLeastOneScheduled)
+				iterationsWithoutResourceScheduled++;
+			else
+				iterationsWithoutResourceScheduled = 0;
+		}
 		
 		final boolean isComplete = isAssetsLoaded && allResourcesLoaded;
 		if (isComplete)
 			doOnLoadActions();
+		else if (isAssetsLoaded && iterationsWithoutResourceScheduled > 100) {
+			//
+			// Fail all pending resources.
+			for (Entry<Class<?>, Set<String>> pending : pendingResourceLoads.entrySet()) {
+				final Class<?> pendingType = pending.getKey();
+				for (String pendingFileName : pending.getValue())
+					taskFailed(new AssetDescriptor<>(pendingFileName, pendingType), new RuntimeException(
+							"Cannot load resource -- possible circular dependency with another resource?"));
+			}
+			
+			pendingResourceLoads.clear();
+			pendingResourceLoadsCount.set(0);
+			
+			return true;
+		}
 		
 		return isComplete;
 	}
 	
 	private boolean updatePendingResourceLoads() {
 		
-		boolean resourceScheduled = false;
+		boolean atLeastOneResourceScheduled = false;
 		
 		for (Entry<Class<?>, Set<String>> pendingResourceLoad : pendingResourceLoads.entrySet()) {
 			final Class<?> pendingType = pendingResourceLoad.getKey();
@@ -267,12 +306,21 @@ public class GameAssetService extends AssetManager {
 				fileNameIterator.remove();
 				pendingResourceLoadsCount.decrementAndGet();
 				super.load(fileName, pendingType);
-				resourceScheduled = true;
+				atLeastOneResourceScheduled = true;
 				
 			}
 		}
 		
-		return resourceScheduled;
+		return atLeastOneResourceScheduled;
+	}
+	
+	@Override
+	public synchronized boolean isFinished() {
+		
+		final boolean isAssetsLoaded = super.isFinished();
+		final boolean noPendingResources = pendingResourceLoadsCount.get() == 0;
+		
+		return (isAssetsLoaded && noPendingResources);
 	}
 	
 	@Override
@@ -317,6 +365,10 @@ public class GameAssetService extends AssetManager {
 			
 			else {
 				
+				//
+				// Grab the first exception-handler we come to whose registered type is a
+				// superclass of the caught exception.
+				//
 				final Map<Class<? extends Throwable>, BiConsumer<AssetDescriptor<?>, Throwable>> handlers = exceptionHandlers
 						.entrySet().stream().filter(e -> e.getKey().isAssignableFrom(assetDesc.type)).findFirst()
 						.map(Entry::getValue).orElse(null);
@@ -325,10 +377,11 @@ public class GameAssetService extends AssetManager {
 					//
 					// We have an exception handler for a superclass of this asset-type
 					handleForAssetType(assetDesc, t, handlers);
-				else
-					//
-					// No valid exception-handlers. Just throw it.
-					throw ex;
+				
+				else {
+					if (isThrowUnhandledExceptions())
+						throw ex;
+				}
 			}
 			
 		} catch (Throwable t) {

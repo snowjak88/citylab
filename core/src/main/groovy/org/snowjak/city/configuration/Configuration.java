@@ -67,6 +67,8 @@ public class Configuration {
 		
 		scriptedResourceLoaders.forEach(l -> assetService.setLoader(l.getResourceType(), l));
 		
+		assetService.setThrowUnhandledExceptions(false);
+		
 		initiateScriptScanning(assetService, resolver);
 	}
 	

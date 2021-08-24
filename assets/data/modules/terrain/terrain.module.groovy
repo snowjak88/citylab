@@ -6,11 +6,12 @@ description = 'Handles fitting terrain-tiles to the map.'
 // with a pre-programmed fallback
 tilesetName = preference('tileset-name', 'default-landscape.tileset')
 
-dependsOn TileSet, 'default'
-
 //
 // Get that tileset from the tile-set service.
-//tileset = tileSetService.get(tilesetName)
+// Note that we need to mark that tile-set as explicitly depended-upon.
+//
+dependsOn TileSet, 'default'
+
 tileset = assets.getByID 'default', TileSet
 
 //
