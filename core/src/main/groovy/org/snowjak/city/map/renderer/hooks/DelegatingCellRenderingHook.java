@@ -18,9 +18,9 @@ public class DelegatingCellRenderingHook extends AbstractCellRenderingHook {
 	
 	private final CellRenderingHook implementation;
 	
-	public DelegatingCellRenderingHook(int priority, CellRenderingHook implementation) {
+	public DelegatingCellRenderingHook(String id, CellRenderingHook implementation) {
 		
-		super(priority);
+		super(id);
 		
 		this.implementation = implementation;
 	}

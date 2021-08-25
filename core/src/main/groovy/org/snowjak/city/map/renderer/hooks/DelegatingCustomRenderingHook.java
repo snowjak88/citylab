@@ -28,21 +28,14 @@ public class DelegatingCustomRenderingHook extends AbstractCustomRenderingHook {
 	private final CustomRenderingHook implementation;
 	
 	/**
-	 * Create a new custom-rendering hook with the given {@code priority}. The
-	 * screen-renderer will call all rendering-hooks in order of their
-	 * {@code priority}.
-	 * <p>
-	 * For guidance, the screen-renderer itself has priority <strong>0</strong>.
-	 * Custom-renderers with a negative priority will be triggered <em>before</em>
-	 * the normal screen-renderer.
-	 * </p>
+	 * Create a new custom-rendering hook with the given {@code id}.
 	 * 
-	 * @param priority
+	 * @param id
 	 * @param implementation
 	 */
-	public DelegatingCustomRenderingHook(int priority, CustomRenderingHook implementation) {
+	public DelegatingCustomRenderingHook(String id, CustomRenderingHook implementation) {
 		
-		super(priority);
+		super(id);
 		
 		this.implementation = implementation;
 	}

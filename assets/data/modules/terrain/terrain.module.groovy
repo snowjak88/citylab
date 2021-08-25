@@ -35,11 +35,46 @@ include 'systems.groovy'
 
 //
 // Declare a cell-rendering hook into the map-rendering loop.
-// This will be called every frame for every on-screen map-cell
+// This will be called every frame for every on-screen map-cell.
 //
-cellRenderHook 0, { cellX, cellY, support ->
+// Note that this hook as a name.
+// Names must be unique for cell-rendering hooks. Hooks that are
+// registered later will overwrite those registered earlier.
+//
+cellRenderHook 'terrainRender', { cellX, cellY, support ->
 	for(def entity in data.map.getEntities(cellX, cellY, IsTerrainTile)) {
 		for(def tile in terrainMapper.get(entity).tiles)
 			support.renderTile cellX, cellY, tile
 	}
 }
+
+//
+// Declare a "custom" rendering hook into the map-rendering loop.
+// This is called only once per frame.
+//
+// As with cell-rendering hooks, custom-rendering hooks have IDs, too, which also
+// are susceptible of being overwritten by other custom-rendering hooks.
+//
+// Note how we prioritize this renderer, relative to the map-renderer (which has the ID "map"),
+// which executes all those cell-render-hooks.
+//
+// You indicate priorities using both "before" and "after", and you can prioritize both
+// custom- and cell-rendering hooks.
+//
+customRenderHook ('overMap', { batch, shapeDrawer, support ->
+	def viewBounds = support.viewportWorldBounds
+	
+	def offsetX = viewBounds.x / 1.5
+	def offsetY = viewBounds.y / 1.5
+	
+	def startX = viewBounds.x
+	def startY = viewBounds.y
+	def endX = startX + viewBounds.width
+	def endY = startY + viewBounds.height
+	
+	for(def x=startX; x<=endX; x += 15)
+		for(def y=startY; y<=endY; y += 5) {
+			batch.color = Color.WHITE
+			shapeDrawer.filledEllipse( (float)(x + offsetX), (float)(y + offsetY), 3f, 1f )
+		}
+}).after('map')

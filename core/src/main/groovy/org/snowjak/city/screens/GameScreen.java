@@ -98,7 +98,8 @@ public class GameScreen extends AbstractGameScreen {
 		//
 		
 		renderer = new MapRenderer(data.map);
-		GameData.get().customRenderingHooks.add(renderer.MAP_RENDERING_HOOK);
+		GameData.get().customRenderingHooks.put(renderer.MAP_RENDERING_HOOK.getId(), renderer.MAP_RENDERING_HOOK);
+		GameData.get().prioritizedCustomRenderingHooks.add(renderer.MAP_RENDERING_HOOK);
 		
 		final Vector2 scratch = new Vector2();
 		scratch.set(0, 0);
@@ -137,7 +138,7 @@ public class GameScreen extends AbstractGameScreen {
 			hoverX.set(e.getX());
 			hoverY.set(e.getY());
 		});
-		final AbstractCustomRenderingHook hoverHook = new AbstractCustomRenderingHook(100) {
+		final AbstractCustomRenderingHook hoverHook = new AbstractCustomRenderingHook("hover") {
 			
 			@Override
 			public void render(Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
@@ -153,8 +154,10 @@ public class GameScreen extends AbstractGameScreen {
 				shapeDrawer.line(vertices[3], vertices[0]);
 			}
 		};
+		hoverHook.getRelativePriority().after("map");
 		
-		GameData.get().customRenderingHooks.add(hoverHook);
+		GameData.get().customRenderingHooks.put(hoverHook.getId(), hoverHook);
+		GameData.get().prioritizedCustomRenderingHooks.add(hoverHook);
 	}
 	
 	@Override

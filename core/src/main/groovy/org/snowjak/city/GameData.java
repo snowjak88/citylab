@@ -4,8 +4,8 @@
 package org.snowjak.city;
 
 import java.time.Duration;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -14,6 +14,7 @@ import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
+import org.snowjak.city.util.RelativePriorityList;
 
 import com.badlogic.ashley.core.Engine;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -48,9 +49,16 @@ public class GameData {
 	/**
 	 * Hooks into the {@link CityMap}-rendering process. These are called every
 	 * frame, in ascending order of their priority, for every visible map-cell.
+	 * <p>
+	 * Note that
+	 * </p>
 	 */
-	public final SortedSet<AbstractCellRenderingHook> cellRenderingHooks = new TreeSet<AbstractCellRenderingHook>(
-			(h1, h2) -> Integer.compare(h1.getPriority(), h2.getPriority()));
+	public final Map<String, AbstractCellRenderingHook> cellRenderingHooks = new LinkedHashMap<>();
+	
+	/**
+	 * Prioritized version of {@link #cellRenderingHooks}.
+	 */
+	public final RelativePriorityList<String, AbstractCellRenderingHook> prioritizedCellRenderingHooks = new RelativePriorityList<>();
 	
 	/**
 	 * Hooks into the {@link CityMap}-rendering process. These are called every
@@ -58,8 +66,12 @@ public class GameData {
 	 * priority 0; hooks with negative priority are called before, while those with
 	 * positive priority are called after.
 	 */
-	public final SortedSet<AbstractCustomRenderingHook> customRenderingHooks = new TreeSet<AbstractCustomRenderingHook>(
-			(h1, h2) -> Integer.compare(h1.getPriority(), h2.getPriority()));
+	public final Map<String, AbstractCustomRenderingHook> customRenderingHooks = new LinkedHashMap<>();
+	
+	/**
+	 * Prioritized version of {@link #customRenderingHooks}.
+	 */
+	public final RelativePriorityList<String, AbstractCustomRenderingHook> prioritizedCustomRenderingHooks = new RelativePriorityList<>();
 	
 	/**
 	 * Seed to be used for random-number generation.

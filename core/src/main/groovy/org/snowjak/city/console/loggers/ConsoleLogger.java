@@ -3,6 +3,8 @@
  */
 package org.snowjak.city.console.loggers;
 
+import java.util.List;
+
 import org.snowjak.city.console.Console;
 import org.snowjak.city.console.ConsolePrintStream;
 
@@ -22,10 +24,12 @@ public class ConsoleLogger extends DefaultLogger {
 	private Console console;
 	private ConsolePrintStream printStream;
 	
-	public ConsoleLogger(Console console, LoggerService service, Class<?> forClass) {
+	private final List<Object[]> bufferedLogEntries;
+	
+	public ConsoleLogger(Console console, LoggerService service, List<Object[]> bufferedLogEntries, Class<?> forClass) {
 		
 		super(service, forClass);
-		
+		this.bufferedLogEntries = bufferedLogEntries;
 		setConsole(console);
 	}
 	
@@ -43,7 +47,7 @@ public class ConsoleLogger extends DefaultLogger {
 		if (console != null && console.isReady())
 			printStream.println(tag + ": " + message);
 		else
-			super.logDebug(tag, message);
+			bufferedLogEntries.add(new Object[] { tag + ": " + message });
 	}
 	
 	@Override
@@ -52,8 +56,10 @@ public class ConsoleLogger extends DefaultLogger {
 		if (console != null && console.isReady()) {
 			printStream.println(tag + ": " + message);
 			printStream.println(exception.getClass().getName() + ": " + exception.getMessage());
-		} else
-			super.logDebug(tag, message, exception);
+		} else {
+			bufferedLogEntries.add(new Object[] { tag + ": " + message });
+			bufferedLogEntries.add(new Object[] { exception.getClass().getName() + ": " + exception.getMessage() });
+		}
 	}
 	
 	@Override
@@ -62,7 +68,7 @@ public class ConsoleLogger extends DefaultLogger {
 		if (console != null && console.isReady())
 			printStream.println(tag + ": " + message);
 		else
-			super.logInfo(tag, message);
+			bufferedLogEntries.add(new Object[] { tag + ": " + message });
 	}
 	
 	@Override
@@ -71,8 +77,10 @@ public class ConsoleLogger extends DefaultLogger {
 		if (console != null && console.isReady()) {
 			printStream.println(tag + ": " + message);
 			printStream.println(exception.getClass().getName() + ": " + exception.getMessage());
-		} else
-			super.logInfo(tag, message, exception);
+		} else {
+			bufferedLogEntries.add(new Object[] { tag + ": " + message });
+			bufferedLogEntries.add(new Object[] { exception.getClass().getName() + ": " + exception.getMessage() });
+		}
 	}
 	
 	@Override
@@ -81,7 +89,7 @@ public class ConsoleLogger extends DefaultLogger {
 		if (console != null && console.isReady())
 			printStream.println(tag + ": " + message);
 		else
-			super.logError(tag, message);
+			bufferedLogEntries.add(new Object[] { tag + ": " + message });
 	}
 	
 	@Override
@@ -90,7 +98,9 @@ public class ConsoleLogger extends DefaultLogger {
 		if (console != null && console.isReady()) {
 			printStream.println(tag + ": " + message);
 			printStream.println(exception.getClass().getName() + ": " + exception.getMessage());
-		} else
-			super.logError(tag, message, exception);
+		} else {
+			bufferedLogEntries.add(new Object[] { tag + ": " + message });
+			bufferedLogEntries.add(new Object[] { exception.getClass().getName() + ": " + exception.getMessage() });
+		}
 	}
 }

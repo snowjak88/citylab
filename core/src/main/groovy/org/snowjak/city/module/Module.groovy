@@ -3,7 +3,6 @@ package org.snowjak.city.module
 import java.util.function.Consumer
 
 import org.snowjak.city.GameData
-import org.snowjak.city.configuration.Configuration
 import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook
 import org.snowjak.city.map.renderer.hooks.CellRenderingHook
@@ -13,12 +12,12 @@ import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
 import org.snowjak.city.resources.ScriptedResource
 import org.snowjak.city.service.PreferencesService
 import org.snowjak.city.service.PreferencesService.ScopedPreferences
+import org.snowjak.city.util.RelativePriority
 
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.core.Family
 import com.badlogic.ashley.systems.IteratingSystem
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.files.FileHandle
 
 /**
@@ -62,18 +61,22 @@ public class Module extends ScriptedResource {
 		preferencesService.get(id)
 	}
 	
-	public void cellRenderHook(int priority, CellRenderingHook hook) {
+	public RelativePriority cellRenderHook(String id, CellRenderingHook hook) {
 		if(isDependencyCheckingMode())
-			return
+			return new RelativePriority()
 		
-		cellRenderingHooks << new DelegatingCellRenderingHook(priority, hook)
+		def newHook = new DelegatingCellRenderingHook(id, hook)
+		cellRenderingHooks << newHook
+		newHook.relativePriority
 	}
 	
-	public void renderHook(int priority, CustomRenderingHook hook) {
+	public RelativePriority customRenderHook(id, CustomRenderingHook hook) {
 		if(isDependencyCheckingMode())
-			return
+			return new RelativePriority()
 		
-		customRenderingHooks << new DelegatingCustomRenderingHook(priority, hook)
+		def newHook = new DelegatingCustomRenderingHook(id, hook)
+		customRenderingHooks << newHook
+		newHook.relativePriority
 	}
 	
 	public void iteratingSystem(String id, Family family, Closure implementation) {

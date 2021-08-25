@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.snowjak.city.GameData;
+import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook;
+import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
 import org.snowjak.city.module.Module;
 import org.snowjak.city.screens.LoadingScreen.LoadingTask;
 import org.snowjak.city.service.GameAssetService;
@@ -97,12 +99,12 @@ public class GameModulesInitializationTask implements LoadingTask {
 				
 				if (!module.getCellRenderingHooks().isEmpty()) {
 					LOG.info("Adding cell rendering hooks ...");
-					data.cellRenderingHooks.addAll(module.getCellRenderingHooks());
+					module.getCellRenderingHooks().forEach(h -> data.cellRenderingHooks.put(h.getId(), h));
 				}
 				
 				if (!module.getCustomRenderingHooks().isEmpty()) {
 					LOG.info("Adding custom rendering hooks ...");
-					data.customRenderingHooks.addAll(module.getCustomRenderingHooks());
+					module.getCustomRenderingHooks().forEach(h -> data.customRenderingHooks.put(h.getId(), h));
 				}
 				
 				//
@@ -118,6 +120,38 @@ public class GameModulesInitializationTask implements LoadingTask {
 				LOG.info("Done initializing module \"{0}\".", module.getId());
 				progress.addAndGet(progressStep);
 			}
+			
+			LOG.info("Prioritizing cell-rendering hooks ...");
+			data.prioritizedCellRenderingHooks.clear();
+			
+			for (AbstractCellRenderingHook hook : data.cellRenderingHooks.values())
+				try {
+					data.prioritizedCellRenderingHooks.add(hook);
+				} catch (RuntimeException e) {
+					LOG.error(e, "Cannot configure cell-rendering-hook {0} -- too many conflicting priorities!",
+							hook.getId());
+				}
+			
+			LOG.info("Cell-rendering hooks prioritized:");
+			int i = 1;
+			for (AbstractCellRenderingHook hook : data.prioritizedCellRenderingHooks)
+				LOG.info("[{0}]: {1}", i++, hook.getId());
+			
+			LOG.info("Prioritizing custom-rendering hooks ...");
+			data.prioritizedCustomRenderingHooks.clear();
+			
+			for (AbstractCustomRenderingHook hook : data.customRenderingHooks.values())
+				try {
+					data.prioritizedCustomRenderingHooks.add(hook);
+				} catch (RuntimeException e) {
+					LOG.error(e, "Cannot configure custom-rendering-hook {0} -- too many conflicting priorities!",
+							hook.getId());
+				}
+			
+			LOG.info("Custom-rendering hooks prioritized:");
+			i = 1;
+			for (AbstractCustomRenderingHook hook : data.prioritizedCustomRenderingHooks)
+				LOG.info("[{0}]: {1}", i++, hook.getId());
 		});
 	}
 }

@@ -4,6 +4,7 @@
 package org.snowjak.city.console;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.snowjak.city.configuration.InitPriority;
@@ -66,6 +67,8 @@ public class Console {
 	private final ConsoleWordCompleter completer;
 	private final AbstractConsoleExecutor executor;
 	
+	private final LinkedList<Runnable> onReadyRunnables = new LinkedList<>();
+	
 	public Console(GameAssetService assetService, SkinService skinService, Viewport viewport) {
 		
 		this.display = new ConsoleDisplay(this, skinService, viewport);
@@ -73,11 +76,27 @@ public class Console {
 		this.executor = new GroovyConsoleExecutor(this, new ConsoleModel(assetService), new ConsolePrintStream(this));
 	}
 	
+	public void addOnReadyAction(Runnable action) {
+		
+		synchronized (this) {
+			if (!isReady)
+				onReadyRunnables.add(action);
+			else
+				action.run();
+		}
+		
+	}
+	
 	@Initiate(priority = InitPriority.LOW_PRIORITY)
 	public void init() {
 		
-		display.init();
-		isReady = true;
+		synchronized (this) {
+			display.init();
+			isReady = true;
+			
+			while (!onReadyRunnables.isEmpty())
+				onReadyRunnables.pop().run();
+		}
 	}
 	
 	/**

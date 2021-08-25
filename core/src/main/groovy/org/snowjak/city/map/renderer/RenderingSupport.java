@@ -3,10 +3,11 @@
  */
 package org.snowjak.city.map.renderer;
 
-import org.snowjak.city.map.tiles.TileCorner;
 import org.snowjak.city.map.tiles.Tile;
+import org.snowjak.city.map.tiles.TileCorner;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
 /**
@@ -14,6 +15,14 @@ import com.badlogic.gdx.math.Vector2;
  *
  */
 public interface RenderingSupport {
+	
+	/**
+	 * Get the {@link Rectangle} corresponding to the current viewport, in World
+	 * coordinates.
+	 * 
+	 * @return
+	 */
+	public Rectangle getViewportWorldBounds();
 	
 	/**
 	 * Schedule the given {@link Tile} to be rendered at the given cell location.

@@ -3,24 +3,39 @@
  */
 package org.snowjak.city.map.renderer.hooks;
 
-import org.snowjak.city.util.Prioritized;
+import org.snowjak.city.util.RelativePriority;
+import org.snowjak.city.util.RelativelyPrioritized;
 
 /**
  * @author snowjak88
  *
  */
-public abstract class AbstractCustomRenderingHook implements CustomRenderingHook, Prioritized {
+public abstract class AbstractCustomRenderingHook
+		implements CustomRenderingHook, RelativelyPrioritized<AbstractCustomRenderingHook, String> {
 	
-	private final int priority;
+	private final String id;
+	private final RelativePriority<String> relativePriority;
 	
-	public AbstractCustomRenderingHook(int priority) {
+	public AbstractCustomRenderingHook(String id) {
 		
-		this.priority = priority;
+		this.id = id;
+		this.relativePriority = new RelativePriority<>();
+	}
+	
+	public String getId() {
+		
+		return id;
 	}
 	
 	@Override
-	public int getPriority() {
+	public String getRelativePriorityKey() {
 		
-		return priority;
+		return id;
+	}
+	
+	@Override
+	public RelativePriority<String> getRelativePriority() {
+		
+		return relativePriority;
 	}
 }

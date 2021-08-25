@@ -31,8 +31,8 @@ import org.snowjak.city.GameData;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
-import org.snowjak.city.map.tiles.TileCorner;
 import org.snowjak.city.map.tiles.Tile;
+import org.snowjak.city.map.tiles.TileCorner;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -107,10 +107,10 @@ public class MapRenderer implements RenderingSupport {
 	
 	/**
 	 * The rendering-hook that actually executes the map-renderer. In effect, this
-	 * MapRenderer hooks into itself, with priority 0. This enables the MapRenderer
+	 * MapRenderer hooks into itself, with id = "map". This enables the MapRenderer
 	 * to allow other rendering-hooks to execute prior to the map being rendered.
 	 */
-	public final AbstractCustomRenderingHook MAP_RENDERING_HOOK = new AbstractCustomRenderingHook(0) {
+	public final AbstractCustomRenderingHook MAP_RENDERING_HOOK = new AbstractCustomRenderingHook("map") {
 		
 		@Override
 		public void render(Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
@@ -121,15 +121,16 @@ public class MapRenderer implements RenderingSupport {
 			if (map == null)
 				return;
 			
-			if (GameData.get().cellRenderingHooks.isEmpty())
+			if (GameData.get().prioritizedCellRenderingHooks.isEmpty())
 				return;
 			
 			for (int cellY = mapVisibleMaxY; cellY >= mapVisibleMinY; cellY--)
 				for (int cellX = mapVisibleMinX; cellX <= mapVisibleMaxX; cellX++)
 					if (map.isValidCell(cellX, cellY))
-						for (AbstractCellRenderingHook hook : GameData.get().cellRenderingHooks)
+						for (AbstractCellRenderingHook hook : GameData.get().prioritizedCellRenderingHooks)
 							hook.renderCell(cellX, cellY, support);
 		}
+		
 	};
 	
 	public MapRenderer() {
@@ -194,6 +195,14 @@ public class MapRenderer implements RenderingSupport {
 		this.shapeDrawer.setDefaultLineWidth(1f / DISPLAYED_GRID_WIDTH);
 	}
 	
+	/**
+	 * Updates the MapRenderer's viewport-bounds based on the given camera. The
+	 * MapRenderer should only render map-cells that are visible to the Camera, so
+	 * it's important that you keep the MapRenderer updated every time your Camera
+	 * changes one of its attributes.
+	 * 
+	 * @param camera
+	 */
 	public void setView(OrthographicCamera camera) {
 		
 		batch.setProjectionMatrix(camera.combined);
@@ -219,6 +228,12 @@ public class MapRenderer implements RenderingSupport {
 		
 		batch.setProjectionMatrix(projection);
 		viewBounds.set(x, y, width, height);
+	}
+	
+	@Override
+	public Rectangle getViewportWorldBounds() {
+		
+		return viewBounds;
 	}
 	
 	private void updateViewportBounds() {
@@ -257,7 +272,7 @@ public class MapRenderer implements RenderingSupport {
 		
 		batch.begin();
 		
-		for (AbstractCustomRenderingHook hook : GameData.get().customRenderingHooks)
+		for (AbstractCustomRenderingHook hook : GameData.get().prioritizedCustomRenderingHooks)
 			hook.render(batch, shapeDrawer, this);
 		
 		batch.end();

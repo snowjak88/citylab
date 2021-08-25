@@ -5,6 +5,8 @@ package org.snowjak.city.console.loggers;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.snowjak.city.console.Console;
@@ -28,6 +30,7 @@ public class ConsoleLoggerFactory implements LoggerFactory {
 		return INSTANCE;
 	}
 	
+	private final List<Object[]> bufferedLogEntries = Collections.synchronizedList(new LinkedList<>());
 	private final Map<Class<?>, ConsoleLogger> loggers = Collections.synchronizedMap(new LinkedHashMap<>());
 	
 	private Console console = null;
@@ -41,12 +44,15 @@ public class ConsoleLoggerFactory implements LoggerFactory {
 		this.console = console;
 		for (ConsoleLogger logger : loggers.values())
 			logger.setConsole(console);
+		
+		console.addOnReadyAction(() -> bufferedLogEntries.forEach(l -> console.println(l)));
 	}
 	
 	@Override
 	public Logger newLogger(LoggerService service, Class<?> forClass) {
 		
-		return loggers.computeIfAbsent(forClass, (c) -> new ConsoleLogger(console, service, forClass));
+		return loggers.computeIfAbsent(forClass,
+				(c) -> new ConsoleLogger(console, service, bufferedLogEntries, forClass));
 	}
 	
 }

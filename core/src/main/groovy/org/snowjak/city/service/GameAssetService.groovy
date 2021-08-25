@@ -40,9 +40,24 @@ public class GameAssetService extends AssetManager {
 	
 	private static final Logger LOG = LoggerService.forClass(GameAssetService.class)
 	
+	/**
+	 * Registered {@link ScriptedResourceLoader}s, by resource-type
+	 */
 	private final Map<Class<?>, ScriptedResourceLoader<?, ?>> scriptResourceLoaders = new LinkedHashMap<>()
+	
+	/**
+	 * Pending {@link ScriptedResource} file-names, by resource-type
+	 */
 	private final Map<Class<?>, Set<String>> pendingResourceLoads = new LinkedHashMap<>()
+	
+	/**
+	 * Should be equal to the size of {@link #pendingResourceLoads}
+	 */
 	private final AtomicInteger pendingResourceLoadsCount = new AtomicInteger()
+	
+	/**
+	 * {@link ScriptedResource#getID() ScriptedResource IDs} to files, by resource-type
+	 */
 	private final Map<Class<?>, Map<String, FileHandle>> scriptedResourceIDs = new LinkedHashMap<>()
 	
 	private final Map<Class<?>, Map<Class<? extends Throwable>, BiConsumer<AssetDescriptor<?>, Throwable>>> exceptionHandlers = new LinkedHashMap<>()
@@ -69,8 +84,17 @@ public class GameAssetService extends AssetManager {
 	public synchronized <T, P extends AssetLoaderParameters<T>> void setLoader(Class<T> type, String suffix,
 			AssetLoader<T, P> loader) {
 		
-		if (ScriptedResourceLoader.isAssignableFrom(loader.getClass()))
+		if (ScriptedResourceLoader.isAssignableFrom(loader.getClass())) {
+			
 			scriptResourceLoaders[(Class<ScriptedResource>) type] = (ScriptedResourceLoader) loader
+			
+			//
+			// If a ScriptedResource fails, we should remove it from the list of pending ScriptedResources!
+			addFailureHandler(type, Throwable, { asset, ex ->
+				if( pendingResourceLoads[asset.type].remove(asset.fileName) )
+					pendingResourceLoadsCount.decrementAndGet()
+			})
+		}
 		
 		super.setLoader(type, suffix, loader)
 	}
@@ -251,41 +275,47 @@ public class GameAssetService extends AssetManager {
 				final ScriptedResourceLoader<?, ?> loader = scriptResourceLoaders.get(pendingType)
 				final FileHandle fileHandle = loader.resolve(fileName)
 				
-				boolean anyNotLoaded = false
-				for (Entry<Class<?>, Set<String>> scriptedDependencies : loader.getScriptedDependencies(fileName)
-						.entrySet()) {
+				try {
 					
-					final Class<?> dependencyType = scriptedDependencies.key
-					for (String dependencyID : scriptedDependencies.value) {
-						final FileHandle dependencyFile = scriptedResourceIDs
-								.computeIfAbsent(dependencyType, {t -> new LinkedHashMap<>()}).get(dependencyID)
-						if (dependencyFile == null || !super.isLoaded(dependencyFile.path(), dependencyType)) {
-							anyNotLoaded = true
-							break
+					boolean anyNotLoaded = false
+					for (Entry<Class<?>, Set<String>> scriptedDependencies : loader.getScriptedDependencies(fileName)
+							.entrySet()) {
+						
+						final Class<?> dependencyType = scriptedDependencies.key
+						for (String dependencyID : scriptedDependencies.value) {
+							final FileHandle dependencyFile = scriptedResourceIDs
+									.computeIfAbsent(dependencyType, {t -> new LinkedHashMap<>()}).get(dependencyID)
+							if (dependencyFile == null || !super.isLoaded(dependencyFile.path(), dependencyType)) {
+								anyNotLoaded = true
+								break
+							}
 						}
+						
+						if (anyNotLoaded)
+							break
 					}
 					
+					//
+					// If any aren't loaded, then this pending resource can't become non-pending.
 					if (anyNotLoaded)
-						break
+						continue
+					
+					//
+					// Make sure we can reference this resource by its ID.
+					final String resourceID = loader.getResourceID(fileHandle)
+					scriptedResourceIDs.computeIfAbsent(pendingType, {t -> new LinkedHashMap<>()}).put(resourceID,
+					fileHandle)
+					
+					//
+					// Schedule this resource for loading.
+					fileNameIterator.remove()
+					pendingResourceLoadsCount.decrementAndGet()
+					super.load(fileName, pendingType)
+					atLeastOneResourceScheduled = true
+					
+				} catch(Throwable t) {
+					handleException new AssetDescriptor(fileHandle, pendingType), t
 				}
-				
-				//
-				// If any aren't loaded, then this pending resource can't become non-pending.
-				if (anyNotLoaded)
-					continue
-				
-				//
-				// Make sure we can reference this resource by its ID.
-				final String resourceID = loader.getResourceID(fileHandle)
-				scriptedResourceIDs.computeIfAbsent(pendingType, {t -> new LinkedHashMap<>()}).put(resourceID,
-				fileHandle)
-				
-				//
-				// Schedule this resource for loading.
-				fileNameIterator.remove()
-				pendingResourceLoadsCount.decrementAndGet()
-				super.load(fileName, pendingType)
-				atLeastOneResourceScheduled = true
 				
 			}
 		}
@@ -323,43 +353,65 @@ public class GameAssetService extends AssetManager {
 	@Override
 	protected void taskFailed( AssetDescriptor assetDesc, RuntimeException ex) {
 		
+		handleException assetDesc, ex
+	}
+	
+	/**
+	 * Handle any exception encountered during resource-loading.
+	 * @param asset the asset that threw the exception, or {@code null} if unknown/none
+	 * @param t
+	 */
+	private void handleException(AssetDescriptor assetDesc, Throwable ex) {
 		try {
-			LOG.info("Captured load-task failure: {0} while loading {1}", ex.getClass().getSimpleName(),
-					assetDesc.fileName)
+			LOG.error "Caught an exception while loading assets!"
 			
-			LOG.info("Drilling down to capture root exception ...")
+			if(assetDesc == null)
+				LOG.error "Captured exception: {0}", ex.getClass().simpleName
+			else
+				LOG.error "Captured exception: {0} while loading {1}", ex.getClass().simpleName,
+						assetDesc.fileName
+			
+			LOG.debug("Drilling down to capture root exception ...")
 			Throwable t = ex
 			while (t.getCause() != null) {
 				LOG.debug("Drilling down past {0} ...", t.getClass().getSimpleName())
 				t = t.getCause()
 			}
-			LOG.info("Root exception is {0}: {1}", t.getClass().getSimpleName(), t.getMessage())
+			LOG.error("Root exception is {0}: {1}", t.getClass().getSimpleName(), t.getMessage())
 			
-			loadFailures.add(new LoadFailureBean(assetDesc.type, assetDesc.file, t))
-			
-			if (exceptionHandlers.containsKey(assetDesc.type))
-				//
-				// We have an exception-handler that matches this asset-type
-				handleForAssetType(assetDesc, t, exceptionHandlers.get(assetDesc.type))
-			
+			if(assetDesc == null) {
+				loadFailures.add(LoadFailureBean.forNoResource(ex))
+				
+				if (isThrowUnhandledExceptions())
+					throw ex
+			}
 			else {
+				loadFailures.add(new LoadFailureBean(assetDesc.type, assetDesc.file, t))
 				
-				//
-				// Grab the first exception-handler we come to whose registered type is a
-				// superclass of the caught exception.
-				//
-				final Map<Class<? extends Throwable>, BiConsumer<AssetDescriptor<?>, Throwable>> handlers = exceptionHandlers
-						.entrySet().stream().filter({it.key.isAssignableFrom(assetDesc.type)}).findFirst()
-						.map({it.value}).orElse(null)
-				
-				if (handlers != null)
+				if (exceptionHandlers.containsKey(assetDesc.type))
 					//
-					// We have an exception handler for a superclass of this asset-type
-					handleForAssetType(assetDesc, t, handlers)
+					// We have an exception-handler that matches this asset-type
+					handleForAssetType(assetDesc, t, exceptionHandlers.get(assetDesc.type))
 				
 				else {
-					if (isThrowUnhandledExceptions())
-						throw ex
+					
+					//
+					// Grab the first exception-handler we come to whose registered type is a
+					// superclass of the caught exception.
+					//
+					final Map<Class<? extends Throwable>, BiConsumer<AssetDescriptor<?>, Throwable>> handlers = exceptionHandlers
+							.entrySet().stream().filter({it.key.isAssignableFrom(assetDesc.type)}).findFirst()
+							.map({it.value}).orElse(null)
+					
+					if (handlers != null)
+						//
+						// We have an exception handler for a superclass of this asset-type
+						handleForAssetType(assetDesc, t, handlers)
+					
+					else {
+						if (isThrowUnhandledExceptions())
+							throw ex
+					}
 				}
 			}
 			
@@ -399,6 +451,10 @@ public class GameAssetService extends AssetManager {
 	}
 	
 	public static class LoadFailureBean {
+		
+		public static LoadFailureBean forNoResource(Throwable t) {
+			return new LoadFailureBean(null, null, t)
+		}
 		
 		private final Class<?> assetType
 		private final FileHandle file
