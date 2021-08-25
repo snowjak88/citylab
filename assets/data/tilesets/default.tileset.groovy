@@ -6,9 +6,10 @@ description = "Default tileset, being the developer's first Blender project."
 //
 // The grid-dimensions for which this tileset was designed
 //
+//
 // (Default: 32 / 16)
-gridWidth = 196
-gridHeight = 97
+gridWidth = 128
+gridHeight = 64
 
 //
 // Default width/height for all tiles. (Visible width/height, as distinct from grid width/height.)
@@ -28,11 +29,11 @@ height = 0
 // to be positioned "below" the grid.
 //
 // (Default: 0)
-surfaceOffset = 37
+surfaceOffset = 32
 
 //
 // Every unit of altitude should add/subtract these many pixels from this tile's Y-position.
-altitudeOffset = 31
+altitudeOffset = 32
 
 //
 // Starting x/y within the image-file for each tile
