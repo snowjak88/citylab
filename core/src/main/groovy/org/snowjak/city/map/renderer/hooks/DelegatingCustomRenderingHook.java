@@ -41,8 +41,8 @@ public class DelegatingCustomRenderingHook extends AbstractCustomRenderingHook {
 	}
 	
 	@Override
-	public void render(Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
+	public void render(float delta, Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
 		
-		implementation.render(batch, shapeDrawer, support);
+		implementation.render(delta, batch, shapeDrawer, support);
 	}
 }

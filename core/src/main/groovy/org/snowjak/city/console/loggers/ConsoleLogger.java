@@ -11,6 +11,7 @@ import org.snowjak.city.console.ConsolePrintStream;
 import com.badlogic.gdx.Application;
 import com.github.czyzby.kiwi.log.LoggerService;
 import com.github.czyzby.kiwi.log.impl.DefaultLogger;
+import com.google.common.base.Throwables;
 
 /**
  * Delegate logger, writes to the active {@link Console} (with
@@ -56,9 +57,11 @@ public class ConsoleLogger extends DefaultLogger {
 		if (console != null && console.isReady()) {
 			printStream.println(tag + ": " + message);
 			printStream.println(exception.getClass().getName() + ": " + exception.getMessage());
+			printStream.println(Throwables.getStackTraceAsString(exception));
 		} else {
 			bufferedLogEntries.add(new Object[] { tag + ": " + message });
 			bufferedLogEntries.add(new Object[] { exception.getClass().getName() + ": " + exception.getMessage() });
+			bufferedLogEntries.add(new Object[] { Throwables.getStackTraceAsString(exception) });
 		}
 	}
 	
@@ -77,9 +80,11 @@ public class ConsoleLogger extends DefaultLogger {
 		if (console != null && console.isReady()) {
 			printStream.println(tag + ": " + message);
 			printStream.println(exception.getClass().getName() + ": " + exception.getMessage());
+			printStream.println(Throwables.getStackTraceAsString(exception));
 		} else {
 			bufferedLogEntries.add(new Object[] { tag + ": " + message });
 			bufferedLogEntries.add(new Object[] { exception.getClass().getName() + ": " + exception.getMessage() });
+			bufferedLogEntries.add(new Object[] { Throwables.getStackTraceAsString(exception) });
 		}
 	}
 	
@@ -98,9 +103,11 @@ public class ConsoleLogger extends DefaultLogger {
 		if (console != null && console.isReady()) {
 			printStream.println(tag + ": " + message);
 			printStream.println(exception.getClass().getName() + ": " + exception.getMessage());
+			printStream.println(Throwables.getStackTraceAsString(exception));
 		} else {
 			bufferedLogEntries.add(new Object[] { tag + ": " + message });
 			bufferedLogEntries.add(new Object[] { exception.getClass().getName() + ": " + exception.getMessage() });
+			bufferedLogEntries.add(new Object[] { Throwables.getStackTraceAsString(exception) });
 		}
 	}
 }

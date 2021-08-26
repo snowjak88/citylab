@@ -5,7 +5,6 @@ package org.snowjak.city.resources
 
 import java.util.function.Consumer
 
-import org.snowjak.city.service.GameAssetService
 import org.snowjak.city.service.LoggerService
 
 import com.badlogic.gdx.files.FileHandle
@@ -45,13 +44,13 @@ public abstract class ScriptedResource {
 	FileHandle scriptDirectory
 	GroovyShell shell
 	
-	GameAssetService assets
+	ScriptedResourceAssetProvider assets
 	
 	final Binding binding = new Binding()
 	final Map<String,Set<String>> imports = [:]
 	final Map<String,Object> providedObjects = [:]
 	private final Map<Class<?>, Set<String>> scriptedDependencies = [:]
-	private final Map<String, Class<?>> assetDependencies = [:]
+	private final Map<FileHandle, Class<?>> assetDependencies = [:]
 	
 	def propertyMissing(name) {
 		binding[name]
@@ -66,17 +65,48 @@ public abstract class ScriptedResource {
 	 * @param id
 	 */
 	public void dependsOn(String id) {
-		dependsOn this.class, id
+		dependsOn id, this.class
 	}
 	
 	/**
-	 * Indicates that this resource depends on another resource(given by {@code id}).
-	 * This resource should not be loaded until the named resource is itself loaded.
-	 * @param moduleID
+	 * Indicates that this resource depends on something else:
+	 * <ul>
+	 * <li>A scripted resource, whose ID = {@code name}</li>
+	 * <li>Another kind of asset, whose file-name is {@code name} (relative to the current directory)</li>
+	 * </ul>
 	 */
-	public <T extends ScriptedResource> void dependsOn(Class<T> resourceType, String id) {
+	public <T extends ScriptedResource> void dependsOn(String name, Class<T> resourceType) {
 		
-		addScriptedDependency resourceType, id
+		if(ScriptedResource.isAssignableFrom( resourceType ))
+			addScriptedDependency resourceType, name
+		else
+			addAssetDependency resourceType, name
+	}
+	
+	
+	
+	protected void addScriptedDependency(Class<?> type, String id) {
+		
+		scriptedDependencies.computeIfAbsent(type, {t -> new HashSet<>()}).add(id)
+	}
+	
+	public Map<Class<?>, Set<String>> getScriptedDependencies() {
+		
+		Collections.unmodifiableMap(scriptedDependencies)
+	}
+	
+	protected void addAssetDependency(Class<?> type, String name) {
+		
+		addAssetDependency type, scriptDirectory.child(name)
+	}
+	
+	protected void addAssetDependency(Class<?> type, FileHandle file) {
+		assetDependencies[file] = type
+	}
+	
+	public Map<FileHandle, Class<?>> getAssetDependencies() {
+		
+		Collections.unmodifiableMap(assetDependencies)
 	}
 	
 	/**
@@ -95,7 +125,7 @@ public abstract class ScriptedResource {
 	 *    id = 'myResource'
 	 *    provides myVariable as 'provision'
 	 *    ...
-	 *    
+	 *
 	 * [somewhere else]
 	 *    ...
 	 *    def r = assets.getByID( 'myResource', MyResourceType )
@@ -122,26 +152,6 @@ public abstract class ScriptedResource {
 		}
 	}
 	
-	protected void addScriptedDependency(Class<?> type, String id) {
-		
-		scriptedDependencies.computeIfAbsent(type, {t -> new HashSet<>()}).add(id)
-	}
-	
-	public Map<Class<?>, Set<String>> getScriptedDependencies() {
-		
-		Collections.unmodifiableMap(scriptedDependencies)
-	}
-	
-	protected void addAssetDependency(String name, Class<?> type) {
-		
-		assetDependencies.put(name, type)
-	}
-	
-	public Map<String, Class<?>> getAssetDependencies() {
-		
-		Collections.unmodifiableMap(assetDependencies)
-	}
-	
 	/**
 	 * Get a {@link FileHandle} to a child (file or directory) of the current script's directory.
 	 * @param name
@@ -158,7 +168,6 @@ public abstract class ScriptedResource {
 	 * <ol>
 	 * <li>Another module-definition script</li>
 	 * <li>A .JAR file</li>
-	 * <li>A class (i.e., as {@code import}</li>
 	 * </ol>
 	 * </p>
 	 * <h2>Including a Script</h2>
@@ -181,22 +190,12 @@ public abstract class ScriptedResource {
 	 * include 'gdx-ai.1.8.2.jar'
 	 * </pre>
 	 * </p>
-	 * <h2>Including a Class</h2>
-	 * <p>
-	 *
-	 * </p>
 	 *
 	 * @param name
 	 */
-	public IncludeBuilder include(String name) {
+	public void include(String name) {
 		final includeHandle = scriptDirectory.child(name)
 		
-		if(!includeHandle.exists())
-			try {
-				return tryIncludeClass(name)
-			} catch(ClassNotFoundException e) {
-				throw new FileNotFoundException("Cannot include resource \"$name\" -- neither an existing file nor class.")
-			}
 		if(includeHandle.directory)
 			throw new RuntimeException("Cannot include resource \"$name\" [${includeHandle.path()}] -- is a directory, not a file.")
 		
@@ -206,29 +205,6 @@ public abstract class ScriptedResource {
 			includeScript includeHandle
 		else
 			return
-	}
-	
-	private IncludeBuilder tryIncludeClass(String name) throws ClassNotFoundException {
-		final clazz = this.class.classLoader.loadClass(name)
-		
-		imports.computeIfAbsent(name, { new HashSet<>() }).add clazz.simpleName
-		
-		return new IncludeBuilder(name, clazz)
-	}
-	
-	class IncludeBuilder {
-		final String name
-		final Class<?> clazz
-		
-		IncludeBuilder(String name, Class<?> clazz) {
-			this.name = name
-			this.clazz = clazz
-		}
-		
-		public void alias(String alias) {
-			
-			imports.computeIfAbsent(name, { new HashSet<>() }).add alias
-		}
 	}
 	
 	private void includeJar(FileHandle handle) {
@@ -297,5 +273,4 @@ public abstract class ScriptedResource {
 	 * @return the new resource instance after script execution
 	 */
 	protected abstract ScriptedResource executeInclude(FileHandle includeHandle, Consumer<ScriptedResource> configurer, DelegatingScript script)
-	
 }

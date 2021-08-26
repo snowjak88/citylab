@@ -95,7 +95,7 @@ class TileSet extends ScriptedResource implements Disposable {
 		tiles << tile
 		
 		def tileFile = tile.folder.child(tile.filename)
-		addAssetDependency tileFile.path(), Texture
+		addAssetDependency Texture, tileFile
 		
 		next()
 	}

@@ -141,7 +141,7 @@ public class GameScreen extends AbstractGameScreen {
 		final AbstractCustomRenderingHook hoverHook = new AbstractCustomRenderingHook("hover") {
 			
 			@Override
-			public void render(Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
+			public void render(float delta, Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
 				
 				if (!hoverActive.get())
 					return;
@@ -187,7 +187,7 @@ public class GameScreen extends AbstractGameScreen {
 			viewport.getCamera().update();
 			renderer.setView((OrthographicCamera) viewport.getCamera());
 			
-			renderer.render();
+			renderer.render(delta);
 			
 			//
 			// Remember to re-apply the Stage's viewport.

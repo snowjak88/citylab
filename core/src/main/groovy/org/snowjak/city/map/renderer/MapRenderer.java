@@ -113,7 +113,7 @@ public class MapRenderer implements RenderingSupport {
 	public final AbstractCustomRenderingHook MAP_RENDERING_HOOK = new AbstractCustomRenderingHook("map") {
 		
 		@Override
-		public void render(Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
+		public void render(float delta, Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
 			
 			//
 			// This main rendering-hook handles rendering the actual map.
@@ -128,7 +128,7 @@ public class MapRenderer implements RenderingSupport {
 				for (int cellX = mapVisibleMinX; cellX <= mapVisibleMaxX; cellX++)
 					if (map.isValidCell(cellX, cellY))
 						for (AbstractCellRenderingHook hook : GameData.get().prioritizedCellRenderingHooks)
-							hook.renderCell(cellX, cellY, support);
+							hook.renderCell(delta, cellX, cellY, support);
 		}
 		
 	};
@@ -258,7 +258,7 @@ public class MapRenderer implements RenderingSupport {
 		mapVisibleMaxX = (int) (viewportToMap(topRight, true).x / TILE_WIDTH) + 2;
 	}
 	
-	public void render() {
+	public void render(float delta) {
 		
 		if (map == null)
 			return;
@@ -273,7 +273,7 @@ public class MapRenderer implements RenderingSupport {
 		batch.begin();
 		
 		for (AbstractCustomRenderingHook hook : GameData.get().prioritizedCustomRenderingHooks)
-			hook.render(batch, shapeDrawer, this);
+			hook.render(delta, batch, shapeDrawer, this);
 		
 		batch.end();
 	}

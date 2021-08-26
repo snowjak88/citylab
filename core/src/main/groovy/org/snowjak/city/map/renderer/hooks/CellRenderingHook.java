@@ -15,5 +15,5 @@ import org.snowjak.city.map.renderer.RenderingSupport;
 @FunctionalInterface
 public interface CellRenderingHook {
 	
-	public void renderCell(int cellX, int cellY, RenderingSupport support);
+	public void renderCell(float delta, int cellX, int cellY, RenderingSupport support);
 }

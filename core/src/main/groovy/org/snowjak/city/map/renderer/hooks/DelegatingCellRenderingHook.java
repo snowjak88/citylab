@@ -26,8 +26,8 @@ public class DelegatingCellRenderingHook extends AbstractCellRenderingHook {
 	}
 	
 	@Override
-	public void renderCell(int cellX, int cellY, RenderingSupport support) {
+	public void renderCell(float delta, int cellX, int cellY, RenderingSupport support) {
 		
-		implementation.renderCell(cellX, cellY, support);
+		implementation.renderCell(delta, cellX, cellY, support);
 	}
 }

@@ -1,3 +1,5 @@
+import java.lang.Math
+
 id = 'terrain'
 description = 'Handles fitting terrain-tiles to the map.'
 
@@ -10,7 +12,7 @@ tilesetName = preferences().getString('tileset-name', 'default')
 // Get that tileset from the tile-set service.
 // Note that we need to mark that tile-set as explicitly depended-upon.
 //
-dependsOn TileSet, tilesetName
+dependsOn tilesetName, TileSet
 
 tileset = assets.getByID tilesetName, TileSet
 
@@ -41,7 +43,7 @@ include 'systems.groovy'
 // Names must be unique for cell-rendering hooks. Hooks that are
 // registered later will overwrite those registered earlier.
 //
-cellRenderHook 'terrainRender', { cellX, cellY, support ->
+cellRenderHook 'terrainRender', { delta, cellX, cellY, support ->
 	for(def entity in data.map.getEntities(cellX, cellY, IsTerrainTile)) {
 		for(def tile in terrainMapper.get(entity).tiles)
 			support.renderTile cellX, cellY, tile
@@ -61,20 +63,35 @@ cellRenderHook 'terrainRender', { cellX, cellY, support ->
 // You indicate priorities using both "before" and "after", and you can prioritize both
 // custom- and cell-rendering hooks.
 //
-customRenderHook ('overMap', { batch, shapeDrawer, support ->
+dependsOn 'cloud.png', Texture
+cloudTexture = assets.get( 'cloud.png', Texture )
+
+cloudOffsetX = 0f
+cloudOffsetY = 0f
+
+customRenderHook ('clouds', { delta, batch, shapeDrawer, support ->
 	def viewBounds = support.viewportWorldBounds
 	
-	def offsetX = viewBounds.x / 1.5
-	def offsetY = viewBounds.y / 1.5
+	final float cloudWidth = 4
+	final float cloudHeight = cloudWidth * (cloudTexture.height / cloudTexture.width)
 	
-	def startX = viewBounds.x
-	def startY = viewBounds.y
-	def endX = startX + viewBounds.width
-	def endY = startY + viewBounds.height
+	final cloudSpacingX = cloudWidth * 13
+	final cloudSpacingY = cloudHeight * 7
 	
-	for(def x=startX; x<=endX; x += 15)
-		for(def y=startY; y<=endY; y += 5) {
-			batch.color = Color.WHITE
-			shapeDrawer.filledEllipse( (float)(x + offsetX), (float)(y + offsetY), 3f, 1f )
-		}
+	float originX = cloudOffsetX + delta
+	float originY = cloudOffsetY + delta
+	
+	cloudOffsetX = Util.wrap( cloudOffsetX + delta, 0, cloudSpacingX )
+	cloudOffsetY = Util.wrap( cloudOffsetY - delta, 0, cloudSpacingY )
+	
+	def startX = Util.wrap( originX, viewBounds.x - cloudSpacingX, viewBounds.x )
+	def startY = Util.wrap( originY, viewBounds.y - cloudSpacingY, viewBounds.y )
+	def endX = startX + viewBounds.width + cloudSpacingX
+	def endY = startY + viewBounds.height + cloudSpacingY
+	
+	batch.color = Color.WHITE
+	for(def x=startX; x<=endX; x += cloudSpacingX)
+		for(def y=startY; y<=endY; y += cloudSpacingY)
+			batch.draw cloudTexture, (float) x, (float) y, (float) cloudWidth, (float) cloudHeight
+	
 }).after('map')

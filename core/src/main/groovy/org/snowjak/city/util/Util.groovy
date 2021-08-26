@@ -55,8 +55,22 @@ class Util {
 	}
 	
 	public static int wrap(int v, int min, int max) {
-		final int range = (max+1) - min
-		while (v < min) v += range
+		final int range = max - min
+		while (v <= min) v += range
+		while (v > max) v -= range
+		v
+	}
+	
+	public static float wrap(float v, float min, float max) {
+		final float range = max - min
+		while (v <= min) v += range
+		while (v > max) v -= range
+		v
+	}
+	
+	public static double wrap(double v, double min, double max) {
+		final float range = max - min
+		while (v <= min) v += range
 		while (v > max) v -= range
 		v
 	}

@@ -14,9 +14,9 @@ import org.snowjak.city.resources.ScriptedResourceLoader;
 import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.PreferencesService;
 
+import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
-import com.badlogic.gdx.graphics.Color;
 import com.github.czyzby.autumn.annotation.Component;
 
 import groovy.util.DelegatingScript;
@@ -46,11 +46,16 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		final ImportCustomizer customizer = new ImportCustomizer();
 		customizer.addStarImports("org.snowjak.city.ecs.components");
 		customizer.addStarImports("com.badlogic.ashley.core");
+		customizer.addStarImports("com.badlogic.gdx.audio");
+		customizer.addStarImports("com.badlogic.gdx.files");
+		customizer.addStarImports("com.badlogic.gdx.graphics");
+		customizer.addStarImports("com.badlogic.gdx.math");
+		customizer.addStarImports("com.badlogic.gdx.utils");
 		customizer.addImports(
 				// jCity types
 				CityMap.class.getName(), GameData.class.getName(), Tile.class.getName(), TileSet.class.getName(),
-				// Gdx types
-				Color.class.getName());
+				// Misc. LibGDX types
+				AssetDescriptor.class.getName());
 		
 		config.addCompilationCustomizers(customizer);
 		config.setScriptBaseClass(DelegatingScript.class.getName());

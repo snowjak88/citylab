@@ -12,6 +12,7 @@ import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.codehaus.groovy.control.customizers.SecureASTCustomizer
 import org.codehaus.groovy.syntax.Types
 import org.snowjak.city.service.GameAssetService
+import org.snowjak.city.util.Util
 
 import com.badlogic.gdx.assets.AssetDescriptor
 import com.badlogic.gdx.assets.AssetLoaderParameters
@@ -56,8 +57,8 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 			loadResource(f, true)
 		})
 		
-		final anyAssetNotLoaded = !r.assetDependencies.isEmpty() && r.assetDependencies.any { name, type ->
-			!assetService.isLoaded(name, type)
+		final anyAssetNotLoaded = !r.assetDependencies.isEmpty() && r.assetDependencies.any { assetFile, type ->
+			!assetService.isLoaded(assetFile.path(), type)
 		}
 		final anyResourceNotLoaded = !r.scriptedDependencies.isEmpty() && r.scriptedDependencies.any { type, names ->
 			names.any { name ->
@@ -90,8 +91,8 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		})
 		
 		final dependencies = new Array<AssetDescriptor>()
-		r.assetDependencies.forEach({ n,t ->
-			dependencies.add(new AssetDescriptor(resolve(n),t))
+		r.assetDependencies.forEach({ f,t ->
+			dependencies.add(new AssetDescriptor(f,t))
 		})
 		dependencies
 	}
@@ -180,7 +181,7 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		r.setShell shell
 		r.binding.variables.putAll providedObjects
 		
-		r.setAssets assetService
+		r.setAssets new ScriptedResourceAssetProvider(r, assetService)
 		
 		script.setDelegate r
 		
@@ -235,11 +236,13 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		
 		final secureCustomizer = new SecureASTCustomizer()
 		secureCustomizer.disallowedTokens = [
-			Types.KEYWORD_PACKAGE,
-			Types.KEYWORD_IMPORT
+			Types.KEYWORD_PACKAGE
 		]
 		
-		config.addCompilationCustomizers secureCustomizer
+		final importCustomizer = new ImportCustomizer()
+		importCustomizer.addImport "Util", Util.name
+		
+		config.addCompilationCustomizers secureCustomizer, importCustomizer
 		config
 	}
 	

@@ -377,7 +377,7 @@ public class GameAssetService extends AssetManager {
 				LOG.debug("Drilling down past {0} ...", t.getClass().getSimpleName())
 				t = t.getCause()
 			}
-			LOG.error("Root exception is {0}: {1}", t.getClass().getSimpleName(), t.getMessage())
+			LOG.error(t, "Root exception is {0}: {1}", t.getClass().getSimpleName(), t.getMessage())
 			
 			if(assetDesc == null) {
 				loadFailures.add(LoadFailureBean.forNoResource(ex))
