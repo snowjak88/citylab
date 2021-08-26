@@ -75,7 +75,8 @@ public interface RenderingSupport {
 	
 	/**
 	 * Convert the given map-coordinates to viewport coordinates (i.e., what you'd
-	 * need to perform drawing).
+	 * need to perform drawing). <strong>Mutates</strong> the provided
+	 * {@link Vector2}, to save on garbage collection.
 	 * 
 	 * @param mapCoordinates
 	 * @return

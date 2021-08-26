@@ -86,6 +86,7 @@ public class MapRenderer implements RenderingSupport {
 	private Vector2 bottomRight = new Vector2();
 	
 	private Rectangle viewBounds = new Rectangle();
+	private Rectangle worldBounds = new Rectangle();
 	
 	private final float layerOffsetX = 0, layerOffsetY = -0;
 	private int mapVisibleMinX = 0, mapVisibleMinY = 0, mapVisibleMaxX = 0, mapVisibleMaxY = 0;
@@ -222,12 +223,6 @@ public class MapRenderer implements RenderingSupport {
 		// given the Camera's position defines the middle of the viewport,
 		// our viewing bounds are easy to derive
 		viewBounds.set(camera.position.x - w / 2, camera.position.y - h / 2, w, h);
-	}
-	
-	public void setView(Matrix4 projection, float x, float y, float width, float height) {
-		
-		batch.setProjectionMatrix(projection);
-		viewBounds.set(x, y, width, height);
 	}
 	
 	@Override
@@ -492,7 +487,8 @@ public class MapRenderer implements RenderingSupport {
 		scratchV3.set(iso.x, iso.y, 0);
 		scratchV3.mul(isoTransform);
 		
-		return new Vector2(scratchV3.x, scratchV3.y);
+		iso.set(scratchV3.x, scratchV3.y);
+		return iso;
 	}
 	
 	/**

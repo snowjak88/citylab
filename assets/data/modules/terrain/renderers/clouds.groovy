@@ -1,0 +1,106 @@
+//
+// Declare a "custom" rendering hook into the map-rendering loop.
+// This is called only once per frame.
+//
+// As with cell-rendering hooks, custom-rendering hooks have IDs, too, which also
+// are susceptible of being overwritten by other custom-rendering hooks.
+//
+// Note how we prioritize this renderer, relative to the map-renderer (which has the ID "map"),
+// which executes all those cell-render-hooks.
+//
+// You indicate priorities using both "before" and "after", and you can prioritize both
+// custom- and cell-rendering hooks.
+//
+dependsOn 'cloud.png', Texture
+cloudTexture = assets.get( 'cloud.png', Texture )
+
+import java.util.Random
+RND = new Random()
+
+clouds = null
+initClouds = { ->
+	clouds = new boolean[data.map.width / 8][data.map.height / 8]
+	for(def x=0; x<clouds.length; x++)
+		for(def y=0; y<clouds[x].length; y++)
+			clouds[x][y] = RND.nextInt(10) <= 3
+}
+
+cloudOffsetX = 0f
+cloudOffsetY = 0f
+cloudsIndexStartX = 0
+cloudsIndexStartY = 0
+
+cloudPosition = new Vector2()
+
+customRenderHook ('clouds', { delta, batch, shapeDrawer, support ->
+	
+	if(!clouds)
+		initClouds()
+	
+	def viewBounds = support.viewportWorldBounds
+	
+	final float cloudWidth = 4
+	final float cloudHeight = cloudWidth * (cloudTexture.height / cloudTexture.width)
+	
+	final cloudSpacingX = data.map.width / ( clouds.length - 2 )
+	final cloudSpacingY = data.map.height / ( clouds[0].length - 2 )
+	
+	cloudOffsetX += delta * 7 / 2
+	cloudOffsetY += delta * 3 / 2
+	
+	if(cloudOffsetX >= cloudSpacingX) {
+		cloudOffsetX -= cloudSpacingX
+		cloudsIndexStartX = Util.wrap( cloudsIndexStartX - 1, 0, clouds.length-1)
+	}
+	if(cloudOffsetY >= cloudSpacingY) {
+		cloudOffsetY -= cloudSpacingY
+		cloudsIndexStartY = Util.wrap( cloudsIndexStartY - 1, 0, clouds[0].length-1)
+	}
+	
+	float originX = cloudOffsetX
+	float originY = cloudOffsetY
+	
+	def x = originX - cloudSpacingX
+	for(def i=0; i<clouds.length; i++) {
+		
+		def y = data.map.height + cloudSpacingY - originY
+		for(def j=0; j<clouds[i].length; j++) {
+			
+			if( clouds[Util.wrap( i+cloudsIndexStartX, 0, clouds.length-1 )][Util.wrap( j+cloudsIndexStartY, 0, clouds[i].length-1 )] ) {
+				
+				batch.setColor Color.WHITE
+				
+				if(x < 0 || y < 0 || x > data.map.width || y > data.map.width) {
+					def xd = -1
+					def yd = -1
+					if(x < 0 || x > data.map.width)
+						xd = 1 - Util.clamp( (x<0) ? (-x / cloudSpacingX) : ((x-data.map.width) / cloudSpacingX), 0, 1 )
+					if(y < 0 || y > data.map.height)
+						yd = 1 - Util.clamp( (y<0) ? (-y / cloudSpacingY) : ((y-data.map.height) / cloudSpacingY), 0, 1 )
+					
+					
+					if(xd < 0)
+						xd = yd
+					if(yd < 0)
+						yd = xd
+					float alpha = ( xd + yd ) / 2
+					
+					batch.setColor new Color(1f,1f,1f,alpha)
+				}
+				
+				
+				cloudPosition.set( (float)x, (float)y )
+				support.mapToViewport cloudPosition
+				
+				batch.draw cloudTexture, cloudPosition.x, cloudPosition.y, (float) cloudWidth, (float) cloudHeight
+			}
+			
+			y -= cloudSpacingY
+		}
+		
+		x += cloudSpacingX
+		
+		batch.setColor Color.WHITE
+	}
+	
+}).after('map')

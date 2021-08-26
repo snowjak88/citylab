@@ -58,6 +58,7 @@ public class GameScreen extends AbstractGameScreen {
 	private final Viewport viewport = new FitViewport(8, 8);
 	
 	private float cameraOffsetX, cameraOffsetY;
+	private boolean cameraUpdated = true;
 	
 	private MapRenderer renderer;
 	float minWorldX, minWorldY, maxWorldX, maxWorldY;
@@ -183,9 +184,13 @@ public class GameScreen extends AbstractGameScreen {
 		if (renderer != null) {
 			viewport.apply();
 			
-			viewport.getCamera().position.set(cameraOffsetX, cameraOffsetY, 0);
-			viewport.getCamera().update();
-			renderer.setView((OrthographicCamera) viewport.getCamera());
+			if (cameraUpdated) {
+				viewport.getCamera().position.set(cameraOffsetX, cameraOffsetY, 0);
+				viewport.getCamera().update();
+				renderer.setView((OrthographicCamera) viewport.getCamera());
+				
+				cameraUpdated = false;
+			}
 			
 			renderer.render(delta);
 			
@@ -266,6 +271,7 @@ public class GameScreen extends AbstractGameScreen {
 			
 			cameraOffsetX = min(max(cameraOffsetX + (endX - startX) / 2f, minWorldX), maxWorldX);
 			cameraOffsetY = min(max(cameraOffsetY + (endY - startY) / 2f, minWorldY), maxWorldY);
+			cameraUpdated = true;
 		}
 		
 		public void scroll(float amountX, float amountY) {
@@ -283,12 +289,14 @@ public class GameScreen extends AbstractGameScreen {
 			
 			final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom / 2f, 8f), 1f);
 			((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
+			cameraUpdated = true;
 		}
 		
 		private void zoomIn() {
 			
 			final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom * 2f, 8f), 1f);
 			((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
+			cameraUpdated = true;
 		}
 	}
 }

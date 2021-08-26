@@ -24,6 +24,13 @@ class Util {
 		minValue
 	}
 	
+	public static double min(double...values) {
+		def minValue = Double.MAX_VALUE
+		for(def v : values)
+			minValue = (minValue > v) ? v : minValue;
+		minValue
+	}
+	
 	public static int max(int...values) {
 		def minValue = Integer.MIN_VALUE
 		for(def v : values)
@@ -38,6 +45,13 @@ class Util {
 		minValue
 	}
 	
+	public static double max(double...values) {
+		def minValue = -Double.MAX_VALUE
+		for(def v : values)
+			minValue = (minValue < v) ? v : minValue;
+		minValue
+	}
+	
 	public static int clamp(int value, int min, int max) {
 		if(value < min)
 			return min
@@ -47,6 +61,14 @@ class Util {
 	}
 	
 	public static float clamp(float value, float min, float max) {
+		if(value < min)
+			return min
+		if(value > max)
+			return max
+		value
+	}
+	
+	public static double clamp(double value, double min, double max) {
 		if(value < min)
 			return min
 		if(value > max)
