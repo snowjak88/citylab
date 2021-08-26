@@ -86,7 +86,7 @@ public class GameData {
 	/**
 	 * The current entity-processing {@link Engine}.
 	 */
-	public Engine entityEngine = null;
+	public Engine engine = null;
 	
 	/**
 	 * Parameters to be used when getting ready to play the game.

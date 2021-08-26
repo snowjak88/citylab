@@ -223,7 +223,7 @@ public abstract class ScriptedResource {
 			r.providedObjects.putAll providedObjects
 			r.scriptDirectory = handle.parent()
 			r.shell = shell
-			r.assets = assets
+			r.assets = new ScriptedResourceAssetProvider(r, assets.assetService)
 			
 			script.setDelegate r
 		}, script

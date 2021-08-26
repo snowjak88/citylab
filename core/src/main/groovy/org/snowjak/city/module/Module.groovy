@@ -3,6 +3,7 @@ package org.snowjak.city.module
 import java.util.function.Consumer
 
 import org.snowjak.city.GameData
+import org.snowjak.city.ecs.systems.ListeningSystem
 import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook
 import org.snowjak.city.map.renderer.hooks.CellRenderingHook
@@ -61,6 +62,13 @@ public class Module extends ScriptedResource {
 		preferencesService.get(id)
 	}
 	
+	/**
+	 * Specify a CellRenderingHook to be included in the game's render-loop.
+	 * 
+	 * @param id Identifies this cell-renderer. Subsequent Modules may overwrite this renderer by using the same ID.
+	 * @param hook
+	 * @return a {@link RelativePriority prioritizer}
+	 */
 	public RelativePriority cellRenderHook(String id, CellRenderingHook hook) {
 		if(isDependencyCheckingMode())
 			return new RelativePriority()
@@ -70,6 +78,13 @@ public class Module extends ScriptedResource {
 		newHook.relativePriority
 	}
 	
+	/**
+	 * Specify a CustomRenderHook to be included in the game's render-loop.
+	 * 
+	 * @param id Identifies this custom-renderer. Subsequent Modules may overwrite this renderer by using the same ID.
+	 * @param hook
+	 * @return a {@link RelativePriority prioritizer}
+	 */
 	public RelativePriority customRenderHook(id, CustomRenderingHook hook) {
 		if(isDependencyCheckingMode())
 			return new RelativePriority()
@@ -79,6 +94,19 @@ public class Module extends ScriptedResource {
 		newHook.relativePriority
 	}
 	
+	/**
+	 * Create a new {@link IteratingSystem}.
+	 * <p>
+	 * {@code implementation} is expected to be of the form:
+	 * <pre>
+	 * { Entity entity, float deltaTime -> ... }
+	 * </pre>
+	 * </p>
+	 * 
+	 * @param id
+	 * @param family
+	 * @param implementation
+	 */
 	public void iteratingSystem(String id, Family family, Closure implementation) {
 		
 		if(isDependencyCheckingMode())
@@ -93,6 +121,48 @@ public class Module extends ScriptedResource {
 					protected void processEntity(Entity entity, float deltaTime) {
 						
 						imp(entity, deltaTime)
+					}
+				}
+		
+		systems << ["$id" : system]
+	}
+	
+	/**
+	 * Create a new {@link ListeningSystem}.
+	 * <p>
+	 * Both {@code added} and {@code dropped} are expected to be of the form:
+	 * <pre>
+	 * { Entity entity, float deltaTime -> ... }
+	 * </pre>
+	 * </p>
+	 *
+	 * @param id
+	 * @param family
+	 * @param implementation
+	 */
+	public void listeningSystem(String id, Family family, Closure added, Closure dropped) {
+		
+		if(isDependencyCheckingMode())
+			return
+		
+		def add = added.rehydrate(this, added, added)
+		add.resolveStrategy = Closure.DELEGATE_FIRST
+		
+		def drop = dropped.rehydrate(this, dropped, dropped)
+		drop.resolveStrategy = Closure.DELEGATE_FIRST
+		
+		def system = new ListeningSystem(family) {
+					
+					@Override
+					public void added(Entity entity, float deltaTime) {
+						
+						add(entity, deltaTime)
+					}
+					
+					@Override
+					public void dropped(Entity entity, float deltaTime) {
+						
+						drop(entity, deltaTime)
 					}
 				}
 		

@@ -113,7 +113,7 @@ public class GameModulesInitializationTask implements LoadingTask {
 					LOG.info("Adding entity-processing systems ...");
 					for (Map.Entry<String, EntitySystem> systemEntry : module.getSystems().entrySet()) {
 						LOG.debug("Adding entity-processing system \"{0}\" ...", systemEntry.getKey());
-						data.entityEngine.addSystem(systemEntry.getValue());
+						data.engine.addSystem(systemEntry.getValue());
 					}
 				}
 				

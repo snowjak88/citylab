@@ -4,8 +4,8 @@
 package org.snowjak.city.screens.loadingtasks;
 
 import org.snowjak.city.GameData;
-import org.snowjak.city.ecs.components.UpdatedMapCell;
-import org.snowjak.city.ecs.systems.MapCellUpdatingSystem;
+import org.snowjak.city.ecs.components.IsMapCell;
+import org.snowjak.city.ecs.systems.IsMapCellManagementSystem;
 import org.snowjak.city.screens.LoadingScreen.LoadingTask;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
@@ -13,6 +13,7 @@ import org.snowjak.city.service.LoggerService;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntitySystem;
+import com.badlogic.ashley.core.PooledEngine;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Inject;
 import com.github.czyzby.kiwi.log.Logger;
@@ -81,14 +82,14 @@ public class GameEntitySystemInitializationTask implements LoadingTask {
 		if (data.map == null)
 			return;
 		
-		if (data.entityEngine == null)
-			data.entityEngine = new Engine();
+		if (data.engine == null)
+			data.engine = new PooledEngine(64, 1024, 4, 64);
 		
 		taskFuture = GameData.get().executor.submit(() -> {
 			
 			LOG.info("Adding default entity-processing systems ...");
 			
-			data.entityEngine.addSystem(new MapCellUpdatingSystem());
+			data.engine.addSystem(new IsMapCellManagementSystem());
 			
 			//
 			// Add Entities for every map-cell ...
@@ -98,11 +99,12 @@ public class GameEntitySystemInitializationTask implements LoadingTask {
 			
 			for (int x = 0; x < data.map.getWidth(); x++)
 				for (int y = 0; y < data.map.getHeight(); y++) {
-					final Entity entity = data.entityEngine.createEntity();
-					final UpdatedMapCell mapCell = (UpdatedMapCell) entity.addAndReturn(new UpdatedMapCell());
+					final Entity entity = data.engine.createEntity();
+					final IsMapCell mapCell = (IsMapCell) entity
+							.addAndReturn(data.engine.createComponent(IsMapCell.class));
 					mapCell.setCellX(x);
 					mapCell.setCellY(y);
-					data.entityEngine.addEntity(entity);
+					data.engine.addEntity(entity);
 					
 					progress.addAndGet(progressStep);
 				}

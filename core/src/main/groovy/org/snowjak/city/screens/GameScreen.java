@@ -170,7 +170,7 @@ public class GameScreen extends AbstractGameScreen {
 	@Override
 	public void beforeStageAct(float delta) {
 		
-		final Engine entityEngine = GameData.get().entityEngine;
+		final Engine entityEngine = GameData.get().engine;
 		if (entityEngine != null)
 			entityEngine.update(delta);
 		

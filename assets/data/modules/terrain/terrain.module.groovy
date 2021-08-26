@@ -27,7 +27,6 @@ class IsTerrainTile implements Component {
 //
 // ComponentMappers make us faster at querying and retrieving Components from entities
 terrainMapper = ComponentMapper.getFor(IsTerrainTile)
-atCellMapper = ComponentMapper.getFor(AtMapCell)
 
 //
 // This module declares its entity-processing systems in another file.
@@ -50,4 +49,4 @@ cellRenderHook 'terrainRender', { delta, cellX, cellY, support ->
 	}
 }
 
-include 'renderers/clouds.groovy'
+include 'renderers/cloudRenderer.groovy'
