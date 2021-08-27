@@ -5,7 +5,8 @@ package org.snowjak.city.screens.loadingtasks;
 
 import org.snowjak.city.GameData;
 import org.snowjak.city.ecs.components.IsMapCell;
-import org.snowjak.city.ecs.systems.IsMapCellManagementSystem;
+import org.snowjak.city.ecs.systems.impl.IsMapCellManagementSystem;
+import org.snowjak.city.ecs.systems.impl.RemoveMapCellRearrangedSystem;
 import org.snowjak.city.screens.LoadingScreen.LoadingTask;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
@@ -90,6 +91,7 @@ public class GameEntitySystemInitializationTask implements LoadingTask {
 			LOG.info("Adding default entity-processing systems ...");
 			
 			data.engine.addSystem(new IsMapCellManagementSystem());
+			data.engine.addSystem(new RemoveMapCellRearrangedSystem());
 			
 			//
 			// Add Entities for every map-cell ...
@@ -99,12 +101,13 @@ public class GameEntitySystemInitializationTask implements LoadingTask {
 			
 			for (int x = 0; x < data.map.getWidth(); x++)
 				for (int y = 0; y < data.map.getHeight(); y++) {
-					final Entity entity = data.engine.createEntity();
-					final IsMapCell mapCell = (IsMapCell) entity
-							.addAndReturn(data.engine.createComponent(IsMapCell.class));
+					final IsMapCell mapCell = data.engine.createComponent(IsMapCell.class);
 					mapCell.setCellX(x);
 					mapCell.setCellY(y);
+					
+					final Entity entity = data.engine.createEntity();
 					data.engine.addEntity(entity);
+					entity.add(mapCell);
 					
 					progress.addAndGet(progressStep);
 				}

@@ -1,10 +1,11 @@
 /**
  * 
  */
-package org.snowjak.city.ecs.systems;
+package org.snowjak.city.ecs.systems.impl;
 
 import org.snowjak.city.GameData;
 import org.snowjak.city.ecs.components.IsMapCell;
+import org.snowjak.city.ecs.systems.ListeningSystem;
 import org.snowjak.city.map.CityMap;
 
 import com.badlogic.ashley.core.ComponentMapper;
@@ -14,6 +15,17 @@ import com.badlogic.ashley.core.Family;
 /**
  * When an Entity receives an {@link IsMapCell} component, this system handles
  * sticking it into the Map at the correct space.
+ * <p>
+ * <strong>Note</strong> that this system is fairly dumb -- the moment you add
+ * {@link IsMapCell} to an entity, this system will read that component's
+ * assigned {@link IsMapCell#getCellX() cellX} and {@link IsMapCell#getCellY()
+ * cellY} coordinates, and associate that Entity with that location in the
+ * {@link CityMap}.
+ * </p>
+ * <p>
+ * Make sure you assign cellX and cellY <strong>before</strong> you add the
+ * component to the Entity.
+ * </p>
  * 
  * @author snowjak88
  *
@@ -43,7 +55,7 @@ public class IsMapCellManagementSystem extends ListeningSystem {
 		
 		final IsMapCell cell = isCellMapper.get(entity);
 		
-		map.addEntity((int) cell.getCellX(), (int) cell.getCellY(), entity);
+		map.setEntity((int) cell.getCellX(), (int) cell.getCellY(), entity);
 	}
 	
 	@Override
@@ -53,6 +65,6 @@ public class IsMapCellManagementSystem extends ListeningSystem {
 		
 		final IsMapCell cell = isCellMapper.get(entity);
 		
-		map.removeEntity((int) cell.getCellX(), (int) cell.getCellY(), entity);
+		map.setEntity((int) cell.getCellX(), (int) cell.getCellY(), null);
 	}
 }

@@ -3,8 +3,6 @@
  */
 package org.snowjak.city.map
 
-import java.util.stream.Collectors
-
 import org.snowjak.city.map.tiles.TileCorner
 
 import com.badlogic.ashley.core.Component
@@ -27,7 +25,7 @@ public class CityMap {
 	
 	private List<String>[][] vertices
 	private int[][] vertexAltitudes
-	private Set<Entity>[][] entities
+	private Entity[][] entities
 	
 	private final Map<Class<? extends Component>,ComponentMapper> componentMappers = [:]
 	
@@ -53,7 +51,7 @@ public class CityMap {
 		
 		vertices = new List<String>[width+1][height+1]
 		vertexAltitudes = new int[width+1][height+1]
-		entities = new List<Entity>[width][height]
+		entities = new Entity[width][height]
 	}
 	
 	/**
@@ -229,7 +227,7 @@ public class CityMap {
 	}
 	
 	/**
-	 * Get the set of assigned {@link Entity Entities} at this location, or {@link Collections#emptyList()} if no Entities are assigned.
+	 * Get the associated {@link Entity} at this location, or null if no Entity is associated.
 	 * @param cellX
 	 * @param cellY
 	 * @return
@@ -237,24 +235,16 @@ public class CityMap {
 	 *             if ({@code cellX}) or
 	 *             ({@code cellY}) fall outside the map
 	 */
-	public Set<Entity> getEntities(int cellX, int cellY, Class<? extends Component> withComponentClass = null) {
+	public Entity getEntity(int cellX, int cellY) {
 		
 		if(!isValidCell(cellX, cellY))
-			throw new ArrayIndexOutOfBoundsException(String.format("Given cell index [%d,%d] is out of bounds.", cellX, cellY));
+			throw new ArrayIndexOutOfBoundsException(String.format("Given cell index [%d,%d] is out of bounds.", cellX, cellY))
 		
-		if(entities[cellX][cellY] == null)
-			return Collections.emptyList();
-		
-		if(withComponentClass == null)
-			return Collections.unmodifiableSet(entities[cellX][cellY])
-		else {
-			def mapper = componentMappers.computeIfAbsent(withComponentClass, {c -> ComponentMapper.getFor(c)})
-			return entities[cellX][cellY].stream().filter({e -> mapper.has(e)}).collect(Collectors.toSet())
-		}
+		return entities[cellX][cellY]
 	}
 	
 	/**
-	 * Add the given Entity to the given cell.
+	 * Associate the given Entity to the given cell. Overwrites any previous association.
 	 * 
 	 * <p>
 	 * <strong>Note</strong> that this doesn't check to see if this Entity
@@ -268,39 +258,10 @@ public class CityMap {
 	 *             if ({@code cellX}) or
 	 *             ({@code cellY}) fall outside the map
 	 */
-	public void addEntity( int cellX, int cellY, Entity entity) {
-		if(!isValidCell(cellX, cellY))
-			throw new ArrayIndexOutOfBoundsException(String.format("Given cell index [%d,%d] is out of bounds.", cellX, cellY));
+	public void setEntity( int cellX, int cellY, Entity entity) {
 		
-		if(entities[cellX][cellY] == null)
-			entities[cellX][cellY] = new LinkedHashSet<>();
-		
-		entities[cellX][cellY] << entity
+		entities[cellX][cellY] = entity
 	}
-	
-	/**
-	 * Remove the given Entity from the given cell, if it exists
-	 *
-	 * <p>
-	 * <strong>Note</strong> that this doesn't check to see if this Entity
-	 * is already associated with any other cell -- you have to take care of that bookkeeping yourself.
-	 * </p>
-	 *
-	 * @param cellX
-	 * @param cellY
-	 * @param entity
-	 * @throws ArrayIndexOutOfBoundsException
-	 *             if ({@code cellX}) or
-	 *             ({@code cellY}) fall outside the map
-	 */
-	public void removeEntity( int cellX, int cellY, Entity entity) {
-		if(!isValidCell(cellX, cellY))
-			throw new ArrayIndexOutOfBoundsException(String.format("Given cell index [%d,%d] is out of bounds.", cellX, cellY));
-		
-		if(entities[cellX][cellY] != null)
-			entities[cellX][cellY].remove entity
-	}
-	
 	
 	/**
 	 * Returns the width of this map, expressed in cells. This map's width in vertices will be this value, plus 1.

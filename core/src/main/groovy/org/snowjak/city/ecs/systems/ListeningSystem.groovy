@@ -65,7 +65,7 @@ abstract class ListeningSystem extends EntitySystem implements EntityListener {
 	 * {@link #dropped(Entity) dropped()}.
 	 * @param entity
 	 */
-	public abstract void added(Entity entity, float deltaTime)
+	protected abstract void added(Entity entity, float deltaTime)
 	
 	/**
 	 * Called when an {@link Entity} falls out of this system's configured {@link Family}.
@@ -73,7 +73,7 @@ abstract class ListeningSystem extends EntitySystem implements EntityListener {
 	 * {@link #added(Entity) added()}.
 	 * @param entity
 	 */
-	public abstract void dropped(Entity entity, float deltaTime)
+	protected abstract void dropped(Entity entity, float deltaTime)
 	
 	@Override
 	public void entityAdded(Entity entity) {

@@ -43,10 +43,9 @@ include 'systems.groovy'
 // registered later will overwrite those registered earlier.
 //
 cellRenderHook 'terrainRender', { delta, cellX, cellY, support ->
-	for(def entity in data.map.getEntities(cellX, cellY, IsTerrainTile)) {
+	def entity = data.map.getEntity(cellX, cellY)
 		for(def tile in terrainMapper.get(entity).tiles)
 			support.renderTile cellX, cellY, tile
-	}
 }
 
 include 'renderers/cloudRenderer.groovy'
