@@ -76,6 +76,8 @@ public class GameScreen extends AbstractGameScreen {
 	private MapRenderer renderer;
 	float minWorldX, minWorldY, maxWorldX, maxWorldY;
 	
+	private GameScreenInputHandler inputHandler;
+	
 	@Initiate(priority = InitPriority.LOWEST_PRIORITY)
 	public void init() {
 		
@@ -111,10 +113,10 @@ public class GameScreen extends AbstractGameScreen {
 		
 		final GameState state = getGameService().getState();
 		
+		state.setCamera(getCameraControl());
+		
 		final CityMap map = state.getMap();
 		final MapRenderer renderer = state.getRenderer();
-		
-		renderer.setMap(map);
 		
 		final Vector2 scratch = new Vector2();
 		scratch.set(0, 0);
@@ -134,7 +136,7 @@ public class GameScreen extends AbstractGameScreen {
 		maxWorldX = max(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
 		maxWorldY = max(worldBound1.y, worldBound2.y, worldBound3.y, worldBound4.y);
 		
-		final GameScreenInputHandler inputHandler = new GameScreenInputHandler();
+		inputHandler = new GameScreenInputHandler();
 		inputProcessor.register(ScreenDragStartEvent.class,
 				e -> inputHandler.dragStart(e.getX(), e.getY(), e.getButton()));
 		inputProcessor.register(ScreenDragUpdateEvent.class, e -> inputHandler.dragUpdate(e.getX(), e.getY()));
@@ -180,9 +182,22 @@ public class GameScreen extends AbstractGameScreen {
 	}
 	
 	@Override
+	public void hide() {
+		
+		super.hide();
+		
+		getGameService().getState().setCamera(null);
+	}
+	
+	@Override
 	protected InputProcessor getInputProcessor() {
 		
 		return inputProcessor;
+	}
+	
+	public GameCameraControl getCameraControl() {
+		
+		return inputHandler;
 	}
 	
 	@Override
@@ -233,12 +248,36 @@ public class GameScreen extends AbstractGameScreen {
 	}
 	
 	/**
+	 * Provides programmatic control over the game's camera.
+	 * 
+	 * @author snowjak88
+	 *
+	 */
+	public interface GameCameraControl {
+		
+		/**
+		 * Move the camera so it is centered above the given map-cell.
+		 * 
+		 * @param cellX
+		 * @param cellY
+		 */
+		public void setCamera(int cellX, int cellY);
+		
+		/**
+		 * Get the map-cell over which the camera is centered.
+		 * 
+		 * @return
+		 */
+		public Vector2 getCamera();
+	}
+	
+	/**
 	 * Ad-hoc interpreter for input-events.
 	 * 
 	 * @author snowjak88
 	 *
 	 */
-	class GameScreenInputHandler {
+	public class GameScreenInputHandler implements GameCameraControl {
 		
 		Vector2 scratch = new Vector2();
 		boolean ongoing = false;
@@ -285,10 +324,13 @@ public class GameScreen extends AbstractGameScreen {
 			
 			scratch.set(screenX, screenY);
 			viewport.unproject(scratch);
-			final float endX = scratch.x, endY = scratch.y;
+			scrollMapToViewport(scratch.x, scratch.y);
+		}
+		
+		private void scrollMapToViewport(float viewportX, float viewportY) {
 			
-			cameraOffsetX = min(max(cameraOffsetX + (endX - startX) / 2f, minWorldX), maxWorldX);
-			cameraOffsetY = min(max(cameraOffsetY + (endY - startY) / 2f, minWorldY), maxWorldY);
+			cameraOffsetX = min(max(cameraOffsetX + (viewportX - startX) / 2f, minWorldX), maxWorldX);
+			cameraOffsetY = min(max(cameraOffsetY + (viewportY - startY) / 2f, minWorldY), maxWorldY);
 			cameraUpdated = true;
 		}
 		
@@ -315,6 +357,22 @@ public class GameScreen extends AbstractGameScreen {
 			final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom * 2f, 8f), 1f);
 			((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
 			cameraUpdated = true;
+		}
+		
+		@Override
+		public void setCamera(int cellX, int cellY) {
+			
+			scratch.set(cellX, cellY);
+			renderer.mapToViewport(scratch);
+			scrollMapToViewport(scratch.x, scratch.y);
+		}
+		
+		@Override
+		public Vector2 getCamera() {
+			
+			scratch.set(cameraOffsetX, cameraOffsetY);
+			renderer.viewportToMap(scratch);
+			return scratch.cpy();
 		}
 	}
 }

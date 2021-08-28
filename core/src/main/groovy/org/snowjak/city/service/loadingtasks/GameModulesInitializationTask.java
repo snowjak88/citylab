@@ -3,12 +3,9 @@
  */
 package org.snowjak.city.service.loadingtasks;
 
-import java.util.Collection;
-
 import org.snowjak.city.CityGame;
 import org.snowjak.city.module.Module;
 import org.snowjak.city.screens.LoadingScreen.LoadingTask;
-import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
@@ -36,16 +33,13 @@ public class GameModulesInitializationTask implements LoadingTask {
 	
 	private final GameService gameService;
 	private final I18NService i18nService;
-	private final GameAssetService assetService;
 	private final AtomicDouble progress = new AtomicDouble();
 	private final RelativePriority<Class<?>> relativePriority;
 	
-	public GameModulesInitializationTask(GameService gameService, I18NService i18nService,
-			GameAssetService assetService) {
+	public GameModulesInitializationTask(GameService gameService, I18NService i18nService) {
 		
 		this.gameService = gameService;
 		this.i18nService = i18nService;
-		this.assetService = assetService;
 		this.relativePriority = new RelativePriority<>();
 		relativePriority.after(GameEntitySystemInitializationTask.class);
 	}
@@ -91,18 +85,6 @@ public class GameModulesInitializationTask implements LoadingTask {
 		
 		LOG.info("Starting module-initialization task ...");
 		
-		taskFuture = CityGame.EXECUTOR.submit(() -> {
-			progress.set(0);
-			
-			final Collection<Module> allModules = assetService.getAllByType(Module.class);
-			final double progressStep = 1d / (double) allModules.size();
-			for (Module module : allModules) {
-				
-				gameService.initializeModule(module);
-				
-				LOG.info("Done initializing module \"{0}\".", module.getId());
-				progress.addAndGet(progressStep);
-			}
-		});
+		taskFuture = CityGame.EXECUTOR.submit(() -> gameService.initializeAllModules(p -> progress.set(p)));
 	}
 }

@@ -3,7 +3,6 @@
  */
 package org.snowjak.city.service
 
-import java.util.function.BiConsumer
 import java.util.function.DoubleConsumer
 
 import org.snowjak.city.ecs.components.IsMapCell
@@ -13,17 +12,20 @@ import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.generator.MapGenerator
 import org.snowjak.city.map.renderer.MapRenderer
 import org.snowjak.city.module.Module
+import org.snowjak.city.screens.GameScreen.GameCameraControl
 import org.snowjak.city.screens.LoadingScreen.CompositeLoadingTask
 import org.snowjak.city.screens.LoadingScreen.LoadingTask
 import org.snowjak.city.service.loadingtasks.GameEntitySystemInitializationTask
 import org.snowjak.city.service.loadingtasks.GameMapEntityCreationTask
 import org.snowjak.city.service.loadingtasks.GameMapGenerationTask
+import org.snowjak.city.service.loadingtasks.GameMapRendererSetupTask
 import org.snowjak.city.service.loadingtasks.GameModulesInitializationTask
 import org.snowjak.city.util.RelativePriorityList.PrioritizationFailedException
 
 import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.Family
 import com.badlogic.ashley.core.PooledEngine
+import com.badlogic.gdx.Gdx
 import com.github.czyzby.autumn.annotation.Component
 import com.github.czyzby.autumn.annotation.Inject
 import com.github.czyzby.kiwi.log.Logger
@@ -46,18 +48,24 @@ class GameService {
 	private I18NService i18nService
 	
 	private final GameState state = new GameState()
-	private BiConsumer<CityMap,CityMap> cityMapInitializationListener = null
 	
 	public GameState getState() {
 		return state
 	}
 	
+	/**
+	 * Construct a {@link LoadingTask} that will reset the {@link GameState} to a new game
+	 * (described by the given {@link NewGameParameters}).
+	 * @param param
+	 * @return
+	 */
 	public LoadingTask getNewGameLoadingTask(NewGameParameters param) {
 		return new CompositeLoadingTask(
 				new GameMapGenerationTask(state, param, i18nService),
 				new GameEntitySystemInitializationTask(this, i18nService),
 				new GameMapEntityCreationTask(this, i18nService),
-				new GameModulesInitializationTask(this, i18nService, assetService))
+				new GameModulesInitializationTask(this, i18nService),
+				new GameMapRendererSetupTask(this, i18nService))
 	}
 	
 	/**
@@ -67,24 +75,11 @@ class GameService {
 		
 		progressUpdater?.accept 0
 		
-		if(cityMapInitializationListener) {
-			state.cityMapListeners.remove cityMapInitializationListener
-			cityMapInitializationListener = null
-		}
-		
 		state.engine.removeAllEntities()
 		state.engine.systems.each { state.engine.removeSystem it }
 		
 		state.engine.addSystem new IsMapCellManagementSystem(state)
 		state.engine.addSystem new RemoveMapCellRearrangedSystem()
-		
-		progressUpdater?.accept 0.5
-		
-		cityMapInitializationListener = { oldMap, newMap ->
-			removeCityMapCellEntities oldMap
-			addCityMapCellEntities newMap
-		}
-		state.cityMapListeners << cityMapInitializationListener
 		
 		progressUpdater?.accept 1.0
 	}
@@ -142,16 +137,66 @@ class GameService {
 	}
 	
 	/**
+	 * Invokes {@link #initializeModule(Module) initializeModule()} for all loaded {@link Modules}s.
+	 */
+	public void initializeAllModules(DoubleConsumer progressReporter = { p -> }) {
+		LOG.info "Initializing all modules ..."
+		
+		final modules = assetService.getAllByType(Module)
+		final progressStep = 1d / (double) modules.size()
+		def progress = 0d
+		
+		progressReporter?.accept 0
+		
+		for(Module m : modules) {
+			initializeModule m
+			
+			progress += progressStep
+			progressReporter?.accept progress
+		}
+		
+		progressReporter?.accept 1
+		
+		LOG.info "Finished fnitializing all modules."
+	}
+	
+	/**
+	 * Invokes {@link #uninitializeModule(Module) unitializeModule()} for all loaded {@link Module}s.
+	 */
+	public void uninitializeAllModules(DoubleConsumer progressReporter = { p -> }) {
+		LOG.info "Uninitializing all modules ..."
+		
+		final modules = assetService.getAllByType(Module)
+		final progressStep = 1d / (double) modules.size()
+		def progress = 0d
+		
+		progressReporter?.accept 0
+		
+		for(Module m : assetService.getAllByType(Module)) {
+			uninitializeModule m
+			
+			progress += progressStep
+			progressReporter?.accept progress
+		}
+		
+		progressReporter?.accept 1
+		
+		LOG.info "Finished uninitializing all modules."
+	}
+	
+	/**
 	 * Ensure the given {@link Module} is properly initialized into the current GameState.
 	 * @param module
 	 */
-	public void initializeModule(Module module) {
+	public void initializeModule(Module module, DoubleConsumer progressReporter = { p -> }) {
 		
 		LOG.info "Initializing module \"{0}\"", module.id
 		
 		//
 		// Register rendering hooks with the main GameData instance
 		//
+		
+		progressReporter?.accept 0
 		
 		if (!module.cellRenderingHooks.isEmpty()) {
 			LOG.info "Adding cell rendering hooks ..."
@@ -164,6 +209,8 @@ class GameService {
 				}
 		}
 		
+		progressReporter?.accept 0.334
+		
 		if (!module.customRenderingHooks.isEmpty()) {
 			LOG.info "Adding custom rendering hooks ..."
 			for (def hook : module.customRenderingHooks)
@@ -175,6 +222,8 @@ class GameService {
 				}
 		}
 		
+		progressReporter?.accept 0.667
+		
 		//
 		// Add this module's systems to the entity engine
 		if (!module.systems.isEmpty()) {
@@ -184,6 +233,9 @@ class GameService {
 				state.engine.addSystem systemEntry.value
 			}
 		}
+		
+		progressReporter?.accept 1
+		
 		LOG.info "Finished initialized module \"{0}\".", module.id
 	}
 	
@@ -191,9 +243,11 @@ class GameService {
 	 * Ensure the given {@link Module} is completely removed from the current GameState.
 	 * @param module
 	 */
-	public void uninitializeModule(Module module) {
+	public void uninitializeModule(Module module, DoubleConsumer progressReporter = { p -> }) {
 		
 		LOG.info "Uninitializing module \"{0}\" ...", module.id
+		
+		progressReporter?.accept 0
 		
 		//
 		// Remove this module's rendering-hooks
@@ -203,11 +257,15 @@ class GameService {
 				state.renderer.removeCellRenderingHook hook
 		}
 		
+		progressReporter?.accept 0.334
+		
 		if(!module.customRenderingHooks.isEmpty()) {
 			LOG.info "Removing custom-rendering hooks ..."
 			for(def hook : module.customRenderingHooks)
 				state.renderer.removeCustomRenderingHook hook
 		}
+		
+		progressReporter?.accept 0.667
 		
 		//
 		// Remove this module's entity-processing systems
@@ -217,17 +275,26 @@ class GameService {
 				state.engine.removeSystem(systemEntry.value)
 		}
 		
+		progressReporter?.accept 1
+		
 		LOG.info "Finished uninitializing module \"{0}\".", module.id
 	}
 	
+	/**
+	 * (Re-)initialize the configured renderer.
+	 */
+	public void intializeRenderer() {
+		state.renderer.map = state.map
+	}
+	
+	/**
+	 * Exit now. Do not save. Do not pass Go. Do not collect $200.
+	 */
+	public void exitNow() {
+		Gdx.app.exit()
+	}
+	
 	public static class GameState {
-		
-		/**
-		 * If you want to be notified when {@link #map} is assigned, add a {@link BiConsumer} here.
-		 * Your BiConsumer will be called with the previous and new values of {@link #map} whenever that field
-		 * is updated.
-		 */
-		Set<BiConsumer<CityMap, CityMap>> cityMapListeners = Collections.synchronizedSet(new LinkedHashSet<>())
 		
 		/**
 		 * Seed to be used for random-number generation.
@@ -240,6 +307,11 @@ class GameService {
 		CityMap map
 		
 		/**
+		 * Active camera-controller (may be {@code null})
+		 */
+		GameCameraControl camera
+		
+		/**
 		 * Entity-processing {@link Engine}
 		 */
 		final Engine engine = new PooledEngine(64, 512, 8, 64)
@@ -248,15 +320,6 @@ class GameService {
 		 * The main world renderer
 		 */
 		final MapRenderer renderer = new MapRenderer()
-		
-		//
-		// Intercept property-setters so as to hook in our listeners.
-		void setProperty(String name, Object value) {
-			def previousValue = this.@"$name"
-			this.@"$name" = value
-			if(name == 'map')
-				cityMapListeners.each { it.accept previousValue, value }
-		}
 	}
 	
 	public static class NewGameParameters {

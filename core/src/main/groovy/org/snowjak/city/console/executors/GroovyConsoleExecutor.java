@@ -4,9 +4,17 @@
 package org.snowjak.city.console.executors;
 
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.console.ConsolePrintStream;
 import org.snowjak.city.console.model.ConsoleModel;
+import org.snowjak.city.map.CityMap;
+import org.snowjak.city.map.tiles.Tile;
+import org.snowjak.city.map.tiles.TileSet;
+import org.snowjak.city.module.Module;
+import org.snowjak.city.util.Util;
+
+import com.badlogic.gdx.assets.AssetDescriptor;
 
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
@@ -22,8 +30,7 @@ public class GroovyConsoleExecutor extends AbstractConsoleExecutor {
 	private final ConsoleModel model;
 	private final GroovyShell shell;
 	
-	public GroovyConsoleExecutor(Console console, ConsoleModel model,
-			ConsolePrintStream printStream) {
+	public GroovyConsoleExecutor(Console console, ConsoleModel model, ConsolePrintStream printStream) {
 		
 		super(console);
 		
@@ -83,6 +90,24 @@ public class GroovyConsoleExecutor extends AbstractConsoleExecutor {
 	
 	protected CompilerConfiguration getCompilerConfig() {
 		
-		return new CompilerConfiguration();
+		final CompilerConfiguration config = new CompilerConfiguration();
+		
+		final ImportCustomizer imports = new ImportCustomizer();
+		imports.addStarImports("org.snowjak.city.ecs.components");
+		imports.addStarImports("com.badlogic.ashley.core");
+		imports.addStarImports("com.badlogic.gdx.audio");
+		imports.addStarImports("com.badlogic.gdx.files");
+		imports.addStarImports("com.badlogic.gdx.graphics");
+		imports.addStarImports("com.badlogic.gdx.math");
+		imports.addStarImports("com.badlogic.gdx.utils");
+		imports.addImports(
+				// jCity types
+				Module.class.getName(), CityMap.class.getName(), Tile.class.getName(), TileSet.class.getName(),
+				Util.class.getName(),
+				// Misc. LibGDX types
+				AssetDescriptor.class.getName());
+		
+		config.addCompilationCustomizers(imports);
+		return config;
 	}
 }

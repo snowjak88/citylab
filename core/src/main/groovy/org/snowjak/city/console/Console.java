@@ -15,6 +15,7 @@ import org.snowjak.city.console.executors.GroovyConsoleExecutor;
 import org.snowjak.city.console.model.ConsoleModel;
 import org.snowjak.city.console.ui.ConsoleDisplay;
 import org.snowjak.city.service.GameAssetService;
+import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.Input;
@@ -69,11 +70,12 @@ public class Console {
 	
 	private final LinkedList<Runnable> onReadyRunnables = new LinkedList<>();
 	
-	public Console(GameAssetService assetService, SkinService skinService, Viewport viewport) {
+	public Console(GameService gameService, GameAssetService assetService, SkinService skinService, Viewport viewport) {
 		
 		this.display = new ConsoleDisplay(this, skinService, viewport);
 		this.completer = new StubWordCompleter();
-		this.executor = new GroovyConsoleExecutor(this, new ConsoleModel(assetService), new ConsolePrintStream(this));
+		this.executor = new GroovyConsoleExecutor(this, new ConsoleModel(assetService, gameService),
+				new ConsolePrintStream(this));
 	}
 	
 	public void addOnReadyAction(Runnable action) {

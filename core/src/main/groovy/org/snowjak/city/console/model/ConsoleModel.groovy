@@ -4,6 +4,7 @@
 package org.snowjak.city.console.model
 
 import org.snowjak.city.service.GameAssetService
+import org.snowjak.city.service.GameService
 
 /**
  * Presents an interface to the application's data-structures that console-users can interact with.
@@ -14,12 +15,17 @@ class ConsoleModel extends Binding {
 	
 	private final Set<String> protectedVariableNames = []
 	
-	public ConsoleModel(final GameAssetService assetService) {
+	public ConsoleModel(final GameAssetService assetService, final GameService gameService) {
 		
 		super()
 		
-		variables['assets'] = assetService
-		protectedVariableNames << 'assets'
+		addProtectedVariable 'assets', assetService
+		addProtectedVariable 'game', gameService
+	}
+	
+	private void addProtectedVariable(String name, Object value) {
+		variables[name] = value
+		protectedVariableNames << name
 	}
 	
 	@Override

@@ -3,6 +3,8 @@
  */
 package org.snowjak.city.screens;
 
+import java.util.LinkedList;
+
 import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.service.GameService;
@@ -28,6 +30,8 @@ import com.github.czyzby.kiwi.util.gdx.GdxUtilities;
 public abstract class AbstractGameScreen extends ScreenAdapter {
 	
 	public static final float SCREEN_FADE_TIME = 0.4f;
+	
+	private final LinkedList<Runnable> postShowActions = new LinkedList<>();
 	
 	private final GameService gameService;
 	private final Console console;
@@ -57,6 +61,17 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		
 		stage.getRoot().addAction(
 				Actions.sequence(Actions.fadeOut(SCREEN_FADE_TIME), Actions.run(() -> this.game.setScreen(screen))));
+	}
+	
+	/**
+	 * Add the following "post-show" action. When this screen is shown, this action
+	 * will be executed. After execution, this action is discarded.
+	 * 
+	 * @param action
+	 */
+	public void addPostShowAction(Runnable action) {
+		
+		postShowActions.add(action);
 	}
 	
 	/**
@@ -92,6 +107,9 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 			
 			root.addAction(Actions.fadeIn(SCREEN_FADE_TIME));
 		}
+		
+		while (!postShowActions.isEmpty())
+			postShowActions.pop().run();
 	}
 	
 	protected GameService getGameService() {

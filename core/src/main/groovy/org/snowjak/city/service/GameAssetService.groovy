@@ -167,7 +167,7 @@ public class GameAssetService extends AssetManager {
 	public <T extends ScriptedResource> Collection<T> getAllByType(Class<T> type) {
 		
 		final List<T> result = new LinkedList<>()
-		for (FileHandle resourceFile : scriptedResourceIDs.get(type).values())
+		for (FileHandle resourceFile : scriptedResourceIDs.computeIfAbsent(type, { _ -> new LinkedHashMap<>() }).values())
 			if (isLoaded(resourceFile.path(), type))
 				result.add get(resourceFile.path(), type)
 		
