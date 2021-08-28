@@ -9,7 +9,6 @@ import static org.snowjak.city.util.Util.min;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.snowjak.city.GameData;
 import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.input.GameInputProcessor;
@@ -18,10 +17,15 @@ import org.snowjak.city.input.ScreenDragEndEvent;
 import org.snowjak.city.input.ScreenDragStartEvent;
 import org.snowjak.city.input.ScreenDragUpdateEvent;
 import org.snowjak.city.input.ScrollEvent;
+import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.renderer.MapRenderer;
 import org.snowjak.city.map.renderer.RenderingSupport;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
+import org.snowjak.city.service.GameService;
+import org.snowjak.city.service.GameService.GameState;
+import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.SkinService;
+import org.snowjak.city.util.RelativePriorityList.PrioritizationFailedException;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Input;
@@ -36,6 +40,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
+import com.github.czyzby.kiwi.log.Logger;
 import com.github.czyzby.kiwi.util.gdx.GdxUtilities;
 
 import space.earlygrey.shapedrawer.ShapeDrawer;
@@ -49,9 +54,17 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 @Component
 public class GameScreen extends AbstractGameScreen {
 	
-	public GameScreen(Console console, SkinService skinService, Stage stage) {
+	private static final Logger LOG = LoggerService.forClass(GameScreen.class);
+	
+	private final MainMenuScreen mainMenuScreen;
+	
+	public GameScreen(GameService gameService, Console console, SkinService skinService, Stage stage,
+			MainMenuScreen mainMenuScreen) {
 		
-		super(console, skinService, stage);
+		super(gameService, console, skinService, stage);
+		
+		this.mainMenuScreen = mainMenuScreen;
+		this.renderer = gameService.getState().getRenderer();
 	}
 	
 	private GameInputProcessor inputProcessor;
@@ -92,27 +105,28 @@ public class GameScreen extends AbstractGameScreen {
 		
 		super.show();
 		
-		final GameData data = GameData.get();
-		
 		//
 		//
 		//
 		
-		renderer = new MapRenderer(data.map);
-		GameData.get().customRenderingHooks.put(renderer.MAP_RENDERING_HOOK.getId(), renderer.MAP_RENDERING_HOOK);
-		GameData.get().prioritizedCustomRenderingHooks.add(renderer.MAP_RENDERING_HOOK);
+		final GameState state = getGameService().getState();
+		
+		final CityMap map = state.getMap();
+		final MapRenderer renderer = state.getRenderer();
+		
+		renderer.setMap(map);
 		
 		final Vector2 scratch = new Vector2();
 		scratch.set(0, 0);
 		final Vector2 worldBound1 = renderer.mapToViewport(scratch).cpy();
 		
-		scratch.set(0, data.map.getHeight());
+		scratch.set(0, map.getHeight());
 		final Vector2 worldBound2 = renderer.mapToViewport(scratch).cpy();
 		
-		scratch.set(data.map.getWidth(), 0);
+		scratch.set(map.getWidth(), 0);
 		final Vector2 worldBound3 = renderer.mapToViewport(scratch).cpy();
 		
-		scratch.set(data.map.getWidth(), data.map.getHeight());
+		scratch.set(map.getWidth(), map.getHeight());
 		final Vector2 worldBound4 = renderer.mapToViewport(scratch).cpy();
 		
 		minWorldX = min(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
@@ -130,7 +144,7 @@ public class GameScreen extends AbstractGameScreen {
 		final AtomicInteger hoverX = new AtomicInteger(0), hoverY = new AtomicInteger(0);
 		final AtomicBoolean hoverActive = new AtomicBoolean(false);
 		inputProcessor.register(MapHoverEvent.class, e -> {
-			if (GameData.get().map == null || !GameData.get().map.isValidCell(e.getX(), e.getY())) {
+			if (getGameService().getState().getMap() == null || !map.isValidCell(e.getX(), e.getY())) {
 				hoverActive.set(false);
 				return;
 			}
@@ -157,8 +171,12 @@ public class GameScreen extends AbstractGameScreen {
 		};
 		hoverHook.getRelativePriority().after("map");
 		
-		GameData.get().customRenderingHooks.put(hoverHook.getId(), hoverHook);
-		GameData.get().prioritizedCustomRenderingHooks.add(hoverHook);
+		try {
+			renderer.addCustomRenderingHook(hoverHook);
+		} catch (PrioritizationFailedException e) {
+			LOG.error("Cannot initialize GameScreen -- prioritization-failure while adding hover-handler!");
+			changeScreen(mainMenuScreen);
+		}
 	}
 	
 	@Override
@@ -170,7 +188,7 @@ public class GameScreen extends AbstractGameScreen {
 	@Override
 	public void beforeStageAct(float delta) {
 		
-		final Engine entityEngine = GameData.get().engine;
+		final Engine entityEngine = getGameService().getState().getEngine();
 		if (entityEngine != null)
 			entityEngine.update(delta);
 		

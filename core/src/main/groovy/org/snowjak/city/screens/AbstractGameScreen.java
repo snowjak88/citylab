@@ -5,6 +5,7 @@ package org.snowjak.city.screens;
 
 import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
+import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.Game;
@@ -28,6 +29,7 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	
 	public static final float SCREEN_FADE_TIME = 0.4f;
 	
+	private final GameService gameService;
 	private final Console console;
 	private final SkinService skinService;
 	private final Stage stage;
@@ -38,8 +40,9 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	
 	private Game game;
 	
-	public AbstractGameScreen(Console console, SkinService skinService, Stage stage) {
+	public AbstractGameScreen(GameService gameService, Console console, SkinService skinService, Stage stage) {
 		
+		this.gameService = gameService;
 		this.console = console;
 		this.stage = stage;
 		this.skinService = skinService;
@@ -89,6 +92,11 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 			
 			root.addAction(Actions.fadeIn(SCREEN_FADE_TIME));
 		}
+	}
+	
+	protected GameService getGameService() {
+		
+		return gameService;
 	}
 	
 	/**

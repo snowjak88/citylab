@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
+import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.SkinService;
 
@@ -46,9 +47,9 @@ public class LoadingScreen extends AbstractGameScreen {
 	
 	private boolean isInitiated = false, invokedComplete = false;
 	
-	public LoadingScreen(Console console, SkinService skinService, Stage stage) {
+	public LoadingScreen(GameService gameService, Console console, SkinService skinService, Stage stage) {
 		
-		super(console, skinService, stage);
+		super(gameService, console, skinService, stage);
 		
 		this.skinService = skinService;
 	}

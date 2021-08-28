@@ -2,7 +2,6 @@ package org.snowjak.city.module
 
 import java.util.function.Consumer
 
-import org.snowjak.city.GameData
 import org.snowjak.city.ecs.systems.ListeningSystem
 import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook
@@ -11,7 +10,9 @@ import org.snowjak.city.map.renderer.hooks.CustomRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
 import org.snowjak.city.resources.ScriptedResource
+import org.snowjak.city.service.GameService
 import org.snowjak.city.service.PreferencesService
+import org.snowjak.city.service.GameService.GameState
 import org.snowjak.city.service.PreferencesService.ScopedPreferences
 import org.snowjak.city.util.RelativePriority
 
@@ -41,14 +42,18 @@ public class Module extends ScriptedResource {
 	String description
 	
 	private PreferencesService preferencesService
-	final GameData data = GameData.get()
+	private GameService gameService
+	
+	final GameState state
 	final Map<String,EntitySystem> systems = [:]
 	final Set<AbstractCellRenderingHook> cellRenderingHooks = []
 	final Set<AbstractCustomRenderingHook> customRenderingHooks = []
 	
-	Module(PreferencesService preferencesService) {
+	Module(GameService gameService, PreferencesService preferencesService) {
 		super()
 		this.preferencesService = preferencesService
+		this.gameService = gameService
+		this.state = gameService.state
 	}
 	
 	/**
@@ -172,7 +177,7 @@ public class Module extends ScriptedResource {
 	@Override
 	protected ScriptedResource executeInclude(FileHandle includeHandle, Consumer<ScriptedResource> configurer, DelegatingScript script) {
 		
-		final module = new Module(preferencesService)
+		final module = new Module(gameService, preferencesService)
 		configurer.accept module
 		
 		script.run()

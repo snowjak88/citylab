@@ -5,9 +5,9 @@ package org.snowjak.city.screens;
 
 import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
-import org.snowjak.city.screens.loadingtasks.NewGameSetupTask;
 import org.snowjak.city.screens.menupages.GameSetupMenuPage;
 import org.snowjak.city.screens.menupages.MainMenuPage;
+import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.SkinService;
 
@@ -40,19 +40,13 @@ import com.github.czyzby.autumn.annotation.Inject;
 @Component
 public class MainMenuScreen extends AbstractGameScreen {
 	
-	@Inject
-	private I18NService i18nService;
-	
 	private final SkinService skinService;
 	
 	@Inject
-	private GameSetupMenuPage gameSetupMenuPage;
+	private I18NService i18nService;
 	
 	@Inject
 	private LoadingScreen loadingScreen;
-	
-	@Inject
-	private NewGameSetupTask newGameSetupLoadingTask;
 	
 	@Inject
 	private GameScreen gameScreen;
@@ -60,10 +54,14 @@ public class MainMenuScreen extends AbstractGameScreen {
 	private final Container<Actor> pageContainer = new Container<>();
 	private MainMenuPage currentPage = null;
 	
-	public MainMenuScreen(Console console, SkinService skinService, Stage stage) {
+	private final GameSetupMenuPage gameSetupMenuPage;
+	
+	public MainMenuScreen(GameService gameService, Console console, SkinService skinService, Stage stage,
+			GameSetupMenuPage gameSetupMenuPage) {
 		
-		super(console, skinService, stage);
+		super(gameService, console, skinService, stage);
 		this.skinService = skinService;
+		this.gameSetupMenuPage = gameSetupMenuPage;
 	}
 	
 	@Override
@@ -81,7 +79,8 @@ public class MainMenuScreen extends AbstractGameScreen {
 		root.add(pageContainer).grow().center();
 		
 		gameSetupMenuPage.setOnGameStart(() -> {
-			loadingScreen.setLoadingTasks(newGameSetupLoadingTask);
+			loadingScreen
+					.setLoadingTasks(getGameService().getNewGameLoadingTask(gameSetupMenuPage.getNewGameParameters()));
 			loadingScreen.setLoadingCompleteAction(() -> loadingScreen.changeScreen(gameScreen));
 			changeScreen(loadingScreen);
 		});

@@ -122,7 +122,7 @@ public class Console {
 	}
 	
 	/**
-	 * Submit the given text to the configured console-executor.
+	 * Submit the given text to the configured console-EXECUTOR.
 	 * 
 	 * @param commandText
 	 */

@@ -5,13 +5,13 @@ package org.snowjak.city.module;
 
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
-import org.snowjak.city.GameData;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.module.ModuleResourceLoader.ModuleResourceLoaderParameters;
 import org.snowjak.city.resources.ScriptedResourceLoader;
 import org.snowjak.city.service.GameAssetService;
+import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.PreferencesService;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
@@ -28,13 +28,15 @@ import groovy.util.DelegatingScript;
 @Component
 public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleResourceLoaderParameters> {
 	
+	private final GameService gameService;
 	private final PreferencesService preferencesService;
 	
-	public ModuleResourceLoader(PreferencesService preferencesService, GameAssetService assetService,
-			FileHandleResolver resolver) {
+	public ModuleResourceLoader(GameService gameService, PreferencesService preferencesService,
+			GameAssetService assetService, FileHandleResolver resolver) {
 		
 		super(assetService, resolver);
 		
+		this.gameService = gameService;
 		this.preferencesService = preferencesService;
 	}
 	
@@ -53,7 +55,7 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		customizer.addStarImports("com.badlogic.gdx.utils");
 		customizer.addImports(
 				// jCity types
-				CityMap.class.getName(), GameData.class.getName(), Tile.class.getName(), TileSet.class.getName(),
+				CityMap.class.getName(), Tile.class.getName(), TileSet.class.getName(),
 				// Misc. LibGDX types
 				AssetDescriptor.class.getName());
 		
@@ -65,7 +67,7 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 	@Override
 	protected Module newInstance() {
 		
-		return new Module(preferencesService);
+		return new Module(gameService, preferencesService);
 	}
 	
 	@Override

@@ -5,11 +5,11 @@ package org.snowjak.city.screens.menupages;
 
 import java.util.stream.Collectors;
 
-import org.snowjak.city.GameData;
 import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.screens.MainMenuScreen;
+import org.snowjak.city.service.GameService.NewGameParameters;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.MapGeneratorService;
 import org.snowjak.city.service.SkinService;
@@ -54,14 +54,14 @@ public class GameSetupMenuPage implements MainMenuPage {
 	
 	private Runnable onGameStart;
 	
+	final NewGameParameters param = new NewGameParameters();
+	
 	@Initiate(priority = InitPriority.LOW_PRIORITY)
 	public void init() {
 		
 		final Skin defaultSkin = skinService.getSkin(Configuration.SKIN_NAME);
 		
-		final GameData.GameParameters param = GameData.get().parameters;
-		
-		mapWidthField = new TextField("64", defaultSkin);
+		mapWidthField = new TextField(Integer.toString(param.getMapWidth()), defaultSkin);
 		mapWidthIncrease = new Button(defaultSkin, "plus");
 		mapWidthDecrease = new Button(defaultSkin, "minus");
 		
@@ -77,7 +77,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 				try {
 					final int newValue = Integer.parseInt(newText);
 					
-					param.mapWidth = newValue;
+					param.setMapWidth(newValue);
 				} catch (NumberFormatException e) {
 					event.cancel();
 				}
@@ -92,6 +92,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 				final String width = mapWidthField.getText();
 				if (width.isEmpty()) {
 					mapWidthField.setText("64");
+					param.setMapWidth(64);
 					return;
 				}
 				int widthValue = Integer.parseInt(width);
@@ -110,6 +111,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 				final String width = mapWidthField.getText();
 				if (width.isEmpty()) {
 					mapWidthField.setText("64");
+					param.setMapWidth(64);
 					return;
 				}
 				int widthValue = Integer.parseInt(width);
@@ -120,7 +122,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 			}
 		});
 		
-		mapHeightField = new TextField("64", defaultSkin);
+		mapHeightField = new TextField(Integer.toString(param.getMapHeight()), defaultSkin);
 		mapHeightIncrease = new Button(defaultSkin, "plus");
 		mapHeightDecrease = new Button(defaultSkin, "minus");
 		
@@ -136,7 +138,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 				try {
 					final int newValue = Integer.parseInt(newText);
 					
-					param.mapHeight = newValue;
+					param.setMapHeight(newValue);
 				} catch (NumberFormatException e) {
 					event.cancel();
 				}
@@ -151,6 +153,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 				final String width = mapHeightField.getText();
 				if (width.isEmpty()) {
 					mapHeightField.setText("64");
+					param.setMapHeight(64);
 					return;
 				}
 				int widthValue = Integer.parseInt(width);
@@ -169,6 +172,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 				final String width = mapHeightField.getText();
 				if (width.isEmpty()) {
 					mapHeightField.setText("64");
+					param.setMapHeight(64);
 					return;
 				}
 				int widthValue = Integer.parseInt(width);
@@ -194,8 +198,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				
-				param.selectedMapGenerator = ((SelectBox<MapGenerator>) actor).getSelected();
-				param.selectedMapGeneratorName = null;
+				param.setGenerator(((SelectBox<MapGenerator>) actor).getSelected());
 				
 				checkStartGameButton();
 			}
@@ -220,12 +223,11 @@ public class GameSetupMenuPage implements MainMenuPage {
 		mapHeightButtons.addActor(mapHeightDecrease);
 		mapHeightButtons.addActor(mapHeightIncrease);
 		
-		//@formatter:off
 		root = new Table(defaultSkin);
 		root.row().spaceBottom(15).spaceRight(5);
 		root.add(i18nService.get("menu-gamesetup-map-width")).right().expandX();
 		root.add(mapWidthField);
-		root.add( mapWidthButtons).left();
+		root.add(mapWidthButtons).left();
 		root.row().spaceBottom(15).spaceRight(5);
 		root.add(i18nService.get("menu-gamesetup-map-height")).right().expandX();
 		root.add(mapHeightField, mapHeightButtons);
@@ -234,7 +236,6 @@ public class GameSetupMenuPage implements MainMenuPage {
 		root.add(mapGeneratorSelection).colspan(2).fillX();
 		root.row().spaceBottom(15).spaceRight(5);
 		root.add(startGameButton).colspan(3).right();
-		//@formatter:on
 		
 		checkStartGameButton();
 	}
@@ -269,7 +270,11 @@ public class GameSetupMenuPage implements MainMenuPage {
 		
 		final Array<MapGenerator> availableMapGenerators = new Array<>(mapGeneratorService.getLoadedNames().stream()
 				.map(n -> mapGeneratorService.get(n, true)).collect(Collectors.toList()).toArray(new MapGenerator[0]));
+		
 		mapGeneratorSelection.setItems(availableMapGenerators);
+		
+		param.setGenerator(availableMapGenerators.first());
+		mapGeneratorSelection.setSelectedIndex(0);
 	}
 	
 	@Override
@@ -283,4 +288,12 @@ public class GameSetupMenuPage implements MainMenuPage {
 		return root;
 	}
 	
+	/**
+	 * @return the {@link NewGameParameters} that this setup-screen will be
+	 *         configuring
+	 */
+	public NewGameParameters getNewGameParameters() {
+		
+		return param;
+	}
 }

@@ -19,7 +19,7 @@ RND = new Random()
 
 clouds = null
 initClouds = { ->
-	clouds = new boolean[data.map.width / 8][data.map.height / 8]
+	clouds = new boolean[state.map.width / 8][state.map.height / 8]
 	for(def x=0; x<clouds.length; x++)
 		for(def y=0; y<clouds[x].length; y++)
 			clouds[x][y] = RND.nextInt(10) <= 3
@@ -42,8 +42,8 @@ customRenderHook ('clouds', { delta, batch, shapeDrawer, support ->
 	final float cloudWidth = 4
 	final float cloudHeight = cloudWidth * (cloudTexture.height / cloudTexture.width)
 	
-	final cloudSpacingX = data.map.width / ( clouds.length - 2 )
-	final cloudSpacingY = data.map.height / ( clouds[0].length - 2 )
+	final cloudSpacingX = state.map.width / ( clouds.length - 2 )
+	final cloudSpacingY = state.map.height / ( clouds[0].length - 2 )
 	
 	cloudOffsetX += delta * 7 / 2
 	cloudOffsetY += delta * 3 / 2
@@ -63,20 +63,20 @@ customRenderHook ('clouds', { delta, batch, shapeDrawer, support ->
 	def x = originX - cloudSpacingX
 	for(def i=0; i<clouds.length; i++) {
 		
-		def y = data.map.height + cloudSpacingY - originY
+		def y = state.map.height + cloudSpacingY - originY
 		for(def j=0; j<clouds[i].length; j++) {
 			
 			if( clouds[Util.wrap( i+cloudsIndexStartX, 0, clouds.length-1 )][Util.wrap( j+cloudsIndexStartY, 0, clouds[i].length-1 )] ) {
 				
 				batch.setColor Color.WHITE
 				
-				if(x < 0 || y < 0 || x > data.map.width || y > data.map.width) {
+				if(x < 0 || y < 0 || x > state.map.width || y > state.map.width) {
 					def xd = -1
 					def yd = -1
-					if(x < 0 || x > data.map.width)
-						xd = 1 - Util.clamp( (x<0) ? (-x / cloudSpacingX) : ((x-data.map.width) / cloudSpacingX), 0, 1 )
-					if(y < 0 || y > data.map.height)
-						yd = 1 - Util.clamp( (y<0) ? (-y / cloudSpacingY) : ((y-data.map.height) / cloudSpacingY), 0, 1 )
+					if(x < 0 || x > state.map.width)
+						xd = 1 - Util.clamp( (x<0) ? (-x / cloudSpacingX) : ((x-state.map.width) / cloudSpacingX), 0, 1 )
+					if(y < 0 || y > state.map.height)
+						yd = 1 - Util.clamp( (y<0) ? (-y / cloudSpacingY) : ((y-state.map.height) / cloudSpacingY), 0, 1 )
 					
 					
 					if(xd < 0)

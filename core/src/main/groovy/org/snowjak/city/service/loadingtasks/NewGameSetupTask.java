@@ -1,15 +1,13 @@
 /**
  * 
  */
-package org.snowjak.city.screens.loadingtasks;
+package org.snowjak.city.service.loadingtasks;
 
 import java.util.LinkedList;
 
 import org.snowjak.city.screens.LoadingScreen.LoadingTask;
 import org.snowjak.city.service.LoggerService;
 
-import com.github.czyzby.autumn.annotation.Component;
-import com.github.czyzby.autumn.annotation.Inject;
 import com.github.czyzby.kiwi.log.Logger;
 
 /**
@@ -23,22 +21,27 @@ import com.github.czyzby.kiwi.log.Logger;
  * @author snowjak88
  *
  */
-@Component
 public class NewGameSetupTask implements LoadingTask {
 	
 	private static final Logger LOG = LoggerService.forClass(NewGameSetupTask.class);
 	
-	@Inject
-	private GameMapGenerationTask mapGenerationTask;
-	
-	@Inject
-	private GameEntitySystemInitializationTask entitySystemInitializationTask;
-	
-	@Inject
-	private GameModulesInitializationTask modulesInitializationTask;
+	private final GameMapGenerationTask mapGenerationTask;
+	private final GameEntitySystemInitializationTask entitySystemInitializationTask;
+	private final GameMapEntityCreationTask mapEntityCreationTask;
+	private final GameModulesInitializationTask modulesInitializationTask;
 	
 	private LinkedList<LoadingTask> activeTasks = new LinkedList<>();
 	private float progressOffset = 0, taskCount = 0;
+	
+	public NewGameSetupTask(GameMapGenerationTask mapGenerationTask,
+			GameEntitySystemInitializationTask entitySystemInitializationTask,
+			GameMapEntityCreationTask mapEntityCreationTask, GameModulesInitializationTask modulesInitializationTask) {
+		
+		this.mapGenerationTask = mapGenerationTask;
+		this.entitySystemInitializationTask = entitySystemInitializationTask;
+		this.mapEntityCreationTask = mapEntityCreationTask;
+		this.modulesInitializationTask = modulesInitializationTask;
+	}
 	
 	@Override
 	public void initiate() {
@@ -55,6 +58,9 @@ public class NewGameSetupTask implements LoadingTask {
 					LOG.debug("Initiating: adding entity-system initialization task ...");
 					activeTasks.add(entitySystemInitializationTask);
 					
+					LOG.debug("Initiating: adding map-cell-entity initialization task ...");
+					activeTasks.add(mapEntityCreationTask);
+					
 					LOG.debug("Initiating: adding modules initialization task ...");
 					activeTasks.add(modulesInitializationTask);
 					
@@ -63,7 +69,7 @@ public class NewGameSetupTask implements LoadingTask {
 					activeTasks.peek().initiate();
 					
 					progressOffset = 0;
-					taskCount = 3;
+					taskCount = activeTasks.size();
 				}
 			}
 	}
@@ -83,7 +89,7 @@ public class NewGameSetupTask implements LoadingTask {
 		if (activeTasks.isEmpty())
 			return 1;
 		
-		return (activeTasks.peek().getProgress() / 3f) + progressOffset;
+		return (activeTasks.peek().getProgress() / taskCount) + progressOffset;
 	}
 	
 	@Override

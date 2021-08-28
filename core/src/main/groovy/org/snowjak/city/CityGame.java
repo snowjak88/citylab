@@ -1,5 +1,10 @@
 package org.snowjak.city;
 
+import java.time.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+
 import org.snowjak.city.configuration.processors.InjectAllAnnotationProcessor;
 import org.snowjak.city.screens.AbstractGameScreen;
 import org.snowjak.city.screens.LoadingScreen;
@@ -11,6 +16,8 @@ import com.badlogic.gdx.Screen;
 import com.github.czyzby.autumn.context.ContextDestroyer;
 import com.github.czyzby.autumn.context.ContextInitializer;
 import com.github.czyzby.autumn.scanner.ClassScanner;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * Entry point for this application. Configures the Autumn context for
@@ -40,6 +47,16 @@ public class CityGame extends Game {
 	 * Directory holding map-generator scripts
 	 */
 	public static final String EXTERNAL_ROOT_MAP_GENERATORS = "data/map-generators/";
+	
+	//
+	//
+	//
+	
+	/**
+	 * Thread-caching {@link ExecutorService}.
+	 */
+	public static final ListeningExecutorService EXECUTOR = MoreExecutors.listeningDecorator(MoreExecutors
+			.getExitingExecutorService((ThreadPoolExecutor) Executors.newCachedThreadPool(), Duration.ofSeconds(5)));
 	
 	//
 	//

@@ -3,10 +3,10 @@
  */
 package org.snowjak.city.ecs.systems.impl;
 
-import org.snowjak.city.GameData;
 import org.snowjak.city.ecs.components.IsMapCell;
 import org.snowjak.city.ecs.systems.ListeningSystem;
 import org.snowjak.city.map.CityMap;
+import org.snowjak.city.service.GameService.GameState;
 
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
@@ -34,15 +34,19 @@ public class IsMapCellManagementSystem extends ListeningSystem {
 	
 	private final ComponentMapper<IsMapCell> isCellMapper = ComponentMapper.getFor(IsMapCell.class);
 	
-	public IsMapCellManagementSystem() {
+	private final GameState gameState;
+	
+	public IsMapCellManagementSystem(GameState gameState) {
 		
 		super(Family.all(IsMapCell.class).get(), -1);
+		
+		this.gameState = gameState;
 	}
 	
 	@Override
 	public boolean checkProcessing() {
 		
-		if (GameData.get().map == null)
+		if (gameState.getMap() == null)
 			return false;
 		
 		return super.checkProcessing();
@@ -51,7 +55,7 @@ public class IsMapCellManagementSystem extends ListeningSystem {
 	@Override
 	public void added(Entity entity, float deltaTime) {
 		
-		final CityMap map = GameData.get().map;
+		final CityMap map = gameState.getMap();
 		
 		final IsMapCell cell = isCellMapper.get(entity);
 		
@@ -61,7 +65,7 @@ public class IsMapCellManagementSystem extends ListeningSystem {
 	@Override
 	public void dropped(Entity entity, float deltaTime) {
 		
-		final CityMap map = GameData.get().map;
+		final CityMap map = gameState.getMap();
 		
 		final IsMapCell cell = isCellMapper.get(entity);
 		

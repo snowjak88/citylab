@@ -8,7 +8,7 @@ import org.snowjak.city.console.Console;
 import com.badlogic.gdx.maps.MapRenderer;
 
 /**
- * Stub executor. No matter what you provide, it spits out the same message.
+ * Stub EXECUTOR. No matter what you provide, it spits out the same message.
  * 
  * @author snowjak88
  *
