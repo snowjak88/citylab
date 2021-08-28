@@ -12,6 +12,7 @@ import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
+import org.snowjak.city.util.RelativePriority;
 
 import com.github.czyzby.kiwi.log.Logger;
 import com.google.common.util.concurrent.AtomicDouble;
@@ -37,6 +38,7 @@ public class GameModulesInitializationTask implements LoadingTask {
 	private final I18NService i18nService;
 	private final GameAssetService assetService;
 	private final AtomicDouble progress = new AtomicDouble();
+	private final RelativePriority<Class<?>> relativePriority;
 	
 	public GameModulesInitializationTask(GameService gameService, I18NService i18nService,
 			GameAssetService assetService) {
@@ -44,6 +46,14 @@ public class GameModulesInitializationTask implements LoadingTask {
 		this.gameService = gameService;
 		this.i18nService = i18nService;
 		this.assetService = assetService;
+		this.relativePriority = new RelativePriority<>();
+		relativePriority.after(GameEntitySystemInitializationTask.class);
+	}
+	
+	@Override
+	public RelativePriority<Class<?>> getRelativePriority() {
+		
+		return relativePriority;
 	}
 	
 	@Override

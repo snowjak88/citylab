@@ -3,28 +3,34 @@
  */
 package org.snowjak.city.util;
 
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 public class RelativePriority<V> {
 	
-	private V before, after;
+	private Set<V> before = new LinkedHashSet<>(), after = new LinkedHashSet<>();
 	
-	public RelativePriority<V> before(V before) {
+	@SuppressWarnings("unchecked")
+	public RelativePriority<V> before(V... before) {
 		
-		this.before = before;
+		this.before.addAll(Arrays.asList(before));
 		return this;
 	}
 	
-	public RelativePriority<V> after(V after) {
+	@SuppressWarnings("unchecked")
+	public RelativePriority<V> after(V... after) {
 		
-		this.after = after;
+		this.after.addAll(Arrays.asList(after));
 		return this;
 	}
 	
-	public V getBefore() {
+	public Set<V> getBefore() {
 		
 		return before;
 	}
 	
-	public V getAfter() {
+	public Set<V> getAfter() {
 		
 		return after;
 	}

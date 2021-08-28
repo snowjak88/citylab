@@ -12,6 +12,7 @@ import org.snowjak.city.service.GameService.GameState;
 import org.snowjak.city.service.GameService.NewGameParameters;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
+import org.snowjak.city.util.RelativePriority;
 
 import com.github.czyzby.kiwi.log.Logger;
 import com.google.common.util.concurrent.AtomicDouble;
@@ -36,12 +37,21 @@ public class GameMapGenerationTask implements LoadingTask {
 	private final NewGameParameters param;
 	private final I18NService i18nService;
 	private final AtomicDouble progress = new AtomicDouble();
+	private final RelativePriority<Class<?>> relativePriority;
 	
 	public GameMapGenerationTask(GameState state, NewGameParameters param, I18NService i18nService) {
 		
 		this.state = state;
 		this.param = param;
 		this.i18nService = i18nService;
+		this.relativePriority = new RelativePriority<>();
+		relativePriority.before(GameMapEntityCreationTask.class);
+	}
+	
+	@Override
+	public RelativePriority<Class<?>> getRelativePriority() {
+		
+		return relativePriority;
 	}
 	
 	@Override

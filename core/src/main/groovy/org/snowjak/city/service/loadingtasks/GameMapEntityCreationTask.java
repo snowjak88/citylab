@@ -9,6 +9,7 @@ import org.snowjak.city.screens.LoadingScreen.LoadingTask;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
+import org.snowjak.city.util.RelativePriority;
 
 import com.badlogic.ashley.core.Entity;
 import com.github.czyzby.kiwi.log.Logger;
@@ -31,11 +32,21 @@ public class GameMapEntityCreationTask implements LoadingTask {
 	private final GameService gameService;
 	private final I18NService i18nService;
 	private final AtomicDouble progress = new AtomicDouble();
+	private final RelativePriority<Class<?>> relativePriority;
 	
 	public GameMapEntityCreationTask(GameService gameService, I18NService i18nService) {
 		
 		this.gameService = gameService;
 		this.i18nService = i18nService;
+		
+		this.relativePriority = new RelativePriority<>();
+		relativePriority.after(GameEntitySystemInitializationTask.class, GameMapGenerationTask.class);
+	}
+	
+	@Override
+	public RelativePriority<Class<?>> getRelativePriority() {
+		
+		return relativePriority;
 	}
 	
 	@Override

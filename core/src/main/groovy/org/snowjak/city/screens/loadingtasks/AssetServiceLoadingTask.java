@@ -6,6 +6,7 @@ package org.snowjak.city.screens.loadingtasks;
 import org.snowjak.city.screens.LoadingScreen.LoadingTask;
 import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.I18NService;
+import org.snowjak.city.util.RelativePriority;
 
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Inject;
@@ -25,6 +26,14 @@ public class AssetServiceLoadingTask implements LoadingTask {
 	
 	@Inject
 	private I18NService i18nService;
+	
+	private final RelativePriority<Class<?>> relativePriority = new RelativePriority<>();
+	
+	@Override
+	public RelativePriority<Class<?>> getRelativePriority() {
+		
+		return relativePriority;
+	}
 	
 	@Override
 	public boolean isComplete() {

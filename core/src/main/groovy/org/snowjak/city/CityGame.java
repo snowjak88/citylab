@@ -105,7 +105,7 @@ public class CityGame extends Game {
 		// configured to wait until the GameAssetService has finished, and then switch
 		// to the Main-Menu screen.
 		//
-		loadingScreen.setLoadingTasks(assetServiceLoadingTask);
+		loadingScreen.setLoadingTask(assetServiceLoadingTask);
 		loadingScreen.setLoadingCompleteAction(() -> loadingScreen.changeScreen(mainMenuScreen));
 		setScreen(loadingScreen);
 	}

@@ -13,12 +13,12 @@ import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.generator.MapGenerator
 import org.snowjak.city.map.renderer.MapRenderer
 import org.snowjak.city.module.Module
+import org.snowjak.city.screens.LoadingScreen.CompositeLoadingTask
 import org.snowjak.city.screens.LoadingScreen.LoadingTask
 import org.snowjak.city.service.loadingtasks.GameEntitySystemInitializationTask
 import org.snowjak.city.service.loadingtasks.GameMapEntityCreationTask
 import org.snowjak.city.service.loadingtasks.GameMapGenerationTask
 import org.snowjak.city.service.loadingtasks.GameModulesInitializationTask
-import org.snowjak.city.service.loadingtasks.NewGameSetupTask
 import org.snowjak.city.util.RelativePriorityList.PrioritizationFailedException
 
 import com.badlogic.ashley.core.Engine
@@ -53,28 +53,11 @@ class GameService {
 	}
 	
 	public LoadingTask getNewGameLoadingTask(NewGameParameters param) {
-		return new NewGameSetupTask(
-				getMapGenerationLoadingTask(param),
-				getEntitySystemInitializationLoadingTask(param),
-				getMapCellEntityCreationTask(),
-				getModulesInitializationTask())
-	}
-	
-	public LoadingTask getEntitySystemInitializationLoadingTask(NewGameParameters param) {
-		
-		return new GameEntitySystemInitializationTask(this, i18nService)
-	}
-	
-	public LoadingTask getMapGenerationLoadingTask(NewGameParameters param) {
-		return new GameMapGenerationTask(state, param, i18nService)
-	}
-	
-	public LoadingTask getMapCellEntityCreationTask() {
-		return new GameMapEntityCreationTask(this, i18nService)
-	}
-	
-	public LoadingTask getModulesInitializationTask() {
-		return new GameModulesInitializationTask(this, i18nService, assetService)
+		return new CompositeLoadingTask(
+				new GameMapGenerationTask(state, param, i18nService),
+				new GameEntitySystemInitializationTask(this, i18nService),
+				new GameMapEntityCreationTask(this, i18nService),
+				new GameModulesInitializationTask(this, i18nService, assetService))
 	}
 	
 	/**

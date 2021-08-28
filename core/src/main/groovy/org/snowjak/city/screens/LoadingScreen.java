@@ -4,14 +4,19 @@
 package org.snowjak.city.screens;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Set;
 
 import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.SkinService;
+import org.snowjak.city.util.RelativePriority;
+import org.snowjak.city.util.RelativePriorityList;
+import org.snowjak.city.util.RelativePriorityList.PrioritizationFailedException;
+import org.snowjak.city.util.RelativelyPrioritized;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -36,16 +41,14 @@ public class LoadingScreen extends AbstractGameScreen {
 	
 	private final SkinService skinService;
 	
-	private final LinkedList<LoadingTask> loadingTasks = new LinkedList<>();
-	private float loadingTaskCount;
-	private float loadingTaskProgressOffset = 0f;
+	private LoadingTask loadingTask;
 	
 	private Label taskDescription;
 	private ProgressBar progressBar;
 	
 	private Runnable onLoadingComplete;
 	
-	private boolean isInitiated = false, invokedComplete = false;
+	private boolean isInitiated = false;
 	
 	public LoadingScreen(GameService gameService, Console console, SkinService skinService, Stage stage) {
 		
@@ -75,39 +78,31 @@ public class LoadingScreen extends AbstractGameScreen {
 		return root;
 	}
 	
-	public void setLoadingTasks(LoadingTask... loadingTasks) {
+	public void setLoadingTask(LoadingTask loadingTask) {
 		
-		setLoadingTasks(Arrays.asList(loadingTasks));
-	}
-	
-	public void setLoadingTasks(List<LoadingTask> loadingTasks) {
-		
-		this.loadingTasks.addAll(loadingTasks);
-		loadingTaskCount = this.loadingTasks.size();
-		loadingTaskProgressOffset = 0;
+		this.loadingTask = loadingTask;
 		isInitiated = false;
 	}
 	
 	public void setLoadingCompleteAction(Runnable onLoadingComplete) {
 		
 		this.onLoadingComplete = onLoadingComplete;
-		invokedComplete = false;
 	}
 	
 	@Override
 	public void beforeStageAct(float delta) {
 		
-		if (loadingTasks.isEmpty())
+		if (loadingTask == null)
 			return;
 		
 		if (!isInitiated) {
 			LOG.info("Initiating current task.");
-			loadingTasks.peek().initiate();
+			loadingTask.initiate();
 			isInitiated = true;
 		}
 		
-		progressBar.setValue(loadingTaskProgressOffset + loadingTasks.peek().getProgress() / loadingTaskCount);
-		taskDescription.setText(loadingTasks.peek().getDescription());
+		progressBar.setValue(loadingTask.getProgress());
+		taskDescription.setText(loadingTask.getDescription());
 	}
 	
 	@Override
@@ -118,19 +113,16 @@ public class LoadingScreen extends AbstractGameScreen {
 	@Override
 	public void renderAfterStage(float delta) {
 		
-		if (!loadingTasks.isEmpty())
-			if (loadingTasks.peek().isComplete()) {
-				LOG.info("Current task is complete -- removing from the list of remaining tasks.");
-				loadingTaskProgressOffset += 1f / loadingTaskCount;
-				loadingTasks.pop();
-				isInitiated = false;
-			}
+		if (loadingTask == null)
+			return;
 		
-		if (loadingTasks.isEmpty() && !invokedComplete) {
-			LOG.info("All tasks complete -- invoking onLoadingComplete ...");
-			onLoadingComplete.run();
-			invokedComplete = true;
-		}
+		if (!loadingTask.isComplete())
+			return;
+		
+		LOG.info("Task complete -- invoking onLoadingComplete ...");
+		loadingTask = null;
+		onLoadingComplete.run();
+		
 	}
 	
 	/**
@@ -139,7 +131,7 @@ public class LoadingScreen extends AbstractGameScreen {
 	 * @author snowjak88
 	 *
 	 */
-	public interface LoadingTask {
+	public interface LoadingTask extends RelativelyPrioritized<LoadingTask, Class<?>> {
 		
 		/**
 		 * @return a piece of descriptive text to display alongside the progress-bar
@@ -162,5 +154,123 @@ public class LoadingScreen extends AbstractGameScreen {
 		 * @return if this task is complete
 		 */
 		public boolean isComplete();
+		
+		@Override
+		default Class<?> getRelativePriorityKey() {
+			
+			return this.getClass();
+		}
+	}
+	
+	/**
+	 * A {@link LoadingTask} that delegates to a prioritized list of
+	 * {@link LoadingTask}s.
+	 * 
+	 * @author snowjak88
+	 *
+	 */
+	public static class CompositeLoadingTask implements LoadingTask {
+		
+		private final RelativePriorityList<Class<?>, LoadingTask> configuredTasks = new RelativePriorityList<>();
+		private final LinkedList<LoadingTask> activeTasks = new LinkedList<>();
+		private RelativePriority<Class<?>> relativePriority;
+		
+		private float progressOffset = 0, taskCount = 0;
+		
+		/**
+		 * Construct a new CompositeLoadingTask, composed of the given
+		 * {@link LoadingTask}s.
+		 * 
+		 * @param tasks
+		 * @throws PrioritizationFailedException
+		 *             if the tasks cannot be successfully prioritized -- e.g., if there
+		 *             is a circular dependency somewhere
+		 */
+		public CompositeLoadingTask(LoadingTask... tasks) throws PrioritizationFailedException {
+			
+			this(new HashSet<>(Arrays.asList(tasks)));
+		}
+		
+		/**
+		 * Construct a new CompositeLoadingTask, composed of the given
+		 * {@link LoadingTask}s.
+		 * 
+		 * @param tasks
+		 * @throws PrioritizationFailedException
+		 *             if the tasks cannot be successfully prioritized -- e.g., if there
+		 *             is a circular dependency somewhere
+		 */
+		public CompositeLoadingTask(Set<LoadingTask> tasks) throws PrioritizationFailedException {
+			
+			for (LoadingTask t : tasks)
+				configuredTasks.add(t);
+			relativePriority = new RelativePriority<>();
+		}
+		
+		@Override
+		public RelativePriority<Class<?>> getRelativePriority() {
+			
+			return relativePriority;
+		}
+		
+		@Override
+		public void initiate() {
+			
+			if (activeTasks.isEmpty())
+				synchronized (this) {
+					if (activeTasks.isEmpty()) {
+						
+						for (LoadingTask t : configuredTasks)
+							activeTasks.addLast(t);
+						
+						progressOffset = 0;
+						taskCount = activeTasks.size();
+						
+						if (!activeTasks.isEmpty())
+							activeTasks.peek().initiate();
+						
+					}
+				}
+		}
+		
+		@Override
+		public String getDescription() {
+			
+			if (activeTasks.isEmpty())
+				return "";
+			
+			return activeTasks.peek().getDescription();
+		}
+		
+		@Override
+		public float getProgress() {
+			
+			if (activeTasks.isEmpty())
+				return 1;
+			
+			return (activeTasks.peek().getProgress() / taskCount) + progressOffset;
+		}
+		
+		@Override
+		public boolean isComplete() {
+			
+			if (activeTasks.isEmpty())
+				return true;
+			
+			if (activeTasks.peek().isComplete()) {
+				
+				progressOffset += 1f / taskCount;
+				activeTasks.removeFirst();
+				
+				if (activeTasks.isEmpty())
+					return true;
+				
+				activeTasks.peek().initiate();
+				
+			}
+			
+			return false;
+		}
+		
 	}
 }

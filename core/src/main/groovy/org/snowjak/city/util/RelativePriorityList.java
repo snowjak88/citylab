@@ -81,16 +81,16 @@ public class RelativePriorityList<V, T extends RelativelyPrioritized<T, V>> impl
 			//
 			// Does the current item need to come before the "before" item?
 			// If so, it can't go in atIndex.
-			if (item.getRelativePriority().getBefore() != null
-					&& item.getRelativePriority().getBefore().equals(beforeItemKey))
-				return false;
-				
+			for (V requiredBeforeKey : item.getRelativePriority().getBefore())
+				if (requiredBeforeKey.equals(beforeItemKey))
+					return false;
+					
 			//
 			// Does the "before" item need to come after the current item?
 			// If so, it can't go in atIndex.
-			if (beforeItem.getRelativePriority().getAfter() != null
-					&& beforeItem.getRelativePriority().getAfter().equals(itemKey))
-				return false;
+			for (V requiredAfterKey : beforeItem.getRelativePriority().getAfter())
+				if (requiredAfterKey.equals(itemKey))
+					return false;
 		}
 		
 		//
@@ -104,15 +104,15 @@ public class RelativePriorityList<V, T extends RelativelyPrioritized<T, V>> impl
 			
 			//
 			// Does the current item need to come after the "after" item?
-			if (item.getRelativePriority().getAfter() != null
-					&& item.getRelativePriority().getAfter().equals(afterItemKey))
-				return false;
-				
+			for (V requiredAfterKey : item.getRelativePriority().getAfter())
+				if (requiredAfterKey.equals(afterItemKey))
+					return false;
+					
 			//
 			// Does the "after" item need to come before the current item?
-			if (afterItem.getRelativePriority().getBefore() != null
-					&& afterItem.getRelativePriority().getBefore().equals(itemKey))
-				return false;
+			for (V requiredBeforeKey : afterItem.getRelativePriority().getBefore())
+				if (requiredBeforeKey.equals(itemKey))
+					return false;
 		}
 		
 		//

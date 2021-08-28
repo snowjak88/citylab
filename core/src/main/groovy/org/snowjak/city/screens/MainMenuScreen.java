@@ -80,7 +80,7 @@ public class MainMenuScreen extends AbstractGameScreen {
 		
 		gameSetupMenuPage.setOnGameStart(() -> {
 			loadingScreen
-					.setLoadingTasks(getGameService().getNewGameLoadingTask(gameSetupMenuPage.getNewGameParameters()));
+					.setLoadingTask(getGameService().getNewGameLoadingTask(gameSetupMenuPage.getNewGameParameters()));
 			loadingScreen.setLoadingCompleteAction(() -> loadingScreen.changeScreen(gameScreen));
 			changeScreen(loadingScreen);
 		});
