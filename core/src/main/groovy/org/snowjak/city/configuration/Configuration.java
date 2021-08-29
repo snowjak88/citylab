@@ -9,10 +9,10 @@ import org.snowjak.city.console.loggers.ConsoleLoggerFactory;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.generator.MapGeneratorLoader;
 import org.snowjak.city.map.tiles.TileSet;
-import org.snowjak.city.module.Module;
 import org.snowjak.city.resources.ScriptedResource;
 import org.snowjak.city.resources.ScriptedResourceLoader;
 import org.snowjak.city.service.GameAssetService;
+import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.LoggerService;
 
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
@@ -60,7 +60,8 @@ public class Configuration {
 	}
 	
 	@Initiate(priority = InitPriority.HIGHEST_PRIORITY)
-	public void configureAssetLoaders(final GameAssetService assetService, FileHandleResolver resolver) {
+	public void configureAssetLoaders(final GameService gameService, final GameAssetService assetService,
+			FileHandleResolver resolver) {
 		
 		final MapGeneratorLoader mapGeneratorLoader = new MapGeneratorLoader(resolver);
 		assetService.setLoader(MapGenerator.class, mapGeneratorLoader);
@@ -69,10 +70,11 @@ public class Configuration {
 		
 		assetService.setThrowUnhandledExceptions(false);
 		
-		initiateScriptScanning(assetService, resolver);
+		initiateScriptScanning(gameService, assetService, resolver);
 	}
 	
-	private void initiateScriptScanning(final GameAssetService assetService, FileHandleResolver resolver) {
+	private void initiateScriptScanning(final GameService gameService, final GameAssetService assetService,
+			FileHandleResolver resolver) {
 		
 		LOG.info("Scanning for resource-scripts ...");
 		
@@ -83,10 +85,7 @@ public class Configuration {
 		});
 		
 		LOG.info("Scanning for resource-scripts: modules ...");
-		scanForFiles(resolver.resolve(EXTERNAL_ROOT_MODULES), ".module.groovy", true).forEach(f -> {
-			LOG.info("Queueing module for load: [{0}] ...", f.path());
-			assetService.load(f.path(), Module.class);
-		});
+		gameService.loadAllModules();
 	}
 	
 	private Collection<FileHandle> scanForFiles(FileHandle directory, String desiredExtension,

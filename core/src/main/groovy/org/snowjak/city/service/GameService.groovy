@@ -5,6 +5,7 @@ package org.snowjak.city.service
 
 import java.util.function.DoubleConsumer
 
+import org.snowjak.city.configuration.Configuration
 import org.snowjak.city.ecs.components.IsMapCell
 import org.snowjak.city.ecs.systems.impl.IsMapCellManagementSystem
 import org.snowjak.city.ecs.systems.impl.RemoveMapCellRearrangedSystem
@@ -26,6 +27,8 @@ import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.Family
 import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.assets.loaders.FileHandleResolver
+import com.badlogic.gdx.files.FileHandle
 import com.github.czyzby.autumn.annotation.Component
 import com.github.czyzby.autumn.annotation.Inject
 import com.github.czyzby.kiwi.log.Logger
@@ -46,6 +49,9 @@ class GameService {
 	
 	@Inject
 	private I18NService i18nService
+	
+	@Inject
+	private FileHandleResolver resolver
 	
 	private final GameState state = new GameState()
 	
@@ -134,6 +140,58 @@ class GameService {
 					progressReporter?.accept progress
 				}
 		}
+	}
+	
+	public void loadAllModules() {
+		
+		LOG.info "Scanning for module-scripts ..."
+		
+		final moduleFiles = scanForFiles(resolver.resolve(Configuration.EXTERNAL_ROOT_MODULES), ".module.groovy", true)
+		
+		for(def f : moduleFiles) {
+			LOG.info "Loading module-script [{0}] ...", f.path()
+			assetService.load(f.path(), Module.class)
+		}
+		
+		LOG.info "Finished scanning for module-scripts."
+	}
+	
+	public void unloadAllModules(DoubleConsumer progressReporter = {p -> }) {
+		
+		LOG.info "Unloading all modules ..."
+		
+		final modules = assetService.getAllByType(Module)
+		for(def m : modules)
+			assetService.unload m.id, Module
+		
+		LOG.info "Finished unloading all modules."
+	}
+	
+	/**
+	 * Reloads all loaded {@link Module}s from their script-files.
+	 * Blocks until all Modules are uninitialized, reloaded, and re-initialized.
+	 * 
+	 * @param progressReporter
+	 */
+	public void reloadAllModules(DoubleConsumer progressReporter = {p -> }) {
+		LOG.info "Reloading all modules ..."
+		
+		progressReporter?.accept 0
+		
+		uninitializeAllModules { p -> progressReporter?.accept p * 0.25 }
+		
+		final modules = assetService.getAllByType(Module)
+		
+		unloadAllModules()
+		
+		loadAllModules()
+		
+		while(!assetService.update())
+			progressReporter?. accept assetService.progress * 0.25 + 0.5
+		
+		initializeAllModules { p -> progressReporter?.accept p * 0.25 + 0.75 }
+		
+		LOG.info "Finished reloading all modules."
 	}
 	
 	/**
@@ -278,6 +336,21 @@ class GameService {
 		progressReporter?.accept 1
 		
 		LOG.info "Finished uninitializing module \"{0}\".", module.id
+	}
+	
+	private Collection<FileHandle> scanForFiles(FileHandle directory, String desiredExtension,
+			boolean includeSubdirectories) {
+		
+		final LinkedList<FileHandle> result = new LinkedList<>()
+		
+		for (FileHandle child : directory.list())
+			if (child.isDirectory()) {
+				if (includeSubdirectories)
+					result.addAll(scanForFiles(child, desiredExtension, includeSubdirectories))
+			} else if (child.name().endsWith(desiredExtension))
+				result.add(child)
+		
+		return result
 	}
 	
 	/**

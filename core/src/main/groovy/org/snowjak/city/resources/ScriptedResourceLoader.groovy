@@ -83,6 +83,22 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		})
 	}
 	
+	/**
+	 * Ensure that the ScriptedResource denoted by {@code file} is completely unregistered from this loader.
+	 * @param file
+	 */
+	public void finishUnloading(FileHandle file) {
+		
+		final loadedResource = loaded[file]
+		if(loadedResource)
+			for(def assetDependency : loadedResource.assetDependencies)
+				assetService.unload assetDependency.key.path(), assetDependency.value
+		
+		loaded.remove file
+		dependencyChecks.remove file
+	}
+	
+	
 	@Override
 	public Array<AssetDescriptor> getDependencies(String fileName, FileHandle file, P parameter) {
 		

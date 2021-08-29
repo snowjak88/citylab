@@ -196,6 +196,80 @@ public class GameAssetService extends AssetManager {
 	}
 	
 	/**
+	 * Unload the given asset.
+	 * <p>
+	 * If {@code name} corresponds to the ID of a loaded {@link ScriptedResource},
+	 * that resource is unloaded.
+	 * </p>
+	 * <p>
+	 * Otherwise, {@code name} is assumed to be a file-name and execution is delegated
+	 * to the default {@link AssetManager#unload(String) unload()} behavior.
+	 * </p>
+	 * @throws IllegalArgumentException if {@code name} corresponds to multiple resource-IDs;
+	 * 		if so, you must disambiguate yourself by calling {@link #unload(String, Class)}
+	 */
+	@Override
+	public synchronized void unload(String name) {
+		
+		final resourceEntries = scriptedResourceIDs.findAll { type, resources -> resources.containsKey(name) }
+		
+		if(resourceEntries.size() > 1)
+			throw new IllegalArgumentException("Cannot unload resource by name -- multiple resources match the given name \"{0}\". You must use unload(name, type) instead!", name)
+		
+		if(!resourceEntries.isEmpty()) {
+			
+			for(def resourceEntry : resourceEntries)
+				unload name, resourceEntry.key
+			
+		} else
+			super.unload name
+	}
+	
+	/**
+	 * Unload the given asset.
+	 * 
+	 * @param name
+	 * @param type
+	 */
+	public synchronized void unload(String name, Class<?> type) {
+		
+		if(ScriptedResource.isAssignableFrom(type)) {
+			
+			final file = scriptedResourceIDs.computeIfAbsent(type, {_ -> new LinkedHashSet<>()}).remove name
+			if(file) {
+				((ScriptedResourceLoader) getLoader(type)).finishUnloading file
+				super.unload file.path()
+			}
+			
+		} else
+			super.unload name
+	}
+	
+	/**
+	 * Reload the given {@link ScriptedResource}.
+	 * <p>
+	 * <strong>Note</strong> that this does not wait for the resource to finish loading;
+	 * this only schedules the load. You must call {@link #update()} or {@link finishLoading()}
+	 * or something to ensure that the load completes.
+	 * </p>
+	 * 
+	 * @param resourceID
+	 * @param type
+	 */
+	public synchronized <T extends ScriptedResource> void reload(String resourceID, Class<T> type) {
+		
+		if(!scriptedResourceIDs.computeIfAbsent(type, {_ -> new LinkedHashSet<>()}).containsKey(resourceID))
+			return
+		
+		final resourceFile = scriptedResourceIDs[type][resourceID]
+		if(!resourceFile)
+			return
+		
+		unload resourceID, type
+		load resourceFile.path(), type
+	}
+	
+	/**
 	 * Get the {@link FileHandle} associated with the given
 	 * {@link ScriptedResource}.
 	 * 
