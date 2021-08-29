@@ -63,7 +63,7 @@ public class Module extends ScriptedResource {
 	 * Ensure that you set [id] before attempting to get this instance.
 	 * </p>
 	 */
-	public ScopedPreferences preferences() {
+	public ScopedPreferences getPreferences() {
 		preferencesService.get(id)
 	}
 	

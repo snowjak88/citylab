@@ -6,7 +6,7 @@ description = 'Handles fitting terrain-tiles to the map.'
 //
 // Get the configured tile-set name to use for the landscape,
 // with a pre-programmed fallback
-tilesetName = preferences().getString('tileset-name', 'default')
+tilesetName = preferences.getString('tileset-name', 'default')
 
 //
 // Get that tileset from the tile-set service.

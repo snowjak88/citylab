@@ -32,7 +32,7 @@ cloudsIndexStartY = 0
 
 cloudPosition = new Vector2()
 
-customRenderHook ('clouds', { delta, batch, shapeDrawer, support ->
+customRenderHook 'clouds', { delta, batch, shapeDrawer, support ->
 	
 	if(!clouds)
 		initClouds()
@@ -103,4 +103,4 @@ customRenderHook ('clouds', { delta, batch, shapeDrawer, support ->
 		batch.setColor Color.WHITE
 	}
 	
-}).after('map')
+} after 'map'
