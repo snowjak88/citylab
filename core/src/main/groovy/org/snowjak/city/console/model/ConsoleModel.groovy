@@ -23,7 +23,7 @@ class ConsoleModel extends Binding {
 		addProtectedVariable 'game', gameService
 	}
 	
-	private void addProtectedVariable(String name, Object value) {
+	public void addProtectedVariable(String name, Object value) {
 		variables[name] = value
 		protectedVariableNames << name
 	}

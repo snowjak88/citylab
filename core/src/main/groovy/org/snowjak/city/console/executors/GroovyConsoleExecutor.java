@@ -40,7 +40,7 @@ public class GroovyConsoleExecutor extends AbstractConsoleExecutor {
 		
 		//
 		// Set up our PrintStream to capture normal output
-		model.setProperty("out", printStream);
+		model.addProtectedVariable("out", printStream);
 		
 		shell = new GroovyShell(model, getCompilerConfig());
 	}

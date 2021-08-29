@@ -142,15 +142,21 @@ class GameService {
 		}
 	}
 	
-	public void loadAllModules() {
+	public void loadAllModules(DoubleConsumer progressReporter = {p -> }) {
 		
 		LOG.info "Scanning for module-scripts ..."
 		
 		final moduleFiles = scanForFiles(resolver.resolve(Configuration.EXTERNAL_ROOT_MODULES), ".module.groovy", true)
 		
+		final progressStep = 1d / (double) moduleFiles.size()
+		def progress = 0d
+		
 		for(def f : moduleFiles) {
 			LOG.info "Loading module-script [{0}] ...", f.path()
 			assetService.load(f.path(), Module.class)
+			
+			progress += progressStep
+			progressReporter?.accept progress
 		}
 		
 		LOG.info "Finished scanning for module-scripts."
@@ -161,8 +167,16 @@ class GameService {
 		LOG.info "Unloading all modules ..."
 		
 		final modules = assetService.getAllByType(Module)
-		for(def m : modules)
+		
+		final progressStep = 1d / (double) modules.size()
+		def progress = 0d
+		
+		for(def m : modules) {
 			assetService.unload m.id, Module
+			
+			progress += progressStep
+			progressReporter?.accept progress
+		}
 		
 		LOG.info "Finished unloading all modules."
 	}
@@ -178,18 +192,18 @@ class GameService {
 		
 		progressReporter?.accept 0
 		
-		uninitializeAllModules { p -> progressReporter?.accept p * 0.25 }
+		uninitializeAllModules { p -> progressReporter?.accept p * 0.2 }
 		
 		final modules = assetService.getAllByType(Module)
 		
-		unloadAllModules()
+		unloadAllModules { p -> progressReporter.accept p*0.2 + 0.2 }
 		
-		loadAllModules()
+		loadAllModules { p -> progressReporter.accept p*0.2 + 0.4 }
 		
 		while(!assetService.update())
-			progressReporter?. accept assetService.progress * 0.25 + 0.5
+			progressReporter?.accept assetService.progress * 0.2 + 0.6
 		
-		initializeAllModules { p -> progressReporter?.accept p * 0.25 + 0.75 }
+		initializeAllModules { p -> progressReporter?.accept p * 0.2 + 0.8 }
 		
 		LOG.info "Finished reloading all modules."
 	}
@@ -207,10 +221,9 @@ class GameService {
 		progressReporter?.accept 0
 		
 		for(Module m : modules) {
-			initializeModule m
+			initializeModule m, { p -> progressReporter?.accept p / progressStep + progress }
 			
 			progress += progressStep
-			progressReporter?.accept progress
 		}
 		
 		progressReporter?.accept 1
@@ -231,10 +244,9 @@ class GameService {
 		progressReporter?.accept 0
 		
 		for(Module m : assetService.getAllByType(Module)) {
-			uninitializeModule m
+			uninitializeModule m, { p -> progressReporter p / progressStep + progress }
 			
 			progress += progressStep
-			progressReporter?.accept progress
 		}
 		
 		progressReporter?.accept 1

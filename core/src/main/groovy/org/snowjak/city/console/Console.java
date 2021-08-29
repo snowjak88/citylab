@@ -12,6 +12,8 @@ import org.snowjak.city.console.completers.ConsoleWordCompleter;
 import org.snowjak.city.console.completers.StubWordCompleter;
 import org.snowjak.city.console.executors.AbstractConsoleExecutor;
 import org.snowjak.city.console.executors.GroovyConsoleExecutor;
+import org.snowjak.city.console.history.CommandHistory;
+import org.snowjak.city.console.history.SingleSessionCommandHistory;
 import org.snowjak.city.console.model.ConsoleModel;
 import org.snowjak.city.console.ui.ConsoleDisplay;
 import org.snowjak.city.service.GameAssetService;
@@ -66,6 +68,7 @@ public class Console {
 	
 	private final ConsoleDisplay display;
 	private final ConsoleWordCompleter completer;
+	private final CommandHistory history;
 	private final AbstractConsoleExecutor executor;
 	
 	private final LinkedList<Runnable> onReadyRunnables = new LinkedList<>();
@@ -74,6 +77,7 @@ public class Console {
 		
 		this.display = new ConsoleDisplay(this, skinService, viewport);
 		this.completer = new StubWordCompleter();
+		this.history = new SingleSessionCommandHistory();
 		this.executor = new GroovyConsoleExecutor(this, new ConsoleModel(assetService, gameService),
 				new ConsolePrintStream(this));
 	}
@@ -132,6 +136,11 @@ public class Console {
 		
 		if (executor != null)
 			executor.execute(commandText);
+	}
+	
+	public CommandHistory getHistory() {
+		
+		return history;
 	}
 	
 	/**

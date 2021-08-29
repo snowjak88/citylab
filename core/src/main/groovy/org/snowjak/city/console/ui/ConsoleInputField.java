@@ -5,6 +5,7 @@ package org.snowjak.city.console.ui;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.snowjak.city.console.Console;
 
@@ -34,9 +35,12 @@ public class ConsoleInputField extends TextArea {
 	
 	private final Console console;
 	private final Consumer<String> commandConsumer;
-	BiConsumer<InputEvent, String> completerConsumer;
+	private final BiConsumer<InputEvent, String> completerConsumer;
+	private final Supplier<String> previousHistorySupplier;
+	private final Supplier<String> nextHistorySupplier;
 	
 	public ConsoleInputField(Console console, Consumer<String> commandConsumer,
+			Supplier<String> previousHistorySupplier, Supplier<String> nextHistorySupplier,
 			BiConsumer<InputEvent, String> completerConsumer, String text, Skin skin, String styleName) {
 		
 		super(text, skin, styleName);
@@ -44,9 +48,12 @@ public class ConsoleInputField extends TextArea {
 		this.console = console;
 		this.commandConsumer = commandConsumer;
 		this.completerConsumer = completerConsumer;
+		this.previousHistorySupplier = previousHistorySupplier;
+		this.nextHistorySupplier = nextHistorySupplier;
 	}
 	
 	public ConsoleInputField(Console console, Consumer<String> commandConsumer,
+			Supplier<String> previousHistorySupplier, Supplier<String> nextHistorySupplier,
 			BiConsumer<InputEvent, String> completerConsumer, String text, Skin skin) {
 		
 		super(text, skin);
@@ -54,9 +61,12 @@ public class ConsoleInputField extends TextArea {
 		this.console = console;
 		this.commandConsumer = commandConsumer;
 		this.completerConsumer = completerConsumer;
+		this.previousHistorySupplier = previousHistorySupplier;
+		this.nextHistorySupplier = nextHistorySupplier;
 	}
 	
 	public ConsoleInputField(Console console, Consumer<String> commandConsumer,
+			Supplier<String> previousHistorySupplier, Supplier<String> nextHistorySupplier,
 			BiConsumer<InputEvent, String> completerConsumer, String text, TextFieldStyle style) {
 		
 		super(text, style);
@@ -64,6 +74,8 @@ public class ConsoleInputField extends TextArea {
 		this.console = console;
 		this.commandConsumer = commandConsumer;
 		this.completerConsumer = completerConsumer;
+		this.previousHistorySupplier = previousHistorySupplier;
+		this.nextHistorySupplier = nextHistorySupplier;
 	}
 	
 	@Override
@@ -73,6 +85,36 @@ public class ConsoleInputField extends TextArea {
 	}
 	
 	public class ConsoleInputFieldListener extends TextArea.TextAreaListener {
+		
+		private int ctrlCount = 0;
+		
+		@Override
+		public boolean keyDown(InputEvent event, int keycode) {
+			
+			if (keycode == Input.Keys.CONTROL_LEFT || keycode == Input.Keys.CONTROL_RIGHT)
+				ctrlCount++;
+			
+			else if (keycode == Input.Keys.UP) {
+				setText(previousHistorySupplier.get());
+				return true;
+				
+			} else if (keycode == Input.Keys.DOWN) {
+				setText(nextHistorySupplier.get());
+				return true;
+				
+			}
+			
+			return super.keyDown(event, keycode);
+		}
+		
+		@Override
+		public boolean keyUp(InputEvent event, int keycode) {
+			
+			if (keycode == Input.Keys.CONTROL_LEFT || keycode == Input.Keys.CONTROL_RIGHT)
+				ctrlCount--;
+			
+			return super.keyUp(event, keycode);
+		}
 		
 		@Override
 		public boolean keyTyped(InputEvent event, char character) {
@@ -88,7 +130,7 @@ public class ConsoleInputField extends TextArea {
 				setText("");
 				return true;
 				
-			} else if (event.getKeyCode() == Input.Keys.TAB) {
+			} else if (event.getKeyCode() == Input.Keys.SPACE && ctrlCount > 0) {
 				completerConsumer.accept(event, getText());
 				return true;
 				

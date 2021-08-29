@@ -96,7 +96,7 @@ public class ConsoleDisplay {
 		//
 		stage.addListener(new InputListener() {
 			
-			private boolean isCtrl = false;
+			private int ctrlCount = 0;
 			
 			@Override
 			public boolean handle(Event e) {
@@ -132,7 +132,7 @@ public class ConsoleDisplay {
 					return false;
 				
 				if (keycode == Input.Keys.CONTROL_LEFT || keycode == Input.Keys.CONTROL_RIGHT)
-					isCtrl = true;
+					ctrlCount++;
 				
 				return super.keyDown(event, keycode);
 			}
@@ -144,7 +144,7 @@ public class ConsoleDisplay {
 					return false;
 				
 				if (keycode == Input.Keys.CONTROL_LEFT || keycode == Input.Keys.CONTROL_RIGHT)
-					isCtrl = false;
+					ctrlCount--;
 				
 				return super.keyUp(event, keycode);
 			}
@@ -155,7 +155,7 @@ public class ConsoleDisplay {
 				if (console.isHidden())
 					return false;
 				
-				if (isCtrl) {
+				if (ctrlCount > 0) {
 					zoom = min(max(zoom + Math.signum(amountY) * 0.1f, MINIMUM_ZOOM), MAXIMUM_ZOOM);
 					adjustZoomLevel();
 				}
@@ -199,14 +199,8 @@ public class ConsoleDisplay {
 		
 		//
 		// Add default printers
-		// Note that we go from more- to less-specific
 		printers.add(new ThrowablePrinter(this, skin));
-		printers.add(basicPrinter);		
-//		printers.add(new MethodPrinter(this, skin));
-//		printers.add(new FieldPrinter(this, skin));
-//		printers.add(new TypePrinter(this, skin));
-//		printers.add(new IterablePrinter(this, skin));
-//		printers.add(new ObjectPrinter(this, skin));
+		printers.add(basicPrinter);
 		
 		consoleEntriesTable = new Table(skin);
 		consoleEntriesTable.bottom().left();
@@ -215,8 +209,11 @@ public class ConsoleDisplay {
 		scrollPane.setScrollbarsVisible(true);
 		scrollPane.setFadeScrollBars(false);
 		
-		inputTextArea = new ConsoleInputField(console, (c) -> console.execute(c), this::handleShowingCompletions, "",
-				skin);
+		inputTextArea = new ConsoleInputField(console, (c) -> {
+			console.getHistory().add(c);
+			console.execute(c);
+		}, () -> console.getHistory().getPrevious(), () -> console.getHistory().getNext(),
+				this::handleShowingCompletions, "", skin);
 		inputTextArea.setMaxLength(4096);
 		inputTextArea.setPrefRows(1.5f);
 		inputTextArea.setFocusTraversal(false);
@@ -276,6 +273,8 @@ public class ConsoleDisplay {
 		
 		print(values);
 		newLine();
+		
+		scrollToBottom();
 	}
 	
 	/**
@@ -322,6 +321,8 @@ public class ConsoleDisplay {
 				getPrintFor(value).forEach(this::appendToConsole);
 			
 		}
+		
+		scrollToBottom();
 	}
 	
 	/**
@@ -331,6 +332,7 @@ public class ConsoleDisplay {
 	public void newLine() {
 		
 		addNewConsoleLine();
+		scrollToBottom();
 	}
 	
 	/**
@@ -357,12 +359,16 @@ public class ConsoleDisplay {
 		consoleEntriesTable.row().left();
 		consoleEntriesTable.add(newLine);
 		
-		scrollPane.setScrollPercentY(1f);
-		scrollPane.updateVisualScroll();
-		
 		consoleEntries.add(new LinkedList<>());
 		
 		return newLine;
+	}
+	
+	private void scrollToBottom() {
+		
+		scrollPane.validate();
+		scrollPane.setScrollPercentY(1f);
+		scrollPane.updateVisualScroll();
 	}
 	
 	/**
@@ -393,9 +399,6 @@ public class ConsoleDisplay {
 			
 			consoleEntriesTable.row().left();
 			consoleEntriesTable.add(actor);
-			
-			scrollPane.setScrollPercentY(1f);
-			scrollPane.updateVisualScroll();
 			
 			consoleEntries.add(new LinkedList<>());
 			
