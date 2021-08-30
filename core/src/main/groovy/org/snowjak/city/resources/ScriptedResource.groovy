@@ -50,7 +50,6 @@ public abstract class ScriptedResource implements AssetDependent {
 	final Map<String,Set<String>> imports = [:]
 	final Map<String,Object> providedObjects = [:]
 	private final Map<Class<?>, Set<String>> scriptedDependencies = [:]
-	private final Map<FileHandle, Class<?>> assetDependencies = [:]
 	
 	@Override
 	public FileHandle getBaseDirectory() {

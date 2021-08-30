@@ -91,8 +91,10 @@ public class GameAssetService extends AssetManager {
 			//
 			// If a ScriptedResource fails, we should remove it from the list of pending ScriptedResources!
 			addFailureHandler(type, Throwable, { asset, ex ->
-				if( pendingResourceLoads[asset.type].remove(asset.fileName) )
-					pendingResourceLoadsCount.decrementAndGet()
+				synchronized(pendingResourceLoads) {
+					if( pendingResourceLoads[asset.type].remove(asset.fileName) )
+						pendingResourceLoadsCount.decrementAndGet()
+				}
 			})
 		}
 		
@@ -132,10 +134,13 @@ public class GameAssetService extends AssetManager {
 	public synchronized <T> void load(String fileName, Class<T> type) {
 		
 		if (scriptResourceLoaders.containsKey(type)) {
-			pendingResourceLoads.computeIfAbsent(type, { t ->
-				new LinkedHashSet<>()
-			}).add fileName
-			pendingResourceLoadsCount.incrementAndGet()
+			
+			synchronized(pendingResourceLoads) {
+				pendingResourceLoads.computeIfAbsent(type, { t ->
+					new LinkedHashSet<>()
+				}).add fileName
+				pendingResourceLoadsCount.incrementAndGet()
+			}
 		}
 		else
 			super.load(fileName, type)
@@ -313,15 +318,25 @@ public class GameAssetService extends AssetManager {
 		else if (isAssetsLoaded && iterationsWithoutResourceScheduled > 100) {
 			//
 			// Fail all pending resources.
-			for (Entry<Class<?>, Set<String>> pending : pendingResourceLoads.entrySet()) {
-				final Class<?> pendingType = pending.getKey()
-				for (String pendingFileName : pending.getValue())
-					taskFailed(new AssetDescriptor<>(pendingFileName, pendingType), new RuntimeException(
-							"Cannot load resource -- possible circular dependency with another resource?"))
+			synchronized(pendingResourceLoads) {
+				while(!pendingResourceLoads.isEmpty()) {
+					
+					final pendingType = pendingResourceLoads.keySet().first()
+					final pendingFileNames = pendingResourceLoads[pendingType]
+					
+					while(!pendingFileNames.isEmpty()) {
+						final pendingFileName = pendingFileNames.first()
+						taskFailed(new AssetDescriptor<>(pendingFileName, pendingType), new RuntimeException(
+								"Cannot load resource -- possible circular dependency with another resource?"))
+						pendingFileNames.remove pendingFileName
+					}
+					
+					pendingResourceLoads.remove pendingType
+				}
+				
+				pendingResourceLoads.clear()
+				pendingResourceLoadsCount.set(0)
 			}
-			
-			pendingResourceLoads.clear()
-			pendingResourceLoadsCount.set(0)
 			
 			return true
 		}
@@ -333,64 +348,66 @@ public class GameAssetService extends AssetManager {
 		
 		boolean atLeastOneResourceScheduled = false
 		
-		for (Entry<Class<?>, Set<String>> pendingResourceLoad : pendingResourceLoads.entrySet()) {
-			final Class<?> pendingType = pendingResourceLoad.key
-			final Set<String> fileNames = pendingResourceLoad.value
-			
-			final Iterator<String> fileNameIterator = fileNames.iterator()
-			while (fileNameIterator.hasNext()) {
+		synchronized(pendingResourceLoads) {
+			for (Entry<Class<?>, Set<String>> pendingResourceLoad : pendingResourceLoads.entrySet()) {
+				final Class<?> pendingType = pendingResourceLoad.key
+				final Set<String> fileNames = pendingResourceLoad.value
 				
-				final String fileName = fileNameIterator.next()
-				
-				//
-				// For the given pending resource, see if it has any resource-dependencies that
-				// aren't loaded.
-				//
-				final ScriptedResourceLoader<?, ?> loader = scriptResourceLoaders.get(pendingType)
-				final FileHandle fileHandle = loader.resolve(fileName)
-				
-				try {
+				final Iterator<String> fileNameIterator = fileNames.iterator()
+				while (fileNameIterator.hasNext()) {
 					
-					boolean anyNotLoaded = false
-					for (Entry<Class<?>, Set<String>> scriptedDependencies : loader.getScriptedDependencies(fileName)
-							.entrySet()) {
+					final String fileName = fileNameIterator.next()
+					
+					//
+					// For the given pending resource, see if it has any resource-dependencies that
+					// aren't loaded.
+					//
+					final ScriptedResourceLoader<?, ?> loader = scriptResourceLoaders.get(pendingType)
+					final FileHandle fileHandle = loader.resolve(fileName)
+					
+					try {
 						
-						final Class<?> dependencyType = scriptedDependencies.key
-						for (String dependencyID : scriptedDependencies.value) {
-							final FileHandle dependencyFile = scriptedResourceIDs
-									.computeIfAbsent(dependencyType, {t -> new LinkedHashMap<>()}).get(dependencyID)
-							if (dependencyFile == null || !super.isLoaded(dependencyFile.path(), dependencyType)) {
-								anyNotLoaded = true
-								break
+						boolean anyNotLoaded = false
+						for (Entry<Class<?>, Set<String>> scriptedDependencies : loader.getScriptedDependencies(fileName)
+								.entrySet()) {
+							
+							final Class<?> dependencyType = scriptedDependencies.key
+							for (String dependencyID : scriptedDependencies.value) {
+								final FileHandle dependencyFile = scriptedResourceIDs
+										.computeIfAbsent(dependencyType, {t -> new LinkedHashMap<>()}).get(dependencyID)
+								if (dependencyFile == null || !super.isLoaded(dependencyFile.path(), dependencyType)) {
+									anyNotLoaded = true
+									break
+								}
 							}
+							
+							if (anyNotLoaded)
+								break
 						}
 						
+						//
+						// If any aren't loaded, then this pending resource can't become non-pending.
 						if (anyNotLoaded)
-							break
+							continue
+						
+						//
+						// Make sure we can reference this resource by its ID.
+						final String resourceID = loader.getResourceID(fileHandle)
+						scriptedResourceIDs.computeIfAbsent(pendingType, {t -> new LinkedHashMap<>()}).put(resourceID,
+						fileHandle)
+						
+						//
+						// Schedule this resource for loading.
+						fileNameIterator.remove()
+						pendingResourceLoadsCount.decrementAndGet()
+						super.load(fileName, pendingType)
+						atLeastOneResourceScheduled = true
+						
+					} catch(Throwable t) {
+						handleException new AssetDescriptor(fileHandle, pendingType), t
 					}
 					
-					//
-					// If any aren't loaded, then this pending resource can't become non-pending.
-					if (anyNotLoaded)
-						continue
-					
-					//
-					// Make sure we can reference this resource by its ID.
-					final String resourceID = loader.getResourceID(fileHandle)
-					scriptedResourceIDs.computeIfAbsent(pendingType, {t -> new LinkedHashMap<>()}).put(resourceID,
-					fileHandle)
-					
-					//
-					// Schedule this resource for loading.
-					fileNameIterator.remove()
-					pendingResourceLoadsCount.decrementAndGet()
-					super.load(fileName, pendingType)
-					atLeastOneResourceScheduled = true
-					
-				} catch(Throwable t) {
-					handleException new AssetDescriptor(fileHandle, pendingType), t
 				}
-				
 			}
 		}
 		

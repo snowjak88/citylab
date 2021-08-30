@@ -25,13 +25,13 @@ tool 'terrainRaise', {
 				buttonDown = 'terrain_raise_button.png'
 			}
 			
-			active mapHover { cellX, cellY ->
-				//
-				// highlight nearest vertex
-			}
-			
-			active mapClick 'left', { cellX, cellY ->
-		//
-		// Adjust height of nearest vertex
-	}
+//			active mapHover { cellX, cellY ->
+//				//
+//				// highlight nearest vertex
+//			}
+//			
+//			active mapClick 'left', { cellX, cellY ->
+//		//
+//		// Adjust height of nearest vertex
+//	}
 }

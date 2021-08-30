@@ -20,14 +20,14 @@ abstract class GroupDefiner<T extends ToolGroup> {
 		this.groups = groups
 	}
 	
-	public T subgroup(String id) {
+	public T group(String id) {
 		if(!groups.containsKey(id))
 			throw new IllegalArgumentException("Cannot reference tool-group '$id' before it is defined.")
 		
 		groups[id]
 	}
 	
-	public T subgroup(Closure groupSpec) throws PrioritizationFailedException {
+	public T group(Closure groupSpec) throws PrioritizationFailedException {
 		final group = newDelegate()
 		groupSpec = groupSpec.rehydrate(group, this, this)
 		groupSpec.resolveStrategy = Closure.DELEGATE_FIRST

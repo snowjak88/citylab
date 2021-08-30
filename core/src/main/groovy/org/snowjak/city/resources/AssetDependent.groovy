@@ -27,6 +27,6 @@ trait AssetDependent {
 	
 	public Map<FileHandle, Class<?>> getAssetDependencies() {
 		
-		Collections.unmodifiableMap(assetDependencies)
+		assetDependencies
 	}
 }

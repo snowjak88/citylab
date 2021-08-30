@@ -50,4 +50,12 @@ cellRenderHook 'terrainRender', { delta, cellX, cellY, support ->
 				support.renderTile cellX, cellY, tile
 }
 
+//
+// We define a "clouds" renderer in this file ...
+//
 include 'renderers/cloudRenderer.groovy'
+
+//
+// We define all our terain-tools in this file ...
+//
+include 'ui/tools.groovy'
