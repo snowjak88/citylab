@@ -12,30 +12,29 @@ import org.snowjak.city.util.RelativelyPrioritized;
  */
 public abstract class AbstractCustomRenderingHook
 		implements CustomRenderingHook, RelativelyPrioritized<AbstractCustomRenderingHook, String> {
-	
+
 	private final String id;
-	private final RelativePriority<String> relativePriority;
-	
+	private final RelativePriority<String> relativePriority = new RelativePriority<>();
+
 	public AbstractCustomRenderingHook(String id) {
-		
+
 		this.id = id;
-		this.relativePriority = new RelativePriority<>();
 	}
-	
+
 	public String getId() {
-		
+
 		return id;
 	}
-	
-	@Override
-	public String getRelativePriorityKey() {
-		
-		return id;
-	}
-	
+
 	@Override
 	public RelativePriority<String> getRelativePriority() {
 		
 		return relativePriority;
+	}
+
+	@Override
+	public String getRelativePriorityKey() {
+
+		return id;
 	}
 }

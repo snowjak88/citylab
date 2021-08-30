@@ -5,11 +5,10 @@ package org.snowjak.city.service.loadingtasks;
 
 import org.snowjak.city.CityGame;
 import org.snowjak.city.map.CityMap;
-import org.snowjak.city.screens.LoadingScreen.LoadingTask;
+import org.snowjak.city.screens.loadingtasks.LoadingTask;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
-import org.snowjak.city.util.RelativePriority;
 
 import com.badlogic.ashley.core.Entity;
 import com.github.czyzby.kiwi.log.Logger;
@@ -23,7 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * @author snowjak88
  *
  */
-public class GameMapEntityCreationTask implements LoadingTask {
+public class GameMapEntityCreationTask extends LoadingTask {
 	
 	private static final Logger LOG = LoggerService.forClass(GameMapEntityCreationTask.class);
 	
@@ -31,22 +30,14 @@ public class GameMapEntityCreationTask implements LoadingTask {
 	
 	private final GameService gameService;
 	private final I18NService i18nService;
-	private final AtomicDouble progress = new AtomicDouble();
-	private final RelativePriority<Class<?>> relativePriority;
+	private final AtomicDouble progressHolder = new AtomicDouble();
 	
 	public GameMapEntityCreationTask(GameService gameService, I18NService i18nService) {
 		
 		this.gameService = gameService;
 		this.i18nService = i18nService;
 		
-		this.relativePriority = new RelativePriority<>();
-		relativePriority.after(GameEntitySystemInitializationTask.class, GameMapGenerationTask.class);
-	}
-	
-	@Override
-	public RelativePriority<Class<?>> getRelativePriority() {
-		
-		return relativePriority;
+		getRelativePriority().after(GameEntitySystemInitializationTask.class, GameMapGenerationTask.class);
 	}
 	
 	@Override
@@ -68,7 +59,7 @@ public class GameMapEntityCreationTask implements LoadingTask {
 	@Override
 	public float getProgress() {
 		
-		final float progressValue = (float) progress.get();
+		final float progressValue = (float) progressHolder.get();
 		LOG.info("getProgress() = {0}", progressValue);
 		return progressValue;
 	}
@@ -97,6 +88,6 @@ public class GameMapEntityCreationTask implements LoadingTask {
 		
 		LOG.info("Starting map-entity-creation task ...");
 		mapPopulationFuture = CityGame.EXECUTOR
-				.submit(() -> gameService.addCityMapCellEntities(map, (p) -> progress.set(p)));
+				.submit(() -> gameService.addCityMapCellEntities(map, (p) -> progressHolder.set(p)));
 	}
 }

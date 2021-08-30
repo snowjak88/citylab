@@ -34,8 +34,8 @@ import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
 import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileCorner;
 import org.snowjak.city.service.LoggerService;
+import org.snowjak.city.util.PrioritizationFailedException;
 import org.snowjak.city.util.RelativePriorityList;
-import org.snowjak.city.util.RelativePriorityList.PrioritizationFailedException;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;

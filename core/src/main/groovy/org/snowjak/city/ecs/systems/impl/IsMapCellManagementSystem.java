@@ -3,10 +3,10 @@
  */
 package org.snowjak.city.ecs.systems.impl;
 
+import org.snowjak.city.GameState;
 import org.snowjak.city.ecs.components.IsMapCell;
 import org.snowjak.city.ecs.systems.ListeningSystem;
 import org.snowjak.city.map.CityMap;
-import org.snowjak.city.service.GameService.GameState;
 
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;

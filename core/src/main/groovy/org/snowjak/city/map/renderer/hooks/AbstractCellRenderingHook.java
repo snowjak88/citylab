@@ -14,12 +14,11 @@ public abstract class AbstractCellRenderingHook
 		implements CellRenderingHook, RelativelyPrioritized<AbstractCellRenderingHook, String> {
 	
 	private final String id;
-	private final RelativePriority<String> relativePriority;
+	private final RelativePriority<String> relativePriority = new RelativePriority<>();
 	
 	public AbstractCellRenderingHook(String id) {
 		
 		this.id = id;
-		this.relativePriority = new RelativePriority<>();
 	}
 	
 	public String getId() {
@@ -28,14 +27,14 @@ public abstract class AbstractCellRenderingHook
 	}
 	
 	@Override
-	public String getRelativePriorityKey() {
-		
-		return id;
-	}
-	
-	@Override
 	public RelativePriority<String> getRelativePriority() {
 		
 		return relativePriority;
+	}
+	
+	@Override
+	public String getRelativePriorityKey() {
+		
+		return id;
 	}
 }

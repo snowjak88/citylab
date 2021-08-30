@@ -5,27 +5,24 @@ package org.snowjak.city.service
 
 import java.util.function.DoubleConsumer
 
+import org.snowjak.city.GameState
 import org.snowjak.city.configuration.Configuration
 import org.snowjak.city.ecs.components.IsMapCell
 import org.snowjak.city.ecs.systems.impl.IsMapCellManagementSystem
 import org.snowjak.city.ecs.systems.impl.RemoveMapCellRearrangedSystem
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.generator.MapGenerator
-import org.snowjak.city.map.renderer.MapRenderer
 import org.snowjak.city.module.Module
-import org.snowjak.city.screens.GameScreen.GameCameraControl
-import org.snowjak.city.screens.LoadingScreen.CompositeLoadingTask
-import org.snowjak.city.screens.LoadingScreen.LoadingTask
+import org.snowjak.city.screens.loadingtasks.CompositeLoadingTask
+import org.snowjak.city.screens.loadingtasks.LoadingTask
 import org.snowjak.city.service.loadingtasks.GameEntitySystemInitializationTask
 import org.snowjak.city.service.loadingtasks.GameMapEntityCreationTask
 import org.snowjak.city.service.loadingtasks.GameMapGenerationTask
 import org.snowjak.city.service.loadingtasks.GameMapRendererSetupTask
 import org.snowjak.city.service.loadingtasks.GameModulesInitializationTask
-import org.snowjak.city.util.RelativePriorityList.PrioritizationFailedException
+import org.snowjak.city.util.PrioritizationFailedException
 
-import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.Family
-import com.badlogic.ashley.core.PooledEngine
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.assets.loaders.FileHandleResolver
 import com.badlogic.gdx.files.FileHandle
@@ -279,7 +276,7 @@ class GameService {
 				}
 		}
 		
-		progressReporter?.accept 0.334
+		progressReporter?.accept 0.25
 		
 		if (!module.customRenderingHooks.isEmpty()) {
 			LOG.info "Adding custom rendering hooks ..."
@@ -292,7 +289,7 @@ class GameService {
 				}
 		}
 		
-		progressReporter?.accept 0.667
+		progressReporter?.accept 0.5
 		
 		//
 		// Add this module's systems to the entity engine
@@ -301,6 +298,16 @@ class GameService {
 			for (def systemEntry : module.systems) {
 				LOG.debug "Adding entity-processing system \"{0}\" ...", systemEntry.key
 				state.engine.addSystem systemEntry.value
+			}
+		}
+		
+		progressReporter?.accept 0.75
+		
+		if(!module.tools.isEmpty()) {
+			LOG.info "Adding tools ..."
+			for(def toolEntry : module.tools) {
+				LOG.info "Adding tool \"{0}\" ...", toolEntry.key
+				state.tools << ["$toolEntry.key" : toolEntry.value]
 			}
 		}
 		
@@ -377,34 +384,6 @@ class GameService {
 	 */
 	public void exitNow() {
 		Gdx.app.exit()
-	}
-	
-	public static class GameState {
-		
-		/**
-		 * Seed to be used for random-number generation.
-		 */
-		String seed = Long.toString(System.currentTimeMillis())
-		
-		/**
-		 * Active {@link CityMap} (may be {@code null})
-		 */
-		CityMap map
-		
-		/**
-		 * Active camera-controller (may be {@code null})
-		 */
-		GameCameraControl camera
-		
-		/**
-		 * Entity-processing {@link Engine}
-		 */
-		final Engine engine = new PooledEngine(64, 512, 8, 64)
-		
-		/**
-		 * The main world renderer
-		 */
-		final MapRenderer renderer = new MapRenderer()
 	}
 	
 	public static class NewGameParameters {

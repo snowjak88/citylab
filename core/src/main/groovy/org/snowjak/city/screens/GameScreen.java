@@ -9,6 +9,7 @@ import static org.snowjak.city.util.Util.min;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.snowjak.city.GameState;
 import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.input.GameInputProcessor;
@@ -22,10 +23,9 @@ import org.snowjak.city.map.renderer.MapRenderer;
 import org.snowjak.city.map.renderer.RenderingSupport;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
 import org.snowjak.city.service.GameService;
-import org.snowjak.city.service.GameService.GameState;
 import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.SkinService;
-import org.snowjak.city.util.RelativePriorityList.PrioritizationFailedException;
+import org.snowjak.city.util.PrioritizationFailedException;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Input;

@@ -2,6 +2,7 @@ package org.snowjak.city.module
 
 import java.util.function.Consumer
 
+import org.snowjak.city.GameState
 import org.snowjak.city.ecs.systems.ListeningSystem
 import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook
@@ -12,8 +13,8 @@ import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
 import org.snowjak.city.resources.ScriptedResource
 import org.snowjak.city.service.GameService
 import org.snowjak.city.service.PreferencesService
-import org.snowjak.city.service.GameService.GameState
 import org.snowjak.city.service.PreferencesService.ScopedPreferences
+import org.snowjak.city.tools.Tool
 import org.snowjak.city.util.RelativePriority
 
 import com.badlogic.ashley.core.Entity
@@ -46,8 +47,11 @@ public class Module extends ScriptedResource {
 	
 	final GameState state
 	final Map<String,EntitySystem> systems = [:]
+	
 	final Set<AbstractCellRenderingHook> cellRenderingHooks = []
 	final Set<AbstractCustomRenderingHook> customRenderingHooks = []
+	
+	final Map<String,Tool> tools = [:]
 	
 	Module(GameService gameService, PreferencesService preferencesService) {
 		super()
@@ -172,6 +176,21 @@ public class Module extends ScriptedResource {
 				}
 		
 		systems << ["$id" : system]
+	}
+	
+	/**
+	 * Register a new {@link Tool} in this module.
+	 * @param id
+	 * @param toolSpec
+	 */
+	public void tool(String id, @DelegatesTo(value=Tool, strategy=Closure.DELEGATE_FIRST) Closure toolSpec) {
+		
+		final tool = new Tool(id, scriptDirectory, gameService)
+		toolSpec = toolSpec.rehydrate(tool, this, this)
+		toolSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		toolSpec()
+		
+		tools << ["$id" : tool]
 	}
 	
 	@Override

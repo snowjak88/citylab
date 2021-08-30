@@ -3,20 +3,18 @@
  */
 package org.snowjak.city.service.loadingtasks;
 
-import org.snowjak.city.screens.LoadingScreen.LoadingTask;
+import org.snowjak.city.screens.loadingtasks.LoadingTask;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
-import org.snowjak.city.util.RelativePriority;
 
 /**
  * @author snowjak88
  *
  */
-public class GameMapRendererSetupTask implements LoadingTask {
+public class GameMapRendererSetupTask extends LoadingTask {
 	
 	private final GameService gameService;
 	private final I18NService i18nService;
-	private final RelativePriority<Class<?>> relativePriority;
 	
 	private boolean executed = false;
 	
@@ -25,14 +23,7 @@ public class GameMapRendererSetupTask implements LoadingTask {
 		this.gameService = gameService;
 		this.i18nService = i18nService;
 		
-		relativePriority = new RelativePriority<>();
-		relativePriority.after(GameMapGenerationTask.class);
-	}
-	
-	@Override
-	public RelativePriority<Class<?>> getRelativePriority() {
-		
-		return relativePriority;
+		getRelativePriority().after(GameMapGenerationTask.class);
 	}
 	
 	@Override

@@ -6,13 +6,12 @@ package org.snowjak.city.service.loadingtasks;
 import java.util.concurrent.ExecutionException;
 
 import org.snowjak.city.CityGame;
+import org.snowjak.city.GameState;
 import org.snowjak.city.map.CityMap;
-import org.snowjak.city.screens.LoadingScreen.LoadingTask;
-import org.snowjak.city.service.GameService.GameState;
+import org.snowjak.city.screens.loadingtasks.LoadingTask;
 import org.snowjak.city.service.GameService.NewGameParameters;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
-import org.snowjak.city.util.RelativePriority;
 
 import com.github.czyzby.kiwi.log.Logger;
 import com.google.common.util.concurrent.AtomicDouble;
@@ -27,7 +26,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * @author snowjak88
  *
  */
-public class GameMapGenerationTask implements LoadingTask {
+public class GameMapGenerationTask extends LoadingTask {
 	
 	private static final Logger LOG = LoggerService.forClass(GameMapGenerationTask.class);
 	
@@ -37,21 +36,13 @@ public class GameMapGenerationTask implements LoadingTask {
 	private final NewGameParameters param;
 	private final I18NService i18nService;
 	private final AtomicDouble progress = new AtomicDouble();
-	private final RelativePriority<Class<?>> relativePriority;
 	
 	public GameMapGenerationTask(GameState state, NewGameParameters param, I18NService i18nService) {
 		
 		this.state = state;
 		this.param = param;
 		this.i18nService = i18nService;
-		this.relativePriority = new RelativePriority<>();
-		relativePriority.before(GameMapEntityCreationTask.class);
-	}
-	
-	@Override
-	public RelativePriority<Class<?>> getRelativePriority() {
-		
-		return relativePriority;
+		getRelativePriority().before(GameMapEntityCreationTask.class);
 	}
 	
 	@Override

@@ -3,6 +3,7 @@
  */
 package org.snowjak.city.input;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -35,6 +36,8 @@ public class GameInputProcessor extends InputAdapter {
 	
 	private final Function<Vector2, Vector2> screenToMapConverter;
 	private final Vector2 scratch = new Vector2();
+	
+	private int altCount = 0, ctrlCount = 0, shiftCount = 0;
 	
 	public GameInputProcessor(Function<Vector2, Vector2> screenToMapConverter) {
 		
@@ -122,8 +125,9 @@ public class GameInputProcessor extends InputAdapter {
 				return pool.peekFirst();
 			
 			try {
-				return eventType.newInstance();
-			} catch (InstantiationException | IllegalAccessException e) {
+				return eventType.getConstructor().newInstance();
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+					| InstantiationException | NoSuchMethodException | SecurityException e) {
 				throw new RuntimeException(
 						"Could not instantiate a new input-event of type [" + eventType.getName() + "].", e);
 			}
@@ -290,6 +294,48 @@ public class GameInputProcessor extends InputAdapter {
 			final ScrollEvent e = getEventInstance(ScrollEvent.class);
 			e.setAmountX(amountX);
 			e.setAmountY(amountY);
+			sendEvent(e);
+		}
+		
+		return true;
+	}
+	
+	@Override
+	public boolean keyDown(int keycode) {
+		
+		if (keycode == Input.Keys.ALT_LEFT || keycode == Input.Keys.ALT_RIGHT)
+			altCount++;
+		else if (keycode == Input.Keys.CONTROL_LEFT || keycode == Input.Keys.CONTROL_RIGHT)
+			ctrlCount++;
+		else if (keycode == Input.Keys.SHIFT_LEFT || keycode == Input.Keys.SHIFT_RIGHT)
+			shiftCount++;
+		
+		return true;
+	}
+	
+	@Override
+	public boolean keyUp(int keycode) {
+		
+		if (keycode == Input.Keys.ALT_LEFT || keycode == Input.Keys.ALT_RIGHT)
+			altCount--;
+		else if (keycode == Input.Keys.CONTROL_LEFT || keycode == Input.Keys.CONTROL_RIGHT)
+			ctrlCount--;
+		else if (keycode == Input.Keys.SHIFT_LEFT || keycode == Input.Keys.SHIFT_RIGHT)
+			shiftCount--;
+		
+		return true;
+	}
+	
+	@Override
+	public boolean keyTyped(char character) {
+		
+		final int keycode = Input.Keys.valueOf(Character.toString(character));
+		if (keycode > -1 && hasReceiversFor(KeyTypedEvent.class)) {
+			final KeyTypedEvent e = getEventInstance(KeyTypedEvent.class);
+			e.setAlt(altCount > 0);
+			e.setCtrl(ctrlCount > 0);
+			e.setShift(shiftCount > 0);
+			e.setKeycode(keycode);
 			sendEvent(e);
 		}
 		
