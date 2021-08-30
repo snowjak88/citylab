@@ -15,7 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor
  * @author snowjak88
  *
  */
-abstract class ToolGroup<T extends ToolGroup> extends GroupDefiner<T> implements RelativelyPrioritized<T, String>, AssetDependent {
+abstract class ToolGroup<T extends ToolGroup> implements SubgroupDefiner<T>, RelativelyPrioritized<T, String>, AssetDependent {
 	final String id = ""
 	final GroupedActivationMethod context
 	
@@ -25,14 +25,16 @@ abstract class ToolGroup<T extends ToolGroup> extends GroupDefiner<T> implements
 	final RelativePriority<String> relativePriority = new RelativePriority()
 	
 	public ToolGroup(String id, GroupedActivationMethod context = null, Map<String,T> groups, FileHandle baseDirectory) {
-		super(groups)
+		
+		this.org_snowjak_city_tools_groups_SubgroupDefiner__groups = new LinkedHashMap<>(groups)
+		
 		this.id = id
 		this.context = context
 		this.baseDirectory = baseDirectory
 	}
 	
 	@Override
-	protected void afterDelegation(T delegate) {
+	public void afterDelegation(T delegate) {
 		
 		if(context)
 			context.grouping = delegate

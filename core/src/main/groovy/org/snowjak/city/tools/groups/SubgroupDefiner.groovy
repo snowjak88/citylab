@@ -8,17 +8,15 @@ import org.snowjak.city.util.RelativePriorityList
 
 
 /**
+ * This trait bestows the ability to manage a prioritized list of sub-groups.
+ * 
  * @author snowjak88
  *
  */
-abstract class GroupDefiner<T extends ToolGroup> {
+trait SubgroupDefiner<T extends ToolGroup> {
 	
-	final Map<String,T> groups = new LinkedHashMap<>()
-	final RelativePriorityList<String, ? extends ToolGroup> prioritizedSubgroups = new RelativePriorityList()
-	
-	public GroupDefiner(Map<String,T> groups) {
-		this.groups = groups
-	}
+	public Map<String,T> groups
+	public final RelativePriorityList<String, ? extends ToolGroup> prioritizedSubgroups = new RelativePriorityList()
 	
 	public T group(String id) {
 		if(!groups.containsKey(id))
@@ -55,7 +53,7 @@ abstract class GroupDefiner<T extends ToolGroup> {
 	 * Produce a new instance of this group-type, configured to be used as the delegate to a group-spec/Closure.
 	 * @return
 	 */
-	protected abstract T newDelegate()
+	public abstract T newDelegate()
 	/**
 	 * Perform any required processing to a group-instance after it has been used as the delegate to a group-spec/Closure.
 	 * <p>
@@ -63,6 +61,6 @@ abstract class GroupDefiner<T extends ToolGroup> {
 	 * </p>
 	 * @param delegate
 	 */
-	protected void afterDelegation(T delegate) {
+	public void afterDelegation(T delegate) {
 	}
 }

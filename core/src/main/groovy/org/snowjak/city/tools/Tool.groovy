@@ -9,6 +9,7 @@ import org.snowjak.city.tools.activation.ButtonActivationMethod
 import org.snowjak.city.tools.activation.KeyActivationMethod
 import org.snowjak.city.tools.activation.MenuActivationMethod
 import org.snowjak.city.tools.groups.ButtonToolGroup
+import org.snowjak.city.tools.groups.GroupsDefiner
 import org.snowjak.city.tools.groups.MenuToolGroup
 
 import com.badlogic.gdx.files.FileHandle
@@ -30,7 +31,7 @@ import com.badlogic.gdx.files.FileHandle
  * @author snowjak88
  *
  */
-class Tool {
+class Tool implements GroupsDefiner {
 	
 	final String id
 	
@@ -39,14 +40,16 @@ class Tool {
 	private final FileHandle baseDirectory
 	
 	private final GameService gameService
-	private final Map<String,MenuToolGroup> menuGroups = [:]
-	private final Map<String,ButtonToolGroup> buttonGroups = [:]
+	private final Map<String,MenuToolGroup> menuGroups
+	private final Map<String,ButtonToolGroup> buttonGroups
 	
 	final Set<ActivationMethod> activationMethods = new LinkedHashSet<>()
 	
-	public Tool(String id, FileHandle baseDirectory, GameService gameService) {
+	public Tool(String id, FileHandle baseDirectory, Map<String,MenuToolGroup> menuGroups, Map<String,ButtonToolGroup> buttonGroups, GameService gameService) {
 		this.id = id
 		this.baseDirectory = baseDirectory
+		this.menuGroups = menuGroups
+		this.buttonGroups = buttonGroups
 		this.gameService = gameService
 	}
 	
@@ -88,41 +91,11 @@ class Tool {
 	//
 	//
 	
-	public MenuToolGroup menuGroup(String id) {
-		if(!menuGroups.containsKey(id))
-			throw new IllegalArgumentException("Cannot reference menu tool-group '$id' before it is defined!")
-		menuGroups[id]
-	}
-	
-	public MenuToolGroup menuGroup(String id, @DelegatesTo(value=MenuToolGroup, strategy=Closure.DELEGATE_FIRST) Closure groupSpec) {
-		final group = new MenuToolGroup(id, menuGroups, baseDirectory)
-		groupSpec = groupSpec.rehydrate(group, this, this)
-		groupSpec.resolveStrategy = Closure.DELEGATE_FIRST
-		groupSpec()
+	@Override
+	public FileHandle getBaseDirectory() {
 		
-		menuGroups[group.id] = group
-		group
+		baseDirectory
 	}
-	
-	public ButtonToolGroup buttonGroup(String id) {
-		if(!buttonGroups.containsKey(id))
-			throw new IllegalArgumentException("Cannot reference button tool-group '$id' before it is defined!")
-		buttonGroups[id]
-	}
-	
-	public ButtonToolGroup buttonGroup(String id, @DelegatesTo(value=ButtonToolGroup, strategy=Closure.DELEGATE_FIRST) Closure groupSpec) {
-		final group = new ButtonToolGroup(id, buttonGroups, baseDirectory)
-		groupSpec = groupSpec.rehydrate(group, this, this)
-		groupSpec.resolveStrategy = Closure.DELEGATE_FIRST
-		groupSpec()
-		
-		buttonGroups[id] = group
-		group
-	}
-	
-	//
-	//
-	//
 	
 	public void activate(GameService service) {
 		throw new UnsupportedOperationException()

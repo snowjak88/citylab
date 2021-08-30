@@ -19,8 +19,6 @@ class ButtonToolRenderer {
 	
 	private final Map<String,Tool> tools = new LinkedHashMap<>()
 	
-	private final Map<String,ButtonToolGroup> groupsByName = new LinkedHashMap<>()
-	
 	/**
 	 * Register all buttons defined by the given {@link Tool}.
 	 * @param tool

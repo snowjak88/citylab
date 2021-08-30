@@ -15,6 +15,7 @@ import org.snowjak.city.service.GameService
 import org.snowjak.city.service.PreferencesService
 import org.snowjak.city.service.PreferencesService.ScopedPreferences
 import org.snowjak.city.tools.Tool
+import org.snowjak.city.tools.groups.GroupsDefiner
 import org.snowjak.city.util.RelativePriority
 
 import com.badlogic.ashley.core.Entity
@@ -38,7 +39,7 @@ import com.badlogic.gdx.files.FileHandle
  * @author snowjak88
  *
  */
-public class Module extends ScriptedResource {
+public class Module extends ScriptedResource implements GroupsDefiner {
 	
 	String description
 	
@@ -185,7 +186,7 @@ public class Module extends ScriptedResource {
 	 */
 	public void tool(String id, @DelegatesTo(value=Tool, strategy=Closure.DELEGATE_FIRST) Closure toolSpec) {
 		
-		final tool = new Tool(id, scriptDirectory, gameService)
+		final tool = new Tool(id, scriptDirectory, org_snowjak_city_tools_groups_GroupsDefiner__menuGroups, org_snowjak_city_tools_groups_GroupsDefiner__buttonGroups, gameService)
 		toolSpec = toolSpec.rehydrate(tool, this, this)
 		toolSpec.resolveStrategy = Closure.DELEGATE_FIRST
 		toolSpec()
