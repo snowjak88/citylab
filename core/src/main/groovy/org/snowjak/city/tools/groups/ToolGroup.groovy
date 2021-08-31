@@ -19,17 +19,20 @@ abstract class ToolGroup<T extends ToolGroup> implements SubgroupDefiner<T>, Rel
 	final String id = ""
 	final GroupedActivationMethod context
 	
+	final T parent
+	
 	final List<GroupedActivationMethod> activationMethods = []
 	final FileHandle baseDirectory
 	
 	final RelativePriority<String> relativePriority = new RelativePriority()
 	
-	public ToolGroup(String id, GroupedActivationMethod context = null, Map<String,T> groups, FileHandle baseDirectory) {
+	public ToolGroup(String id, GroupedActivationMethod context = null, Map<String,T> groups, FileHandle baseDirectory, T parent) {
 		
-		this.org_snowjak_city_tools_groups_SubgroupDefiner__groups = new LinkedHashMap<>(groups)
+		this.org_snowjak_city_tools_groups_SubgroupDefiner__groups = groups
 		
 		this.id = id
 		this.context = context
+		this.parent = parent
 		this.baseDirectory = baseDirectory
 	}
 	

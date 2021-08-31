@@ -16,14 +16,14 @@ import com.badlogic.gdx.scenes.scene2d.Actor
  */
 class MenuToolGroup extends ToolGroup<MenuToolGroup> {
 	
-	public MenuToolGroup(String id, GroupedActivationMethod context = null, Map<String,MenuToolGroup> groups, FileHandle baseDirectory) {
-		super(id, context, groups, baseDirectory)
+	public MenuToolGroup(String id, GroupedActivationMethod context = null, Map<String,MenuToolGroup> groups, FileHandle baseDirectory, MenuToolGroup parent = null) {
+		super(id, context, groups, baseDirectory, parent)
 	}
 	
 	@Override
-	protected MenuToolGroup newDelegate() {
+	protected MenuToolGroup newDelegate(String id, Map<String,MenuToolGroup> groups, FileHandle baseDirectory, MenuToolGroup parent) {
 		
-		new MenuToolGroup(context)
+		new MenuToolGroup(id, context, groups, baseDirectory, parent)
 	}
 	
 	

@@ -3,7 +3,11 @@
 // Here we define the terrain tools -- raise and lower, really
 //
 
-buttonGroup 'terrain', {
+buttonGroup 'world', {
+	title = 'World Tools'
+	buttonUp = 'terrain_raise_button.png'
+	buttonDown = 'terrain_raise_button.png' 
+} group 'terrain', {
 	title = 'Terrain'
 	buttonUp = 'terrain_raise_button.png'
 	buttonDown = 'terrain_raise_button.png'

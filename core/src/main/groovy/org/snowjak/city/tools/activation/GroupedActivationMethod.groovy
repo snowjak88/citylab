@@ -14,8 +14,6 @@ import org.snowjak.city.util.RelativelyPrioritized
  */
 abstract class GroupedActivationMethod<T extends ToolGroup> implements SubgroupDefiner<T>, ActivationMethod, RelativelyPrioritized<GroupedActivationMethod, String> {
 	
-	T grouping
-	
 	final RelativePriority<String> relativePriority = new RelativePriority()
 	
 	public GroupedActivationMethod(Map<String,T> groups) {

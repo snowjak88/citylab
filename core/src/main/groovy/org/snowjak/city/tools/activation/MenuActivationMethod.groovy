@@ -6,6 +6,8 @@ package org.snowjak.city.tools.activation
 import org.snowjak.city.GameState
 import org.snowjak.city.tools.groups.MenuToolGroup
 
+import com.badlogic.gdx.files.FileHandle
+
 /**
  * @author snowjak88
  *
@@ -26,9 +28,9 @@ class MenuActivationMethod extends GroupedActivationMethod<MenuToolGroup> {
 	}
 	
 	@Override
-	protected MenuToolGroup newDelegate() {
+	protected MenuToolGroup newDelegate(String id, Map<String,MenuToolGroup> groups, FileHandle baseDirectory, MenuToolGroup parent) {
 		
-		new MenuToolGroup(this)
+		new MenuToolGroup(id, this, groups, baseDirectory, parent)
 	}
 	
 	@Override

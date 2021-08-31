@@ -14,17 +14,18 @@ import com.badlogic.gdx.scenes.scene2d.Actor
  */
 class ButtonToolGroup extends ToolGroup<ButtonToolGroup> {
 	
+	String title
 	FileHandle buttonUp, buttonDown
 	
-	public ButtonToolGroup(String id, GroupedActivationMethod context = null, Map<String,MenuToolGroup> groups, FileHandle baseDirectory) {
+	public ButtonToolGroup(String id, GroupedActivationMethod context = null, Map<String,ButtonToolGroup> groups, FileHandle baseDirectory, ButtonToolGroup parent = null) {
 		
-		super(id, context, groups, baseDirectory)
+		super(id, context, groups, baseDirectory, parent)
 	}
 	
 	@Override
-	protected ButtonToolGroup newDelegate() {
+	protected ButtonToolGroup newDelegate(String id, Map<String,ButtonToolGroup> groups, FileHandle baseDirectory, ButtonToolGroup parent) {
 		
-		new ButtonToolGroup(context)
+		new ButtonToolGroup(id, context, groups, baseDirectory, parent)
 	}
 	
 	@Override

@@ -8,7 +8,7 @@ import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.renderer.MapRenderer
 import org.snowjak.city.screens.GameScreen.GameCameraControl
 import org.snowjak.city.tools.Tool
-import org.snowjak.city.tools.renderer.ButtonToolRenderer
+import org.snowjak.city.tools.ui.ButtonToolList
 
 import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.PooledEngine
@@ -58,5 +58,5 @@ public class GameState {
 	/**
 	 * Renderer for registered button-activated tools
 	 */
-	final ButtonToolRenderer buttonRenderer = new ButtonToolRenderer()
+	ButtonToolList buttonRenderer
 }

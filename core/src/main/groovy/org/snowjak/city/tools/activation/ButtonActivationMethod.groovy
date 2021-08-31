@@ -32,9 +32,9 @@ class ButtonActivationMethod extends GroupedActivationMethod<ButtonToolGroup> {
 	}
 	
 	@Override
-	protected ButtonToolGroup newDelegate() {
+	protected ButtonToolGroup newDelegate(String id, Map<String,ButtonToolGroup> groups, FileHandle baseDirectory, ButtonToolGroup parent) {
 		
-		new ButtonToolGroup(this)
+		new ButtonToolGroup(id, this, groups, baseDirectory, parent)
 	}
 	
 	@Override
