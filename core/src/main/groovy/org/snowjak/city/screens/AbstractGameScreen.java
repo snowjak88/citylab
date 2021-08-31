@@ -5,7 +5,6 @@ package org.snowjak.city.screens;
 
 import java.util.LinkedList;
 
-import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.SkinService;
@@ -94,8 +93,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 			Gdx.input.setInputProcessor(
 					new InputMultiplexer(console.getInputProcessor(), stage, implementationInputProcessor));
 		
-		skin = skinService.getSkin(Configuration.SKIN_NAME);
-		if (skinService.getSkin(Configuration.SKIN_NAME).has("background", Color.class))
+		skin = skinService.getCurrent();
+		if (skin.has("background", Color.class))
 			backgroundColor = skin.get("background", Color.class);
 		else
 			backgroundColor = null;

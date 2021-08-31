@@ -12,7 +12,6 @@ import org.snowjak.city.resources.ScriptedResourceLoader;
 import org.snowjak.city.service.GameAssetService;
 
 import com.badlogic.gdx.assets.AssetLoaderParameters;
-import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.github.czyzby.autumn.annotation.Component;
@@ -24,9 +23,9 @@ import com.github.czyzby.autumn.annotation.Component;
 @Component
 public class TileSetResourceLoader extends ScriptedResourceLoader<TileSet, TileSetResourceLoaderParameter> {
 	
-	public TileSetResourceLoader(GameAssetService assetService, FileHandleResolver resolver) {
+	public TileSetResourceLoader(GameAssetService assetService) {
 		
-		super(assetService, resolver);
+		super(assetService);
 	}
 	
 	@Override

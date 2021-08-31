@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.snowjak.city.configuration.processors;
+package org.snowjak.city.configuration.annotations;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;

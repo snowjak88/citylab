@@ -16,7 +16,6 @@ import org.snowjak.city.service.PreferencesService;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetLoaderParameters;
-import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.github.czyzby.autumn.annotation.Component;
 
 import groovy.util.DelegatingScript;
@@ -32,9 +31,9 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 	private final PreferencesService preferencesService;
 	
 	public ModuleResourceLoader(GameService gameService, PreferencesService preferencesService,
-			GameAssetService assetService, FileHandleResolver resolver) {
+			GameAssetService assetService) {
 		
-		super(assetService, resolver);
+		super(assetService);
 		
 		this.gameService = gameService;
 		this.preferencesService = preferencesService;

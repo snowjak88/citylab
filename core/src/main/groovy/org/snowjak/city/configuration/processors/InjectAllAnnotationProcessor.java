@@ -6,6 +6,8 @@ package org.snowjak.city.configuration.processors;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import org.snowjak.city.configuration.annotations.InjectAll;
+
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.reflect.Field;
 import com.badlogic.gdx.utils.reflect.ReflectionException;

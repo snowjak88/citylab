@@ -3,7 +3,6 @@
  */
 package org.snowjak.city.screens;
 
-import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.screens.menupages.GameSetupMenuPage;
 import org.snowjak.city.screens.menupages.MainMenuPage;
@@ -107,7 +106,7 @@ public class MainMenuScreen extends AbstractGameScreen {
 		
 		final MainMenuScreen thisScreen = this;
 		
-		final Skin skin = skinService.getSkin(Configuration.SKIN_NAME);
+		final Skin skin = skinService.getCurrent();
 		
 		final TextButton button = new TextButton(i18nService.get(textKey), skin);
 		button.addListener(new ChangeListener() {
@@ -132,7 +131,7 @@ public class MainMenuScreen extends AbstractGameScreen {
 	
 	private TextButton getMenuButton(String textKey, Runnable action) {
 		
-		final Skin skin = skinService.getSkin(Configuration.SKIN_NAME);
+		final Skin skin = skinService.getCurrent();
 		
 		final TextButton button = new TextButton(i18nService.get(textKey), skin);
 		button.addListener(new ChangeListener() {

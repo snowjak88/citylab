@@ -3,7 +3,7 @@ package org.snowjak.city.configuration;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import org.snowjak.city.configuration.processors.InjectAll;
+import org.snowjak.city.configuration.annotations.InjectAll;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.console.loggers.ConsoleLoggerFactory;
 import org.snowjak.city.map.generator.MapGenerator;
@@ -60,17 +60,16 @@ public class Configuration {
 	}
 	
 	@Initiate(priority = InitPriority.HIGHEST_PRIORITY)
-	public void configureAssetLoaders(final GameService gameService, final GameAssetService assetService,
-			FileHandleResolver resolver) {
+	public void configureAssetLoaders(final GameService gameService, final GameAssetService assetService) {
 		
-		final MapGeneratorLoader mapGeneratorLoader = new MapGeneratorLoader(resolver);
+		final MapGeneratorLoader mapGeneratorLoader = new MapGeneratorLoader();
 		assetService.setLoader(MapGenerator.class, mapGeneratorLoader);
 		
 		scriptedResourceLoaders.forEach(l -> assetService.setLoader(l.getResourceType(), l));
 		
 		assetService.setThrowUnhandledExceptions(false);
 		
-		initiateScriptScanning(gameService, assetService, resolver);
+		initiateScriptScanning(gameService, assetService, GameAssetService.FILE_HANDLE_RESOLVER);
 	}
 	
 	private void initiateScriptScanning(final GameService gameService, final GameAssetService assetService,

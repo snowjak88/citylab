@@ -18,7 +18,6 @@ import com.badlogic.gdx.assets.AssetDescriptor
 import com.badlogic.gdx.assets.AssetLoaderParameters
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.assets.loaders.AsynchronousAssetLoader
-import com.badlogic.gdx.assets.loaders.FileHandleResolver
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.utils.Array
 import com.google.common.collect.BiMap
@@ -31,7 +30,6 @@ import com.google.common.collect.HashBiMap
 abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends AssetLoaderParameters<R>> extends AsynchronousAssetLoader<R, P> {
 	
 	private final GameAssetService assetService
-	private final FileHandleResolver resolver
 	
 	private final Map<FileHandle, CompilerConfiguration> resourceCompilerConfigs = [:]
 	private final Map<FileHandle, R> dependencyChecks = [:]
@@ -41,10 +39,9 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 	
 	private final Map<FileHandle, R> loaded = [:]
 	
-	public ScriptedResourceLoader(GameAssetService assetService, FileHandleResolver resolver) {
-		super(resolver)
+	public ScriptedResourceLoader(GameAssetService assetService) {
+		super(GameAssetService.FILE_HANDLE_RESOLVER)
 		this.assetService = assetService
-		this.resolver = resolver
 	}
 	
 	/**

@@ -3,7 +3,6 @@
  */
 package org.snowjak.city.screens;
 
-import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.screens.loadingtasks.LoadingTask;
 import org.snowjak.city.service.GameService;
@@ -52,7 +51,7 @@ public class LoadingScreen extends AbstractGameScreen {
 	@Override
 	protected Actor getRoot() {
 		
-		final Skin defaultSkin = skinService.getSkin(Configuration.SKIN_NAME);
+		final Skin defaultSkin = skinService.getCurrent();
 		
 		taskDescription = new Label("", defaultSkin);
 		taskDescription.setAlignment(Align.center);

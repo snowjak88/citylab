@@ -5,7 +5,6 @@ package org.snowjak.city.screens.menupages;
 
 import java.util.stream.Collectors;
 
-import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.screens.MainMenuScreen;
@@ -59,7 +58,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 	@Initiate(priority = InitPriority.LOW_PRIORITY)
 	public void init() {
 		
-		final Skin defaultSkin = skinService.getSkin(Configuration.SKIN_NAME);
+		final Skin defaultSkin = skinService.getCurrent();
 		
 		mapWidthField = new TextField(Integer.toString(param.getMapWidth()), defaultSkin);
 		mapWidthIncrease = new Button(defaultSkin, "plus");

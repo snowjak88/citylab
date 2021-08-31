@@ -10,6 +10,7 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.snowjak.city.map.generator.MapGeneratorLoader.MapGeneratorLoaderParameters;
 import org.snowjak.city.map.generator.support.MapGeneratorDsl;
+import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.LoggerService;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
@@ -41,9 +42,9 @@ public class MapGeneratorLoader extends AsynchronousAssetLoader<MapGenerator, Ma
 	
 	private MapGeneratorDsl dsl;
 	
-	public MapGeneratorLoader(FileHandleResolver fileHandleResolver) {
+	public MapGeneratorLoader() {
 		
-		super(fileHandleResolver);
+		super(GameAssetService.FILE_HANDLE_RESOLVER);
 		
 		final ImportCustomizer customImports = new ImportCustomizer();
 		customImports.addStaticStars(BasisType.class.getName(), InterpolationType.class.getName(),

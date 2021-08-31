@@ -7,6 +7,8 @@ import java.util.Map.Entry
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
 
+import org.apache.groovy.util.Maps
+import org.snowjak.city.configuration.MatchingFileHandleResolver
 import org.snowjak.city.resources.ScriptedResource
 import org.snowjak.city.resources.ScriptedResourceLoader
 
@@ -15,6 +17,8 @@ import com.badlogic.gdx.assets.AssetLoaderParameters
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.assets.loaders.AssetLoader
 import com.badlogic.gdx.assets.loaders.FileHandleResolver
+import com.badlogic.gdx.assets.loaders.resolvers.InternalFileHandleResolver
+import com.badlogic.gdx.assets.loaders.resolvers.LocalFileHandleResolver
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.utils.GdxRuntimeException
 import com.github.czyzby.autumn.annotation.Component
@@ -37,6 +41,9 @@ import com.github.czyzby.kiwi.log.Logger
  */
 @Component
 public class GameAssetService extends AssetManager {
+	
+	public static final FileHandleResolver FILE_HANDLE_RESOLVER = new MatchingFileHandleResolver(Maps.of("^/?data/.*", new LocalFileHandleResolver()),
+	new InternalFileHandleResolver());
 	
 	private static final Logger LOG = LoggerService.forClass(GameAssetService.class)
 	
@@ -73,9 +80,9 @@ public class GameAssetService extends AssetManager {
 	 */
 	boolean throwUnhandledExceptions = true
 	
-	public GameAssetService(FileHandleResolver resolver) {
+	public GameAssetService() {
 		
-		super(resolver)
+		super(FILE_HANDLE_RESOLVER)
 	}
 	
 	

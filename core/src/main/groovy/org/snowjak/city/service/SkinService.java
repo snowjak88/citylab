@@ -10,9 +10,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.snowjak.city.CityGame;
+import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.configuration.InitPriority;
 
-import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.github.czyzby.autumn.annotation.Component;
@@ -35,9 +35,7 @@ public class SkinService {
 	@Inject
 	private GameAssetService assetService;
 	
-	@Inject
-	private FileHandleResolver resolver;
-	
+	private Skin currentSkin;
 	private final Map<String, Skin> skins = new LinkedHashMap<>();
 	private final Map<String, FileHandle> loadedSkins = new LinkedHashMap<>();
 	
@@ -64,12 +62,42 @@ public class SkinService {
 		}
 	}
 	
+	public void setCurrent(String skinName) {
+		
+		synchronized (this) {
+			setCurrent(getSkin(skinName));
+		}
+	}
+	
+	public void setCurrent(Skin skin) {
+		
+		synchronized (this) {
+			if (skin == null)
+				return;
+				
+			//
+			// TODO changing current skin update Preferences
+			currentSkin = skin;
+		}
+	}
+	
+	public Skin getCurrent() {
+		
+		synchronized (this) {
+			return currentSkin;
+		}
+	}
+	
 	@Initiate(priority = InitPriority.HIGH_PRIORITY)
 	public void init() {
 		
 		LOG.info("Initializing ...");
 		
-		scanForSkins(resolver.resolve(CityGame.INTERNAL_SKIN_BASE));
+		scanForSkins(GameAssetService.FILE_HANDLE_RESOLVER.resolve(CityGame.INTERNAL_SKIN_BASE));
+		
+		//
+		// TODO Load current skin-name from preferences
+		currentSkin = getSkin(Configuration.SKIN_NAME);
 		
 		LOG.info("Finished initialization.");
 	}

@@ -11,14 +11,14 @@ import org.snowjak.city.service.I18NService;
  * @author snowjak88
  *
  */
-public class GameMapRendererSetupTask extends LoadingTask {
+public class GameStateObjectsSetupTask extends LoadingTask {
 	
 	private final GameService gameService;
 	private final I18NService i18nService;
 	
 	private boolean executed = false;
 	
-	public GameMapRendererSetupTask(GameService gameService, I18NService i18nService) {
+	public GameStateObjectsSetupTask(GameService gameService, I18NService i18nService) {
 		
 		this.gameService = gameService;
 		this.i18nService = i18nService;
@@ -29,7 +29,7 @@ public class GameMapRendererSetupTask extends LoadingTask {
 	@Override
 	public String getDescription() {
 		
-		return i18nService.get("loading-tasks-renderer");
+		return i18nService.get("loading-tasks-state");
 	}
 	
 	@Override
@@ -48,6 +48,8 @@ public class GameMapRendererSetupTask extends LoadingTask {
 	public void initiate() {
 		
 		gameService.intializeRenderer();
+		gameService.initializeTools();
+		
 		executed = true;
 	}
 	

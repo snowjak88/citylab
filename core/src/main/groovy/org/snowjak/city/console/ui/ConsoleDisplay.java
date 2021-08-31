@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.console.printers.AbstractPrinter;
 import org.snowjak.city.console.printers.BasicPrinter;
@@ -193,7 +192,7 @@ public class ConsoleDisplay {
 	
 	public void init() {
 		
-		skin = skinService.getSkin(Configuration.SKIN_NAME);
+		skin = skinService.getCurrent();
 		
 		basicPrinter = new BasicPrinter(this, skin);
 		

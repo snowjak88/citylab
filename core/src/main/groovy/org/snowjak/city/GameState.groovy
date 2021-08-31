@@ -12,6 +12,7 @@ import org.snowjak.city.tools.ui.ButtonToolList
 
 import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.PooledEngine
+import com.badlogic.gdx.scenes.scene2d.ui.Skin
 
 public class GameState {
 	

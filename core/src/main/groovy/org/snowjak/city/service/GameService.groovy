@@ -4,7 +4,7 @@
 package org.snowjak.city.service
 
 import java.util.function.DoubleConsumer
-
+import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
 import org.snowjak.city.configuration.Configuration
 import org.snowjak.city.ecs.components.IsMapCell
@@ -18,14 +18,17 @@ import org.snowjak.city.screens.loadingtasks.LoadingTask
 import org.snowjak.city.service.loadingtasks.GameEntitySystemInitializationTask
 import org.snowjak.city.service.loadingtasks.GameMapEntityCreationTask
 import org.snowjak.city.service.loadingtasks.GameMapGenerationTask
-import org.snowjak.city.service.loadingtasks.GameMapRendererSetupTask
 import org.snowjak.city.service.loadingtasks.GameModulesInitializationTask
+import org.snowjak.city.service.loadingtasks.GameStateObjectsSetupTask
+import org.snowjak.city.tools.ui.ButtonToolList
 import org.snowjak.city.util.PrioritizationFailedException
 
 import com.badlogic.ashley.core.Family
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.assets.loaders.FileHandleResolver
 import com.badlogic.gdx.files.FileHandle
+import com.badlogic.gdx.scenes.scene2d.Stage
+import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.github.czyzby.autumn.annotation.Component
 import com.github.czyzby.autumn.annotation.Inject
 import com.github.czyzby.kiwi.log.Logger
@@ -45,10 +48,13 @@ class GameService {
 	private GameAssetService assetService
 	
 	@Inject
+	private SkinService skinService
+	
+	@Inject
 	private I18NService i18nService
 	
 	@Inject
-	private FileHandleResolver resolver
+	private Stage stage
 	
 	private final GameState state = new GameState()
 	
@@ -68,18 +74,21 @@ class GameService {
 				new GameEntitySystemInitializationTask(this, i18nService),
 				new GameMapEntityCreationTask(this, i18nService),
 				new GameModulesInitializationTask(this, i18nService),
-				new GameMapRendererSetupTask(this, i18nService))
+				new GameStateObjectsSetupTask(this, i18nService))
 	}
 	
 	/**
 	 * Reset the entity-processing {@link Engine} to its base condition, without any Module's systems.
 	 */
-	public void initializeBaseEntityEngine(DoubleConsumer progressUpdater = {p -> }) {
+	public void initializeBaseEntityEngine(DoubleConsumer progressUpdater = { p ->
+			}) {
 		
 		progressUpdater?.accept 0
 		
 		state.engine.removeAllEntities()
-		state.engine.systems.each { state.engine.removeSystem it }
+		state.engine.systems.each {
+			state.engine.removeSystem it
+		}
 		
 		state.engine.addSystem new IsMapCellManagementSystem(state)
 		state.engine.addSystem new RemoveMapCellRearrangedSystem()
@@ -91,7 +100,8 @@ class GameService {
 	 * Remove all {@link IsMapCell}-bearing Entities from the entity-processing {@link Engine}.
 	 * @param map
 	 */
-	public void removeCityMapCellEntities(CityMap map, DoubleConsumer progressReporter = { p -> }) {
+	public void removeCityMapCellEntities(CityMap map, DoubleConsumer progressReporter = { p ->
+			}) {
 		
 		def entities = state.engine.getEntitiesFor(Family.all(IsMapCell).get())
 		
@@ -116,7 +126,8 @@ class GameService {
 	 * and associate those Entities with the Map.
 	 * @param map
 	 */
-	public void addCityMapCellEntities(CityMap map, DoubleConsumer progressReporter = { p -> }) {
+	public void addCityMapCellEntities(CityMap map, DoubleConsumer progressReporter = { p ->
+			}) {
 		if(map) {
 			
 			final progressStep = 1.0 / ((double) map.width * (double) map.height)
@@ -139,10 +150,12 @@ class GameService {
 		}
 	}
 	
-	public void loadAllModules(DoubleConsumer progressReporter = {p -> }) {
+	public void loadAllModules(DoubleConsumer progressReporter = { p ->
+			}) {
 		
 		LOG.info "Scanning for module-scripts ..."
 		
+		final resolver = GameAssetService.FILE_HANDLE_RESOLVER
 		final moduleFiles = scanForFiles(resolver.resolve(Configuration.EXTERNAL_ROOT_MODULES), ".module.groovy", true)
 		
 		final progressStep = 1d / (double) moduleFiles.size()
@@ -159,7 +172,8 @@ class GameService {
 		LOG.info "Finished scanning for module-scripts."
 	}
 	
-	public void unloadAllModules(DoubleConsumer progressReporter = {p -> }) {
+	public void unloadAllModules(DoubleConsumer progressReporter = { p ->
+			}) {
 		
 		LOG.info "Unloading all modules ..."
 		
@@ -184,23 +198,32 @@ class GameService {
 	 * 
 	 * @param progressReporter
 	 */
-	public void reloadAllModules(DoubleConsumer progressReporter = {p -> }) {
+	public void reloadAllModules(DoubleConsumer progressReporter = { p ->
+			}) {
 		LOG.info "Reloading all modules ..."
 		
 		progressReporter?.accept 0
 		
-		uninitializeAllModules { p -> progressReporter?.accept p * 0.2 }
+		uninitializeAllModules { p ->
+			progressReporter?.accept p * 0.2
+		}
 		
 		final modules = assetService.getAllByType(Module)
 		
-		unloadAllModules { p -> progressReporter.accept p*0.2 + 0.2 }
+		unloadAllModules { p ->
+			progressReporter.accept p*0.2 + 0.2
+		}
 		
-		loadAllModules { p -> progressReporter.accept p*0.2 + 0.4 }
+		loadAllModules { p ->
+			progressReporter.accept p*0.2 + 0.4
+		}
 		
 		while(!assetService.update())
 			progressReporter?.accept assetService.progress * 0.2 + 0.6
 		
-		initializeAllModules { p -> progressReporter?.accept p * 0.2 + 0.8 }
+		initializeAllModules { p ->
+			progressReporter?.accept p * 0.2 + 0.8
+		}
 		
 		LOG.info "Finished reloading all modules."
 	}
@@ -208,7 +231,8 @@ class GameService {
 	/**
 	 * Invokes {@link #initializeModule(Module) initializeModule()} for all loaded {@link Modules}s.
 	 */
-	public void initializeAllModules(DoubleConsumer progressReporter = { p -> }) {
+	public void initializeAllModules(DoubleConsumer progressReporter = { p ->
+			}) {
 		LOG.info "Initializing all modules ..."
 		
 		final modules = assetService.getAllByType(Module)
@@ -218,7 +242,9 @@ class GameService {
 		progressReporter?.accept 0
 		
 		for(Module m : modules) {
-			initializeModule m, { p -> progressReporter?.accept p / progressStep + progress }
+			initializeModule m, { p ->
+				progressReporter?.accept p / progressStep + progress
+			}
 			
 			progress += progressStep
 		}
@@ -231,7 +257,8 @@ class GameService {
 	/**
 	 * Invokes {@link #uninitializeModule(Module) unitializeModule()} for all loaded {@link Module}s.
 	 */
-	public void uninitializeAllModules(DoubleConsumer progressReporter = { p -> }) {
+	public void uninitializeAllModules(DoubleConsumer progressReporter = { p ->
+			}) {
 		LOG.info "Uninitializing all modules ..."
 		
 		final modules = assetService.getAllByType(Module)
@@ -241,7 +268,9 @@ class GameService {
 		progressReporter?.accept 0
 		
 		for(Module m : assetService.getAllByType(Module)) {
-			uninitializeModule m, { p -> progressReporter p / progressStep + progress }
+			uninitializeModule m, { p ->
+				progressReporter p / progressStep + progress
+			}
 			
 			progress += progressStep
 		}
@@ -255,7 +284,8 @@ class GameService {
 	 * Ensure the given {@link Module} is properly initialized into the current GameState.
 	 * @param module
 	 */
-	public void initializeModule(Module module, DoubleConsumer progressReporter = { p -> }) {
+	public void initializeModule(Module module, DoubleConsumer progressReporter = { p ->
+			}) {
 		
 		LOG.info "Initializing module \"{0}\"", module.id
 		
@@ -377,6 +407,15 @@ class GameService {
 	 */
 	public void intializeRenderer() {
 		state.renderer.map = state.map
+	}
+	
+	public void initializeTools() {
+		// TODO initializeButtonTools needs to be expanded, to load all buttons ...
+		initializeButtonTools()
+	}
+	
+	public void initializeButtonTools() {
+		state.buttonRenderer = new ButtonToolList(skinService, assetService)
 	}
 	
 	/**
