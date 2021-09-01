@@ -4,7 +4,7 @@
 package org.snowjak.city.service
 
 import java.util.function.DoubleConsumer
-import org.snowjak.city.CityGame
+
 import org.snowjak.city.GameState
 import org.snowjak.city.configuration.Configuration
 import org.snowjak.city.ecs.components.IsMapCell
@@ -20,15 +20,13 @@ import org.snowjak.city.service.loadingtasks.GameMapEntityCreationTask
 import org.snowjak.city.service.loadingtasks.GameMapGenerationTask
 import org.snowjak.city.service.loadingtasks.GameModulesInitializationTask
 import org.snowjak.city.service.loadingtasks.GameStateObjectsSetupTask
-import org.snowjak.city.tools.ui.ButtonToolList
+import org.snowjak.city.tools.ui.ToolButtonList
 import org.snowjak.city.util.PrioritizationFailedException
 
 import com.badlogic.ashley.core.Family
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.assets.loaders.FileHandleResolver
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.github.czyzby.autumn.annotation.Component
 import com.github.czyzby.autumn.annotation.Inject
 import com.github.czyzby.kiwi.log.Logger
@@ -406,16 +404,7 @@ class GameService {
 	 * (Re-)initialize the configured renderer.
 	 */
 	public void intializeRenderer() {
-		state.renderer.map = state.map
-	}
-	
-	public void initializeTools() {
-		// TODO initializeButtonTools needs to be expanded, to load all buttons ...
-		initializeButtonTools()
-	}
-	
-	public void initializeButtonTools() {
-		state.buttonRenderer = new ButtonToolList(skinService, assetService)
+		state.renderer.state = state
 	}
 	
 	/**

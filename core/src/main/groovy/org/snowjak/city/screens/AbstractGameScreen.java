@@ -6,6 +6,7 @@ package org.snowjak.city.screens;
 import java.util.LinkedList;
 
 import org.snowjak.city.console.Console;
+import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.SkinService;
 
@@ -35,6 +36,7 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	private final GameService gameService;
 	private final Console console;
 	private final SkinService skinService;
+	private final GameAssetService assetService;
 	private final Stage stage;
 	private Actor root;
 	
@@ -43,12 +45,14 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	
 	private Game game;
 	
-	public AbstractGameScreen(GameService gameService, Console console, SkinService skinService, Stage stage) {
+	public AbstractGameScreen(GameService gameService, Console console, SkinService skinService,
+			GameAssetService assetService, Stage stage) {
 		
 		this.gameService = gameService;
 		this.console = console;
 		this.stage = stage;
 		this.skinService = skinService;
+		this.assetService = assetService;
 	}
 	
 	public void setGame(Game game) {
@@ -116,6 +120,16 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		return gameService;
 	}
 	
+	public SkinService getSkinService() {
+		
+		return skinService;
+	}
+	
+	public GameAssetService getAssetService() {
+		
+		return assetService;
+	}
+	
 	/**
 	 * If your implementation needs to define its own {@link InputProcessor}, it
 	 * should override this method.
@@ -132,7 +146,9 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	}
 	
 	/**
-	 * @return your root Actor here, whether pre-constructed or built on the spot
+	 * Returns your root Actor. Generally, you will want to defer construction of
+	 * your root Actor to this method, as it may be called repeatedly (e.g., if the
+	 * interface needs to be re-built).
 	 */
 	protected abstract Actor getRoot();
 	

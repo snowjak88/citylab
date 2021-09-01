@@ -48,7 +48,6 @@ public class GameStateObjectsSetupTask extends LoadingTask {
 	public void initiate() {
 		
 		gameService.intializeRenderer();
-		gameService.initializeTools();
 		
 		executed = true;
 	}

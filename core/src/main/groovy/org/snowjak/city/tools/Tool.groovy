@@ -3,14 +3,10 @@
  */
 package org.snowjak.city.tools
 
+import java.util.function.Consumer
+
+import org.snowjak.city.input.hotkeys.Hotkey
 import org.snowjak.city.service.GameService
-import org.snowjak.city.tools.activation.ActivationMethod
-import org.snowjak.city.tools.activation.ButtonActivationMethod
-import org.snowjak.city.tools.activation.KeyActivationMethod
-import org.snowjak.city.tools.activation.MenuActivationMethod
-import org.snowjak.city.tools.groups.ButtonToolGroup
-import org.snowjak.city.tools.groups.GroupsDefiner
-import org.snowjak.city.tools.groups.MenuToolGroup
 
 import com.badlogic.gdx.files.FileHandle
 
@@ -31,73 +27,57 @@ import com.badlogic.gdx.files.FileHandle
  * @author snowjak88
  *
  */
-class Tool implements GroupsDefiner {
+class Tool {
+	
+	/**
+	 * Add a Consumer for this Tool if you want to be notified whenever {@link #enabled} is changed.
+	 */
+	final Set<Consumer<Tool>> enabledListeners = Collections.synchronizedSet(new LinkedHashSet<>())
 	
 	final String id
 	
-	String title = "", description = ""
+	boolean enabled = true
 	
 	private final FileHandle baseDirectory
 	
 	private final GameService gameService
-	private final Map<String,MenuToolGroup> menuGroups
-	private final Map<String,ButtonToolGroup> buttonGroups
+	private final Map<String,ToolGroup> groups = new LinkedHashMap<>()
+	private final Map<String,ToolButton> buttons = new LinkedHashMap<>()
+	private final Map<String,Hotkey> hotkeys = new LinkedHashMap<>()
 	
-	final Set<ActivationMethod> activationMethods = new LinkedHashSet<>()
-	
-	public Tool(String id, FileHandle baseDirectory, Map<String,MenuToolGroup> menuGroups, Map<String,ButtonToolGroup> buttonGroups, GameService gameService) {
+	public Tool(String id, FileHandle baseDirectory, Map<String,ToolGroup> toolGroups, GameService gameService) {
 		this.id = id
 		this.baseDirectory = baseDirectory
-		this.menuGroups = menuGroups
-		this.buttonGroups = buttonGroups
+		this.groups.putAll toolGroups
 		this.gameService = gameService
 	}
 	
-	//
-	//
-	//
-	
-	public void activationKey(String id, @DelegatesTo(value=KeyActivationMethod, strategy=Closure.DELEGATE_FIRST) Closure activationSpec) {
+	public void button(String id, @DelegatesTo(value=ToolButton, strategy=Closure.DELEGATE_FIRST) Closure buttonSpec) {
+		final button = new ToolButton(this, id, baseDirectory)
+		buttonSpec = buttonSpec.rehydrate(button, this, this)
+		buttonSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		buttonSpec()
 		
-		final activation = new KeyActivationMethod(id, { -> this.activate(gameService)})
-		activationSpec = activationSpec.rehydrate(activation, this, this)
-		activationSpec.resolveStrategy = Closure.DELEGATE_FIRST
-		activationSpec()
-		
-		activationMethods << activation
+		buttons << [ "$id" : button ]
 	}
 	
-	public void activationButton(String id, @DelegatesTo(value=ButtonActivationMethod, strategy=Closure.DELEGATE_FIRST) Closure activationSpec) {
-		// TODO
-		final activation = new ButtonActivationMethod(id, buttonGroups, baseDirectory, { -> this.activate(gameService)})
-		activationSpec = activationSpec.rehydrate(activation, this, this)
-		activationSpec.resolveStrategy = Closure.DELEGATE_FIRST
-		activationSpec()
+	public void key(String id, @DelegatesTo(value=Hotkey, strategy=Closure.DELEGATE_FIRST) Closure hotkeySpec) {
+		final Hotkey key = new Hotkey(id)
+		hotkeySpec = hotkeySpec.rehydrate(key, this, this)
+		hotkeySpec.resolveStrategy = Closure.DELEGATE_FIRST
+		hotkeySpec()
 		
-		activationMethods << activation
+		hotkeys << [ "$id" : key ]
 	}
 	
-	public void activationMenu(String id, @DelegatesTo(value=MenuActivationMethod, strategy=Closure.DELEGATE_FIRST) Closure activationSpec) {
-		// TODO
-		final activation = new MenuActivationMethod(id, buttonGroups, { -> this.activate(gameService)})
-		activationSpec = activationSpec.rehydrate(activation, this, this)
-		activationSpec.resolveStrategy = Closure.DELEGATE_FIRST
-		activationSpec()
+	
+	public void setEnabled(boolean enabled) {
 		
-		activationMethods << activation
+		this.enabled = enabled;
+		enabledListeners.forEach { it.accept thisObject }
 	}
 	
-	//
-	//
-	//
-	
-	@Override
-	public FileHandle getBaseDirectory() {
-		
-		baseDirectory
-	}
-	
-	public void activate(GameService service) {
-		throw new UnsupportedOperationException()
+	public void activate() {
+		println "Tool [$id] activated!"
 	}
 }

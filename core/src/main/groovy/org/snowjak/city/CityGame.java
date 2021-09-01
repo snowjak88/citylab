@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.snowjak.city.configuration.processors.AssetAnnotationProcessor;
+import org.snowjak.city.configuration.processors.AssetPreloadAnnotationProcessor;
 import org.snowjak.city.configuration.processors.InjectAllAnnotationProcessor;
 import org.snowjak.city.screens.AbstractGameScreen;
 import org.snowjak.city.screens.LoadingScreen;
@@ -92,6 +93,7 @@ public class CityGame extends Game {
 		// AssetAnnotationProcessor is registered as a *component*, not a *processor*,
 		// because it requires one or more components to be injected into it.
 		initializer.addComponent(new AssetAnnotationProcessor());
+		initializer.addComponent(new AssetPreloadAnnotationProcessor());
 		
 		// Registering platform-specific scanner. Starting to scan classes from Root:
 		initializer.scan(CityGame.class, scanner);

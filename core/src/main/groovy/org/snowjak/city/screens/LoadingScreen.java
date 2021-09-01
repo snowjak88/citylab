@@ -5,6 +5,7 @@ package org.snowjak.city.screens;
 
 import org.snowjak.city.console.Console;
 import org.snowjak.city.screens.loadingtasks.LoadingTask;
+import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.SkinService;
@@ -41,9 +42,10 @@ public class LoadingScreen extends AbstractGameScreen {
 	
 	private boolean isInitiated = false;
 	
-	public LoadingScreen(GameService gameService, Console console, SkinService skinService, Stage stage) {
+	public LoadingScreen(GameService gameService, Console console, SkinService skinService,
+			GameAssetService assetService, Stage stage) {
 		
-		super(gameService, console, skinService, stage);
+		super(gameService, console, skinService, assetService, stage);
 		
 		this.skinService = skinService;
 	}

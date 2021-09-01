@@ -35,7 +35,7 @@ import com.github.czyzby.kiwi.log.Logger
  * @author snowjak88
  *
  */
-public abstract class ScriptedResource implements AssetDependent {
+public abstract class ScriptedResource {
 	
 	public final Logger log = LoggerService.forClass(this.class)
 	
@@ -50,12 +50,7 @@ public abstract class ScriptedResource implements AssetDependent {
 	final Map<String,Set<String>> imports = [:]
 	final Map<String,Object> providedObjects = [:]
 	private final Map<Class<?>, Set<String>> scriptedDependencies = [:]
-	
-	@Override
-	public FileHandle getBaseDirectory() {
-		
-		scriptDirectory
-	}
+	private final Map<FileHandle, Class<?>> assetDependencies = [:]
 	
 	def propertyMissing(name) {
 		binding[name]
@@ -96,6 +91,20 @@ public abstract class ScriptedResource implements AssetDependent {
 	public Map<Class<?>, Set<String>> getScriptedDependencies() {
 		
 		Collections.unmodifiableMap(scriptedDependencies)
+	}
+	
+	public void addAssetDependency(Class<?> type, String name) {
+		
+		addAssetDependency type, scriptDirectory.child(name)
+	}
+	
+	public void addAssetDependency(Class<?> type, FileHandle file) {
+		assetDependencies[file] = type
+	}
+	
+	public Map<FileHandle, Class<?>> getAssetDependencies() {
+		
+		assetDependencies
 	}
 	
 	/**

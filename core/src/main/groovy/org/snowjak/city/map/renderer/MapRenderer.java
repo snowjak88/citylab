@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import org.snowjak.city.GameState;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
@@ -47,7 +48,6 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
-import com.badlogic.gdx.maps.tiled.renderers.IsometricTiledMapRenderer;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
@@ -57,13 +57,6 @@ import com.github.czyzby.kiwi.log.Logger;
 
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
-/**
- * Largely copies the logic of {@link IsometricTiledMapRenderer}, modified to
- * enable altitude-sensitive rendering of a {@link Map} instance.
- * 
- * @author snowjak88
- *
- */
 public class MapRenderer implements RenderingSupport {
 	
 	private static final Logger LOG = LoggerService.forClass(MapRenderer.class);
@@ -134,7 +127,7 @@ public class MapRenderer implements RenderingSupport {
 	 */
 	private final Vector2[] cellVertices = new Vector2[4];
 	
-	private CityMap map;
+	private GameState state;
 	private Batch batch;
 	private ShapeDrawer shapeDrawer;
 	private boolean ownsBatch = false;
@@ -152,8 +145,10 @@ public class MapRenderer implements RenderingSupport {
 			//
 			// This main rendering-hook handles rendering the actual map.
 			//
-			if (map == null)
+			if (state == null || state.getMap() == null)
 				return;
+			
+			final CityMap map = state.getMap();
 			
 			if (prioritizedCellRenderingHooks.isEmpty())
 				return;
@@ -169,23 +164,7 @@ public class MapRenderer implements RenderingSupport {
 	
 	public MapRenderer() {
 		
-		this(null, null);
-	}
-	
-	public MapRenderer(CityMap map) {
-		
-		this(map, null);
-	}
-	
-	public MapRenderer(Batch batch) {
-		
-		this(null, batch);
-	}
-	
-	public MapRenderer(CityMap map, Batch batch) {
-		
-		setMap(map);
-		setBatch(batch);
+		setBatch(null);
 		init();
 	}
 	
@@ -210,6 +189,11 @@ public class MapRenderer implements RenderingSupport {
 		
 		customRenderingHooks.put(MAP_RENDERING_HOOK.getId(), MAP_RENDERING_HOOK);
 		prioritizedCustomRenderingHooks.add(MAP_RENDERING_HOOK);
+	}
+	
+	public void setState(GameState state) {
+		
+		this.state = state;
 	}
 	
 	public void addCellRenderingHook(AbstractCellRenderingHook hook) throws PrioritizationFailedException {
@@ -277,11 +261,6 @@ public class MapRenderer implements RenderingSupport {
 			
 			throw (PrioritizationFailedException) e.getCause();
 		}
-	}
-	
-	public void setMap(CityMap map) {
-		
-		this.map = map;
 	}
 	
 	public void setBatch(Batch batch) {
@@ -358,7 +337,7 @@ public class MapRenderer implements RenderingSupport {
 	
 	public void render(float delta) {
 		
-		if (map == null)
+		if (state == null || state.getMap() == null)
 			return;
 		
 		if (ownsBatch) {
@@ -391,7 +370,11 @@ public class MapRenderer implements RenderingSupport {
 	@Override
 	public boolean isCellVisible(int cellX, int cellY) {
 		
-		if (map == null || !map.isValidCell(cellX, cellY))
+		if (state == null || state.getMap() == null)
+			return false;
+		
+		final CityMap map = state.getMap();
+		if (!map.isValidCell(cellX, cellY))
 			return false;
 		
 		return (cellX >= mapVisibleMinX && cellX <= mapVisibleMaxX && cellY >= mapVisibleMinY
@@ -401,7 +384,11 @@ public class MapRenderer implements RenderingSupport {
 	@Override
 	public void renderTile(int col, int row, Tile tile, Color tint) {
 		
-		if (map == null || !map.isValidCell(col, row))
+		if (state == null || state.getMap() == null)
+			return;
+		
+		final CityMap map = state.getMap();
+		if (!map.isValidCell(col, row))
 			return;
 		if (!isCellVisible(col, row))
 			return;
@@ -564,6 +551,11 @@ public class MapRenderer implements RenderingSupport {
 	 */
 	private void getCellVertices(int col, int row, Vector2[] vertices, TileCorner base) {
 		
+		if (state == null || state.getMap() == null)
+			return;
+		
+		final CityMap map = state.getMap();
+		
 		int index = 0;
 		for (TileCorner corner : TileCorner.values()) {
 			vertices[index++].set(computeCellVertexX(col + corner.getOffsetX(), row + corner.getOffsetY()),
@@ -621,6 +613,11 @@ public class MapRenderer implements RenderingSupport {
 	 * @return
 	 */
 	public Vector2 viewportToMap(Vector2 viewportCoordinates, boolean ignoreAltitude) {
+		
+		if (state == null || state.getMap() == null)
+			return viewportCoordinates;
+		
+		final CityMap map = state.getMap();
 		
 		synchronized (viewportToMapScratchV3) {
 			//

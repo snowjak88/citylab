@@ -199,9 +199,11 @@ public class TextureUtils {
 				c.mul(1, 1, 1, inputAlpha);
 				final Color r = resultBackground.cpy().mul(1, 1, 1, backgroundAlpha);
 				
-				r.add(c);
-				
+				// r.add(c);
 				result.setColor(r);
+				result.drawPixel(x, y);
+				
+				result.setColor(c);
 				result.drawPixel(x, y);
 			}
 		

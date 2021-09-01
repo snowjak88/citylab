@@ -15,7 +15,7 @@ import org.snowjak.city.service.GameService
 import org.snowjak.city.service.PreferencesService
 import org.snowjak.city.service.PreferencesService.ScopedPreferences
 import org.snowjak.city.tools.Tool
-import org.snowjak.city.tools.groups.GroupsDefiner
+import org.snowjak.city.tools.ToolGroup
 import org.snowjak.city.util.RelativePriority
 
 import com.badlogic.ashley.core.Entity
@@ -23,6 +23,7 @@ import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.core.Family
 import com.badlogic.ashley.systems.IteratingSystem
 import com.badlogic.gdx.files.FileHandle
+import com.badlogic.gdx.graphics.Texture
 
 /**
  * A Module provides game functionality.
@@ -39,7 +40,7 @@ import com.badlogic.gdx.files.FileHandle
  * @author snowjak88
  *
  */
-public class Module extends ScriptedResource implements GroupsDefiner {
+public class Module extends ScriptedResource {
 	
 	String description
 	
@@ -52,6 +53,7 @@ public class Module extends ScriptedResource implements GroupsDefiner {
 	final Set<AbstractCellRenderingHook> cellRenderingHooks = []
 	final Set<AbstractCustomRenderingHook> customRenderingHooks = []
 	
+	final Map<String,ToolGroup> toolGroups = [:]
 	final Map<String,Tool> tools = [:]
 	
 	Module(GameService gameService, PreferencesService preferencesService) {
@@ -179,6 +181,16 @@ public class Module extends ScriptedResource implements GroupsDefiner {
 		systems << ["$id" : system]
 	}
 	
+	public void buttonGroup(String id, @DelegatesTo(value=ToolGroup, strategy=Closure.DELEGATE_FIRST) Closure groupSpec) {
+		
+		final group = new ToolGroup(id)
+		groupSpec = groupSpec.rehydrate(group, this, this)
+		groupSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		groupSpec()
+		
+		toolGroups << ["$id" : group]
+	}
+	
 	/**
 	 * Register a new {@link Tool} in this module.
 	 * @param id
@@ -186,10 +198,15 @@ public class Module extends ScriptedResource implements GroupsDefiner {
 	 */
 	public void tool(String id, @DelegatesTo(value=Tool, strategy=Closure.DELEGATE_FIRST) Closure toolSpec) {
 		
-		final tool = new Tool(id, scriptDirectory, org_snowjak_city_tools_groups_GroupsDefiner__menuGroups, org_snowjak_city_tools_groups_GroupsDefiner__buttonGroups, gameService)
+		final tool = new Tool(id, scriptDirectory, toolGroups, gameService)
 		toolSpec = toolSpec.rehydrate(tool, this, this)
 		toolSpec.resolveStrategy = Closure.DELEGATE_FIRST
 		toolSpec()
+		
+		tool.buttons.each { _, button ->
+			if(button.buttonUp) addAssetDependency Texture, button.buttonUp
+			if(button.buttonDown) addAssetDependency Texture, button.buttonDown
+		}
 		
 		tools << ["$id" : tool]
 	}
@@ -205,6 +222,8 @@ public class Module extends ScriptedResource implements GroupsDefiner {
 		this.systems.putAll module.systems
 		this.cellRenderingHooks.addAll module.cellRenderingHooks
 		this.customRenderingHooks.addAll module.customRenderingHooks
+		this.toolGroups.putAll module.toolGroups
+		this.tools.putAll module.tools
 		
 		module
 	}

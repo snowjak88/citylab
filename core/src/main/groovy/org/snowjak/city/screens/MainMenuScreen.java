@@ -6,6 +6,7 @@ package org.snowjak.city.screens;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.screens.menupages.GameSetupMenuPage;
 import org.snowjak.city.screens.menupages.MainMenuPage;
+import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.SkinService;
@@ -55,10 +56,10 @@ public class MainMenuScreen extends AbstractGameScreen {
 	
 	private final GameSetupMenuPage gameSetupMenuPage;
 	
-	public MainMenuScreen(GameService gameService, Console console, SkinService skinService, Stage stage,
-			GameSetupMenuPage gameSetupMenuPage) {
+	public MainMenuScreen(GameService gameService, Console console, SkinService skinService,
+			GameAssetService assetService, Stage stage, GameSetupMenuPage gameSetupMenuPage) {
 		
-		super(gameService, console, skinService, stage);
+		super(gameService, console, skinService, assetService, stage);
 		this.skinService = skinService;
 		this.gameSetupMenuPage = gameSetupMenuPage;
 	}
