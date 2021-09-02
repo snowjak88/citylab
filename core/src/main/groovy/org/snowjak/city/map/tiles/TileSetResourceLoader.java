@@ -29,35 +29,34 @@ public class TileSetResourceLoader extends ScriptedResourceLoader<TileSet, TileS
 	}
 	
 	@Override
-	protected void afterLoad(TileSet resource, GameAssetService assetService) {
+	protected void afterLoad(TileSet resource, GameAssetService assetService, boolean isDependencyMode) {
 		
-		super.afterLoad(resource, assetService);
-		
-		for (Tile t : resource.getTiles()) {
-			
-			final Texture texture = assetService.get(t.getFolder().child(t.getFilename()).path(), Texture.class);
-			
-			//
-			// Width/height of 0 == use whatever is in the original texture
-			//
-			if (t.getWidth() == 0)
-				t.setWidth(texture.getWidth());
-			if (t.getHeight() == 0)
-				t.setHeight(texture.getHeight());
+		if (!isDependencyMode)
+			for (Tile t : resource.getTiles()) {
 				
-			//
-			// Clamp the desired texture-region's size to the actual texture-size, after
-			// allowing for the origin x/y and padding.
-			//
-			final int width = clamp(t.getWidth(), 0, texture.getWidth() - t.getPadding() * 2 - t.getX());
-			final int height = clamp(t.getHeight(), 0, texture.getHeight() - t.getPadding() * 2 - t.getY());
-			
-			t.setWidth(width);
-			t.setHeight(height);
-			
-			t.setSprite(new TextureRegion(texture, t.getX(), t.getY(), t.getWidth(), t.getHeight()));
-			
-		}
+				final Texture texture = assetService.get(t.getFolder().child(t.getFilename()).path(), Texture.class);
+				
+				//
+				// Width/height of 0 == use whatever is in the original texture
+				//
+				if (t.getWidth() == 0)
+					t.setWidth(texture.getWidth());
+				if (t.getHeight() == 0)
+					t.setHeight(texture.getHeight());
+					
+				//
+				// Clamp the desired texture-region's size to the actual texture-size, after
+				// allowing for the origin x/y and padding.
+				//
+				final int width = clamp(t.getWidth(), 0, texture.getWidth() - t.getPadding() * 2 - t.getX());
+				final int height = clamp(t.getHeight(), 0, texture.getHeight() - t.getPadding() * 2 - t.getY());
+				
+				t.setWidth(width);
+				t.setHeight(height);
+				
+				t.setSprite(new TextureRegion(texture, t.getX(), t.getY(), t.getWidth(), t.getHeight()));
+				
+			}
 		
 	}
 	

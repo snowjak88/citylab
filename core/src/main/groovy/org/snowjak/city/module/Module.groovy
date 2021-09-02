@@ -12,7 +12,10 @@ import org.snowjak.city.map.renderer.hooks.DelegatingCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
 import org.snowjak.city.resources.ScriptedResource
 import org.snowjak.city.service.GameService
+import org.snowjak.city.service.I18NService
 import org.snowjak.city.service.PreferencesService
+import org.snowjak.city.service.I18NService.I18NBundleContext
+import org.snowjak.city.service.I18NService.ProxiedI18NBundleContext
 import org.snowjak.city.service.PreferencesService.ScopedPreferences
 import org.snowjak.city.tools.Tool
 import org.snowjak.city.tools.ToolGroup
@@ -44,8 +47,25 @@ public class Module extends ScriptedResource {
 	
 	String description
 	
-	private PreferencesService preferencesService
-	private GameService gameService
+	private final PreferencesService preferencesService
+	private final GameService gameService
+	private final I18NService i18nService
+	
+	@Lazy
+	I18NBundleContext i18n = {
+		if(dependencyCheckingMode)
+			return new ProxiedI18NBundleContext(scriptDirectory)
+		if(!id)
+			throw new IllegalStateException("Cannot access [i18n] before setting the Module's [id].")
+		i18nService.getContext(id, scriptDirectory)
+	}()
+	
+	@Lazy
+	ScopedPreferences preferences = {
+		if(!id)
+			throw new IllegalStateException("Cannot access [preferences] before setting the Module's [id].")
+		preferencesService.get(id)
+	}()
 	
 	final GameState state
 	final Map<String,EntitySystem> systems = [:]
@@ -56,22 +76,13 @@ public class Module extends ScriptedResource {
 	final Map<String,ToolGroup> toolGroups = [:]
 	final Map<String,Tool> tools = [:]
 	
-	Module(GameService gameService, PreferencesService preferencesService) {
+	Module(GameService gameService, PreferencesService preferencesService, I18NService i18nService) {
 		super()
 		this.preferencesService = preferencesService
 		this.gameService = gameService
+		this.i18nService = i18nService
+		
 		this.state = gameService.state
-	}
-	
-	/**
-	 * Get the {@link ScopedPreferences} instance named "{@code [module-id]}"
-	 * from the game's preferences file.
-	 * <p>
-	 * Ensure that you set [id] before attempting to get this instance.
-	 * </p>
-	 */
-	public ScopedPreferences getPreferences() {
-		preferencesService.get(id)
 	}
 	
 	/**
@@ -210,9 +221,9 @@ public class Module extends ScriptedResource {
 	 */
 	public void tool(String id, @DelegatesTo(value=Tool, strategy=Closure.DELEGATE_FIRST) Closure toolSpec) {
 		
-		final tool = new Tool(id, binding, scriptDirectory, toolGroups, gameService)
+		final tool = new Tool(id, this, scriptDirectory, toolGroups, gameService)
+		toolSpec = toolSpec.rehydrate(tool, this, toolSpec)
 		toolSpec.resolveStrategy = Closure.DELEGATE_FIRST
-		toolSpec.delegate = tool
 		toolSpec()
 		
 		tool.buttons.each { _, button ->
@@ -226,11 +237,15 @@ public class Module extends ScriptedResource {
 	@Override
 	protected ScriptedResource executeInclude(FileHandle includeHandle, Consumer<ScriptedResource> configurer, DelegatingScript script) {
 		
-		final module = new Module(gameService, preferencesService)
+		final module = new Module(gameService, preferencesService, i18nService)
 		configurer.accept module
+		
+		module.id = this.id
+		this.i18n.bundles.each { module.i18n.addBundle it }
 		
 		script.run()
 		
+		module.i18n.bundles.each { this.i18n.addBundle it }
 		this.systems.putAll module.systems
 		this.cellRenderingHooks.addAll module.cellRenderingHooks
 		this.customRenderingHooks.addAll module.customRenderingHooks

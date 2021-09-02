@@ -5,8 +5,8 @@ package org.snowjak.city.service
 
 import java.util.function.DoubleConsumer
 
+import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
-import org.snowjak.city.configuration.Configuration
 import org.snowjak.city.ecs.components.IsMapCell
 import org.snowjak.city.ecs.systems.impl.IsMapCellManagementSystem
 import org.snowjak.city.ecs.systems.impl.RemoveMapCellRearrangedSystem
@@ -153,7 +153,7 @@ class GameService {
 		LOG.info "Scanning for module-scripts ..."
 		
 		final resolver = GameAssetService.FILE_HANDLE_RESOLVER
-		final moduleFiles = scanForFiles(resolver.resolve(Configuration.EXTERNAL_ROOT_MODULES), ".module.groovy", true)
+		final moduleFiles = scanForFiles(resolver.resolve(CityGame.EXTERNAL_ROOT_MODULES), ".module.groovy", true)
 		
 		final progressStep = 1d / (double) moduleFiles.size()
 		def progress = 0d

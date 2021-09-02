@@ -6,6 +6,7 @@ package org.snowjak.city.tools
 import java.util.function.Consumer
 
 import org.snowjak.city.input.hotkeys.Hotkey
+import org.snowjak.city.module.Module
 import org.snowjak.city.service.GameService
 import org.snowjak.city.tools.activity.Activity
 
@@ -37,13 +38,14 @@ class Tool {
 	
 	final String id
 	
+	String title
 	boolean enabled = true
 	
 	final ToolActivities active
 	
+	private final Module module
 	private final FileHandle baseDirectory
 	private final GameService gameService
-	private final Binding binding
 	
 	final Map<String,ToolGroup> groups = new LinkedHashMap<>()
 	final Map<String,ToolButton> buttons = new LinkedHashMap<>()
@@ -51,9 +53,9 @@ class Tool {
 	final Set<Activity> activities = new LinkedHashSet<>()
 	final Set<Runnable> inactivities = new LinkedHashSet<>()
 	
-	public Tool(String id, Binding binding, FileHandle baseDirectory, Map<String,ToolGroup> toolGroups, GameService gameService) {
+	public Tool(String id, Module module, FileHandle baseDirectory, Map<String,ToolGroup> toolGroups, GameService gameService) {
 		this.id = id
-		this.binding = binding
+		this.module = module
 		this.baseDirectory = baseDirectory
 		this.groups.putAll toolGroups
 		this.gameService = gameService
@@ -61,16 +63,16 @@ class Tool {
 	}
 	
 	def propertyMissing(name) {
-		binding[name]
+		module."$name"
 	}
 	
 	def propertyMissing(name, value) {
-		binding[name] = value
+		module."$name" = value
 	}
 	
 	public void button(String id, @DelegatesTo(value=ToolButton, strategy=Closure.DELEGATE_FIRST) Closure buttonSpec) {
 		final button = new ToolButton(this, id, baseDirectory)
-		buttonSpec = buttonSpec.rehydrate(button, this, buttonSpec)
+		buttonSpec = buttonSpec.rehydrate(button, module, this)
 		buttonSpec.resolveStrategy = Closure.DELEGATE_FIRST
 		buttonSpec()
 		
@@ -79,7 +81,7 @@ class Tool {
 	
 	public void key(String id, @DelegatesTo(value=Hotkey, strategy=Closure.DELEGATE_FIRST) Closure hotkeySpec) {
 		final Hotkey hotkey = new Hotkey(id)
-		hotkeySpec = hotkeySpec.rehydrate(hotkey, this, hotkeySpec)
+		hotkeySpec = hotkeySpec.rehydrate(hotkey, module, this)
 		hotkeySpec.resolveStrategy = Closure.DELEGATE_FIRST
 		hotkeySpec()
 		

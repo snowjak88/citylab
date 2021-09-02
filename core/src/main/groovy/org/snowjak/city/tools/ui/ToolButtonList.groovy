@@ -23,6 +23,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.ui.Table
+import com.badlogic.gdx.scenes.scene2d.ui.Tooltip
 import com.badlogic.gdx.scenes.scene2d.ui.Window
 import com.badlogic.gdx.scenes.scene2d.ui.Button.ButtonStyle
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
@@ -60,11 +61,15 @@ class ToolButtonList extends Window {
 	private final Map<String,Button> groupExpandButtons = [:]
 	private final Map<String,Set<Button>> groupToolButtons = [:]
 	private final Map<String,Button> buttons = [:]
+	private final Map<String,Label> buttonToolTipLabels = [:]
 	
 	private final Table buttonTable;
 	private final ScrollPane scrollPane;
 	
+	private final Button expandCollapseAllButton
+	
 	private final SkinService skinService
+	private final I18NService i18nService
 	private final GameService gameService
 	private final GameAssetService assetService
 	
@@ -74,11 +79,11 @@ class ToolButtonList extends Window {
 	
 	private boolean rebuildNeeded = false
 	
-	public ToolButtonList(I18NService i18nService, SkinService skinService,GameService gameService, GameAssetService assetService, Runnable scrollFocusCanceller) {
+	public ToolButtonList(I18NService i18nService, SkinService skinService, GameService gameService, GameAssetService assetService, Runnable scrollFocusCanceller) {
 		
 		super(i18nService.get("tool-button-list-title"), skinService.current)
 		
-		this.skinService = skinService
+		this.skinService = skinService		this.i18nService = i18nService
 		this.gameService = gameService
 		this.assetService = assetService
 		
@@ -94,7 +99,7 @@ class ToolButtonList extends Window {
 		buttonSunkenMask = assetService.get(BUTTON_MASK_SUNKEN_FILENAME, Texture)
 		buttonHighlight = assetService.get(BUTTON_HIGHLIGHT_FILENAME, Texture)
 		
-		movable = false
+		movable = true
 		modal = false
 		resizable = false
 		
@@ -104,6 +109,19 @@ class ToolButtonList extends Window {
 		scrollPane = new ScrollPane(buttonTable, skin)
 		scrollPane.scrollbarsVisible = false
 		scrollPane.overscrollDistance = 0
+		
+		expandCollapseAllButton = new Button(skin, "minus")
+		expandCollapseAllButton.addListener( [
+			changed: { ChangeEvent e, Actor a ->
+				final b = a as Button
+				if(!b.checked)
+					return
+				b.checked = false
+				
+				final expandAll = ( groupExpanded.isEmpty() )
+				groups.keySet().each { groupID -> setToolGroupExpanded(groupID, expandAll) }
+			}
+		] as ChangeListener)
 		
 		this.addListener([
 			exit: {event, x, y, pointer, toActor ->
@@ -176,26 +194,33 @@ class ToolButtonList extends Window {
 		if(!rebuildNeeded)
 			return
 		
-		buttonTable?.clear()
-		
-		groups?.each { groupID, groupDef ->
+		if(buttonTable) {
+			buttonTable.clear()
 			
-			if(groupButtonDefs[groupID] == null || groupButtonDefs[groupID].isEmpty())
-				return
-			
-			final groupLabel = groupLabels[groupID]
-			final groupExpandButton = groupExpandButtons[groupID]
 			buttonTable.row().left()
-			buttonTable.add(groupLabel).fillX()
-			buttonTable.add(groupExpandButton)
+			buttonTable.add(new Label(i18nService.get("tool-button-list-all"), skin)).fillX().prefWidth(120)
+			buttonTable.add expandCollapseAllButton
 			
-			groupButtonDefs[groupID]?.each { buttonDef ->
+			groups?.each { groupID, groupDef ->
 				
-				final button = buttons[buttonDef.id]
-				buttonTable.row().center()
-				buttonTable.add(button)
+				if(groupButtonDefs[groupID] == null || groupButtonDefs[groupID].isEmpty())
+					return
 				
+				final groupLabel = groupLabels[groupID]
+				final groupExpandButton = groupExpandButtons[groupID]
+				buttonTable.row().left()
+				buttonTable.add(groupLabel).fillX().prefWidth(120)
+				buttonTable.add(groupExpandButton).center()
+				
+				groupButtonDefs[groupID]?.each { buttonDef ->
+					
+					final button = buttons[buttonDef.id]
+					buttonTable.row().center()
+					buttonTable.add(button)
+					
+				}
 			}
+			
 		}
 		
 		this.pack()
@@ -238,7 +263,7 @@ class ToolButtonList extends Window {
 		groupExpandButton.addListener( [ changed: { ChangeEvent e, Actor a ->
 				final b = a as Button
 				if(b.checked) {
-					setToolGroupVisibility groupID, !(groupExpanded.contains(groupID))
+					setToolGroupExpanded groupID, !(groupExpanded.contains(groupID))
 					b.checked = false
 				}
 			} ] as ChangeListener)
@@ -315,7 +340,7 @@ class ToolButtonList extends Window {
 	}
 	
 	/**
-	 * Set the given group's "visibility":
+	 * Set the given group's expansion:
 	 * <ul>
 	 * <li>Change the group's "expand" button's style (to "plus" or "minus")</li>
 	 * <li>Add an {@link Action} to each of this group's buttons, to cause them to change size and fade in/out</li>
@@ -323,9 +348,9 @@ class ToolButtonList extends Window {
 	 * @param groupID
 	 * @param visible
 	 */
-	private void setToolGroupVisibility(String groupID, boolean makeVisible) {
+	private void setToolGroupExpanded(String groupID, boolean expand) {
 		
-		if(makeVisible) {
+		if(expand) {
 			groupExpandButtons[groupID]?.style = skinService.current.get("minus", ButtonStyle)
 			groupToolButtons[groupID]?.each { b ->
 				b.addAction Actions.sequence(
@@ -345,6 +370,12 @@ class ToolButtonList extends Window {
 			}
 			groupExpanded.remove groupID
 		}
+		
+		checkExpandAllButton()
+	}
+	
+	private void checkExpandAllButton() {
+		expandCollapseAllButton.style = skin.get(( groupExpanded.isEmpty() ) ? "plus" : "minus", ButtonStyle )
 	}
 	
 	/**
@@ -360,7 +391,13 @@ class ToolButtonList extends Window {
 		style.checked = processButtonTexture( assetService.get(buttonDef.buttonUp.path(), Texture.class), false, true )
 		style.disabled = processButtonTexture( assetService.get(buttonDef.buttonUp.path(), Texture.class), false, false, true )
 		
-		new Button(style)
+		final buttonToolTipLabel = new Label(buttonDef.tool.title, skin)
+		buttonToolTipLabels[buttonDef.id] = buttonToolTipLabel
+		
+		final b = new Button(style)
+		b.addListener(new Tooltip(buttonToolTipLabel))
+		
+		b
 	}
 	
 	private void updateToolButton(Button button, ToolButton buttonDef) {
@@ -369,6 +406,8 @@ class ToolButtonList extends Window {
 		style.down = processButtonTexture( assetService.get(buttonDef.buttonDown.path(), Texture.class), true )
 		style.checked = processButtonTexture( assetService.get(buttonDef.buttonUp.path(), Texture.class), false, true )
 		style.disabled = processButtonTexture( assetService.get(buttonDef.buttonUp.path(), Texture.class), false, false, true )
+		
+		buttonToolTipLabels[buttonDef.id]?.text = buttonDef.tool.title
 	}
 	
 	/**

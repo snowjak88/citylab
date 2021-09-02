@@ -4,9 +4,8 @@
 package org.snowjak.city.map
 
 import org.snowjak.city.map.tiles.TileCorner
+import org.snowjak.city.util.BiIntConsumer
 
-import com.badlogic.ashley.core.Component
-import com.badlogic.ashley.core.ComponentMapper
 import com.badlogic.ashley.core.Entity
 
 /**
@@ -27,7 +26,15 @@ public class CityMap {
 	private int[][] vertexAltitudes
 	private Entity[][] entities
 	
-	private final Map<Class<? extends Component>,ComponentMapper> componentMappers = [:]
+	private final Collection<BiIntConsumer> vertexChangedListeners = Collections.synchronizedCollection( [] )
+	
+	/**
+	 * Add a listener (a {@link BiIntConsumer}) that will be notified whenever a vertex on this map changes in any way.
+	 * @param listener
+	 */
+	public void addVertexChangedListener(BiIntConsumer listener) {
+		vertexChangedListeners << listener
+	}
 	
 	/**
 	 * Are the given cell-coordinates located within this map?
@@ -182,6 +189,7 @@ public class CityMap {
 			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
 		
 		vertexAltitudes[vertexX][vertexY] = altitude
+		vertexChangedListeners.each { it.accept(vertexX, vertexY) }
 	}
 	
 	/**
@@ -224,6 +232,7 @@ public class CityMap {
 			vertices[vertexX][vertexY].clear()
 		
 		vertices[vertexX][vertexY].addAll flavors
+		vertexChangedListeners.each { it.accept(vertexX, vertexY) }
 	}
 	
 	/**

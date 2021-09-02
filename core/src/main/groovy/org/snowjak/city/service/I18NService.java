@@ -146,15 +146,22 @@ public class I18NService {
 	}
 	
 	/**
-	 * Get the {@link I18NBundleContext context} identified by the given name.
+	 * Get the {@link I18NBundleContext context} identified by the given name and
+	 * using the given {@code baseDirectory} for filename-resolution.
+	 * <p>
+	 * If a context identified by the given name already exists -- even if it uses a
+	 * different base-directory -- then the existing context is returned and
+	 * {@code baseDirectory} is ignored.
+	 * </p>
 	 * 
 	 * @param contextName
 	 * @return
 	 */
-	public I18NBundleContext getContext(String contextName) {
+	public I18NBundleContext getContext(String contextName, FileHandle baseDirectory) {
 		
 		synchronized (this) {
-			return contexts.computeIfAbsent(contextName, (n) -> new I18NBundleContext(this, contextName));
+			return contexts.computeIfAbsent(contextName,
+					(n) -> new I18NBundleContext(this, contextName, baseDirectory));
 		}
 	}
 	
@@ -181,6 +188,8 @@ public class I18NService {
 	private void reloadInternalBundle() {
 		
 		synchronized (this) {
+			if (assetService.isLoaded(internalBundleBase.path(), I18NBundle.class))
+				assetService.unload(internalBundleBase.path(), I18NBundle.class);
 			assetService.load(internalBundleBase.path(), I18NBundle.class, new I18NBundleParameter(currentLocale));
 		}
 	}
@@ -189,16 +198,18 @@ public class I18NService {
 		
 		synchronized (this) {
 			for (String contextName : configuredBundleBases.keySet())
-				for (FileHandle bundleBase : configuredBundleBases.computeIfAbsent(contextName,
-						(n) -> new LinkedHashSet<>()))
+				for (FileHandle bundleBase : getBundleBases(contextName)) {
+					if (assetService.isLoaded(bundleBase.path(), I18NBundle.class))
+						assetService.unload(bundleBase.path(), I18NBundle.class);
 					assetService.load(bundleBase.path(), I18NBundle.class, new I18NBundleParameter(currentLocale));
+				}
 		}
 	}
 	
 	private void addBundle(String contextName, FileHandle bundleBase) {
 		
 		synchronized (this) {
-			configuredBundleBases.computeIfAbsent(contextName, (n) -> new LinkedHashSet<>()).add(bundleBase);
+			getBundleBases(contextName).add(bundleBase);
 			assetService.load(bundleBase.path(), I18NBundle.class, new I18NBundleParameter(currentLocale));
 		}
 	}
@@ -213,8 +224,7 @@ public class I18NService {
 		
 		synchronized (this) {
 			if (cachedBundles.computeIfAbsent(contextName, (n) -> new LinkedHashSet<>()).isEmpty()) {
-				for (FileHandle bundleBase : configuredBundleBases.computeIfAbsent(contextName,
-						(n) -> new LinkedHashSet<>())) {
+				for (FileHandle bundleBase : getBundleBases(contextName)) {
 					assetService.finishLoading(bundleBase.path());
 					final I18NBundle loadedBundle = assetService.get(bundleBase.path(), I18NBundle.class);
 					cachedBundles.get(contextName).add(loadedBundle);
@@ -222,6 +232,19 @@ public class I18NService {
 			}
 			
 			return cachedBundles.get(contextName);
+		}
+	}
+	
+	/**
+	 * Get the set of configured bundle-bases for any given context-name.
+	 * 
+	 * @param contextName
+	 * @return
+	 */
+	private Set<FileHandle> getBundleBases(String contextName) {
+		
+		synchronized (this) {
+			return configuredBundleBases.computeIfAbsent(contextName, (n) -> new LinkedHashSet<>());
 		}
 	}
 	
@@ -235,12 +258,19 @@ public class I18NService {
 	public static class I18NBundleContext {
 		
 		private final String contextName;
+		private final FileHandle baseDirectory;
 		private final I18NService service;
 		
-		private I18NBundleContext(I18NService service, String contextName) {
+		private I18NBundleContext(I18NService service, String contextName, FileHandle baseDirectory) {
 			
 			this.contextName = contextName;
 			this.service = service;
+			this.baseDirectory = baseDirectory;
+		}
+		
+		public void addBundle(String bundleBaseName) {
+			
+			addBundle(baseDirectory.child(bundleBaseName));
 		}
 		
 		public void addBundle(FileHandle bundleBase) {
@@ -272,6 +302,60 @@ public class I18NService {
 		public String format(String key, Object... arguments) {
 			
 			return service.format(contextName, key, arguments);
+		}
+		
+		public Set<FileHandle> getBundles() {
+			
+			return service.getBundleBases(contextName);
+		}
+	}
+	
+	/**
+	 * Pretends to be an I18NBundleContext, but really just snoops on what bundles
+	 * you add.
+	 * 
+	 * @author snowjak88
+	 *
+	 */
+	public static class ProxiedI18NBundleContext extends I18NBundleContext {
+		
+		private final FileHandle baseDirectory;
+		private final Set<FileHandle> bundleBases = new LinkedHashSet<>();
+		
+		public ProxiedI18NBundleContext(FileHandle baseDirectory) {
+			
+			super(null, null, null);
+			this.baseDirectory = baseDirectory;
+		}
+		
+		@Override
+		public void addBundle(String bundleBaseName) {
+			
+			addBundle(baseDirectory.child(bundleBaseName));
+		}
+		
+		@Override
+		public void addBundle(FileHandle bundleBase) {
+			
+			bundleBases.add(bundleBase);
+		}
+		
+		@Override
+		public Set<FileHandle> getBundles() {
+			
+			return bundleBases;
+		}
+		
+		@Override
+		public String get(String key) {
+			
+			return key;
+		}
+		
+		@Override
+		public String format(String key, Object... arguments) {
+			
+			return key;
 		}
 	}
 }

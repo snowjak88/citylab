@@ -3,6 +3,7 @@ package org.snowjak.city.configuration;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import org.snowjak.city.CityGame;
 import org.snowjak.city.configuration.annotations.InjectAll;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.console.loggers.ConsoleLoggerFactory;
@@ -39,16 +40,6 @@ public class Configuration {
 	
 	public static final String SKIN_NAME = "minty-fresh-ui";
 	
-	/**
-	 * Directory holding module-definition scripts
-	 */
-	public static final String EXTERNAL_ROOT_MODULES = "data/modules/";
-	
-	/**
-	 * Directory holding tileset-definition scripts
-	 */
-	public static final String EXTERNAL_ROOT_TILESETS = "data/tilesets/";
-	
 	@InjectAll(ScriptedResourceLoader.class)
 	private Collection<ScriptedResourceLoader<ScriptedResource, ?>> scriptedResourceLoaders;
 	
@@ -78,7 +69,7 @@ public class Configuration {
 		LOG.info("Scanning for resource-scripts ...");
 		
 		LOG.info("Scanning for resource-scripts: tile-sets ...");
-		scanForFiles(resolver.resolve(EXTERNAL_ROOT_TILESETS), ".tileset.groovy", true).forEach(f -> {
+		scanForFiles(resolver.resolve(CityGame.EXTERNAL_ROOT_TILESETS), ".tileset.groovy", true).forEach(f -> {
 			LOG.info("Queueing tile-set for load: [{0}] ...", f.path());
 			assetService.load(f.path(), TileSet.class);
 		});

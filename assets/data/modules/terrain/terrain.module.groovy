@@ -4,16 +4,20 @@ id = 'terrain'
 description = 'Handles fitting terrain-tiles to the map.'
 
 //
+// Ensure our I18N bundle is properly registered.
+i18n.addBundle 'i18n/terrain'
+
+//
 // Get the configured tile-set name to use for the landscape,
 // with a pre-programmed fallback
 tilesetName = preferences.getString('tileset-name', 'default')
 
 //
 // Get that tileset from the tile-set service.
-// Note that we need to mark that tile-set as explicitly depended-upon.
+// Note that we need to mark that tile-set as explicitly depended-upon
+// so it can be fully loaded before we need it.
 //
 dependsOn tilesetName, TileSet
-
 tileset = assets.getByID tilesetName, TileSet
 
 //

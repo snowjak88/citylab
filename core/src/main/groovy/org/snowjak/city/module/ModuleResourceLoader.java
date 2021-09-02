@@ -12,11 +12,13 @@ import org.snowjak.city.module.ModuleResourceLoader.ModuleResourceLoaderParamete
 import org.snowjak.city.resources.ScriptedResourceLoader;
 import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.GameService;
+import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.PreferencesService;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.utils.I18NBundle;
 import com.github.czyzby.autumn.annotation.Component;
 
 import groovy.util.DelegatingScript;
@@ -30,14 +32,16 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 	
 	private final GameService gameService;
 	private final PreferencesService preferencesService;
+	private final I18NService i18nService;
 	
 	public ModuleResourceLoader(GameService gameService, PreferencesService preferencesService,
-			GameAssetService assetService) {
+			GameAssetService assetService, I18NService i18nService) {
 		
 		super(assetService);
 		
 		this.gameService = gameService;
 		this.preferencesService = preferencesService;
+		this.i18nService = i18nService;
 	}
 	
 	@Override
@@ -67,7 +71,14 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 	@Override
 	protected Module newInstance() {
 		
-		return new Module(gameService, preferencesService);
+		return new Module(gameService, preferencesService, i18nService);
+	}
+	
+	@Override
+	protected void afterLoad(Module resource, GameAssetService assetService, boolean isDependencyMode) {
+		
+		if (isDependencyMode)
+			resource.getI18n().getBundles().forEach(b -> assetService.load(b.path(), I18NBundle.class));
 	}
 	
 	@Override

@@ -41,14 +41,19 @@ public class CityGame extends Game {
 	public static final String INTERNAL_SKIN_BASE = "ui/skins/";
 	
 	/**
-	 * Directory holding external I18N bundles
-	 */
-	public static final String EXTERNAL_ROOT_BUNDLES = "data/bundles/";
-	
-	/**
 	 * Directory holding map-generator scripts
 	 */
 	public static final String EXTERNAL_ROOT_MAP_GENERATORS = "data/map-generators/";
+	
+	/**
+	 * Directory holding tileset-definition scripts
+	 */
+	public static final String EXTERNAL_ROOT_TILESETS = "data/tilesets/";
+	
+	/**
+	 * Directory holding module-definition scripts
+	 */
+	public static final String EXTERNAL_ROOT_MODULES = "data/modules/";
 	
 	//
 	//

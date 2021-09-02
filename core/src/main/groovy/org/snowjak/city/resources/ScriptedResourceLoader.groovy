@@ -216,22 +216,22 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		if(!dependencyMode) {
 			r.binding.variables.putAll r.providedObjects
 			this.providedObjects.putAll r.providedObjects
-			
-			afterLoad r, assetService
 		}
+		
+		afterLoad r, assetService, dependencyMode
 		
 		r
 	}
 	
 	/**
-	 * This method is called after this resource is fully loaded. Override this to perform all
-	 * post-load processing -- e.g., inserting required assets into your resource.
+	 * This method is called after this resource is fully loaded (whether in dependency-checking mode or not).
+	 * Override this to perform all post-load processing -- e.g., inserting required assets into your resource.
 	 * <p>
 	 * The default implementation does nothing.
 	 * </p>
 	 * @param resource
 	 */
-	protected void afterLoad(R resource, GameAssetService assetService) {
+	protected void afterLoad(R resource, GameAssetService assetService, boolean isDependencyMode) {
 	}
 	
 	/**

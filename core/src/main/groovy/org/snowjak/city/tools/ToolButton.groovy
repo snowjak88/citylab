@@ -14,7 +14,7 @@ class ToolButton {
 	final Tool tool
 	final String id
 	
-	String title, group
+	String group
 	FileHandle buttonUp, buttonDown
 	
 	public ToolButton(Tool tool, String id, FileHandle baseDirectory) {
