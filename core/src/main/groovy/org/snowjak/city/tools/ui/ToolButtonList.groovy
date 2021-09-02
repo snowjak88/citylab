@@ -198,7 +198,7 @@ class ToolButtonList extends Window {
 			buttonTable.clear()
 			
 			buttonTable.row().left()
-			buttonTable.add(new Label(i18nService.get("tool-button-list-all"), skin)).fillX().prefWidth(120)
+			buttonTable.add(new Label(i18nService.get("tool-button-list-all"), skin, "title")).fillX().prefWidth(120)
 			buttonTable.add expandCollapseAllButton
 			
 			groups?.each { groupID, groupDef ->

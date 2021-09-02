@@ -91,6 +91,10 @@ tool 'terrainRaise', {
 		mapCellOutliner.cellY = cellY
 	}
 	
+	active.mapClick Buttons.LEFT, { cellX, cellY ->
+		println "You want to raise $cellX,$cellY"
+	}
+	
 	inactive {
 		mapCellOutliner.active = false
 	}
@@ -109,6 +113,10 @@ tool 'terrainLower', {
 		mapCellOutliner.active = true
 		mapCellOutliner.cellX = cellX
 		mapCellOutliner.cellY = cellY
+	}
+	
+	active.mapClick Buttons.LEFT, { cellX, cellY ->
+		println "You want to lower $cellX,$cellY"
 	}
 	
 	inactive {

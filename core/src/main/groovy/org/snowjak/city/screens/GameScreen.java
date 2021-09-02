@@ -31,6 +31,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.github.czyzby.autumn.annotation.Component;
@@ -98,6 +99,7 @@ public class GameScreen extends AbstractGameScreen {
 				getAssetService(), () -> getStage().setScrollFocus(null));
 		
 		buttonList.addTools(getGameService().getState().getTools().values());
+		buttonList.setPosition(0, getStage().getHeight(), Align.topLeft);
 		
 		return buttonList;
 	}

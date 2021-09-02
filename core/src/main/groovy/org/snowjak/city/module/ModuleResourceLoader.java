@@ -15,6 +15,7 @@ import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.PreferencesService;
 
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.graphics.Color;
@@ -57,11 +58,12 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		customizer.addStarImports("com.badlogic.gdx.graphics");
 		customizer.addStarImports("com.badlogic.gdx.math");
 		customizer.addStarImports("com.badlogic.gdx.utils");
+		customizer.addImport("Buttons", Input.Buttons.class.getName());
 		customizer.addImports(
 				// jCity types
 				CityMap.class.getName(), Tile.class.getName(), TileSet.class.getName(),
 				// Misc. LibGDX types
-				Color.class.getName(), AssetDescriptor.class.getName());
+				AssetDescriptor.class.getName(), Color.class.getName());
 		
 		config.addCompilationCustomizers(customizer);
 		config.setScriptBaseClass(DelegatingScript.class.getName());
