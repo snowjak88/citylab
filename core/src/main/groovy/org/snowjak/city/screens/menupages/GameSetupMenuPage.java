@@ -272,8 +272,10 @@ public class GameSetupMenuPage implements MainMenuPage {
 		
 		mapGeneratorSelection.setItems(availableMapGenerators);
 		
-		param.setGenerator(availableMapGenerators.first());
-		mapGeneratorSelection.setSelectedIndex(0);
+		if (!availableMapGenerators.isEmpty()) {
+			param.setGenerator(availableMapGenerators.first());
+			mapGeneratorSelection.setSelectedIndex(0);
+		}
 	}
 	
 	@Override

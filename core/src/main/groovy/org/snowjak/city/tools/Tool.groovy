@@ -7,6 +7,7 @@ import java.util.function.Consumer
 
 import org.snowjak.city.input.hotkeys.Hotkey
 import org.snowjak.city.service.GameService
+import org.snowjak.city.tools.activity.Activity
 
 import com.badlogic.gdx.files.FileHandle
 
@@ -38,23 +39,38 @@ class Tool {
 	
 	boolean enabled = true
 	
+	final ToolActivities active
+	
 	private final FileHandle baseDirectory
-	
 	private final GameService gameService
-	private final Map<String,ToolGroup> groups = new LinkedHashMap<>()
-	private final Map<String,ToolButton> buttons = new LinkedHashMap<>()
-	private final Map<String,Hotkey> hotkeys = new LinkedHashMap<>()
+	private final Binding binding
 	
-	public Tool(String id, FileHandle baseDirectory, Map<String,ToolGroup> toolGroups, GameService gameService) {
+	final Map<String,ToolGroup> groups = new LinkedHashMap<>()
+	final Map<String,ToolButton> buttons = new LinkedHashMap<>()
+	final Map<String,Hotkey> hotkeys = new LinkedHashMap<>()
+	final Set<Activity> activities = new LinkedHashSet<>()
+	final Set<Runnable> inactivities = new LinkedHashSet<>()
+	
+	public Tool(String id, Binding binding, FileHandle baseDirectory, Map<String,ToolGroup> toolGroups, GameService gameService) {
 		this.id = id
+		this.binding = binding
 		this.baseDirectory = baseDirectory
 		this.groups.putAll toolGroups
 		this.gameService = gameService
+		this.active = new ToolActivities(this, gameService)
+	}
+	
+	def propertyMissing(name) {
+		binding[name]
+	}
+	
+	def propertyMissing(name, value) {
+		binding[name] = value
 	}
 	
 	public void button(String id, @DelegatesTo(value=ToolButton, strategy=Closure.DELEGATE_FIRST) Closure buttonSpec) {
 		final button = new ToolButton(this, id, baseDirectory)
-		buttonSpec = buttonSpec.rehydrate(button, this, this)
+		buttonSpec = buttonSpec.rehydrate(button, this, buttonSpec)
 		buttonSpec.resolveStrategy = Closure.DELEGATE_FIRST
 		buttonSpec()
 		
@@ -62,14 +78,29 @@ class Tool {
 	}
 	
 	public void key(String id, @DelegatesTo(value=Hotkey, strategy=Closure.DELEGATE_FIRST) Closure hotkeySpec) {
-		final Hotkey key = new Hotkey(id)
-		hotkeySpec = hotkeySpec.rehydrate(key, this, this)
+		final Hotkey hotkey = new Hotkey(id)
+		hotkeySpec = hotkeySpec.rehydrate(hotkey, this, hotkeySpec)
 		hotkeySpec.resolveStrategy = Closure.DELEGATE_FIRST
 		hotkeySpec()
 		
-		hotkeys << [ "$id" : key ]
+		hotkeys << [ "$id" : hotkey ]
 	}
 	
+	/**
+	 * Execute this action when this Tool is deactivated.
+	 * 
+	 * @param inactiveAction
+	 */
+	public void inactive(Closure inactiveAction) {
+		inactiveAction.resolveStrategy = Closure.DELEGATE_FIRST
+		inactiveAction.delegate = this
+		
+		inactivities << inactiveAction
+	}
+	
+	//
+	//
+	//
 	
 	public void setEnabled(boolean enabled) {
 		
@@ -78,6 +109,24 @@ class Tool {
 	}
 	
 	public void activate() {
-		println "Tool [$id] activated!"
+		
+		gameService.state.activeTool?.deactivate()
+		gameService.state.activeTool = this
+		
+		if(enabled)
+			activities.each { it.activate() }
+	}
+	
+	public void update() {
+		
+		if(enabled)
+			activities.each { it.update() }
+	}
+	
+	public void deactivate() {
+		
+		inactivities.each { it.run() }
+		activities.each { it.deactivate() }
+		gameService.state.activeTool = null
 	}
 }

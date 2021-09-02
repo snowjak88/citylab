@@ -233,8 +233,8 @@ public abstract class ScriptedResource {
 		} else
 			this.providedObjects.putAll included.providedObjects
 		
-		
-		script.getBinding().getVariables().forEach({k, v -> this.getBinding().setVariable((String) k, v)})
+		included.binding.variables.each { n, v -> this.binding[n] = v }
+		script.binding.variables.each { n, v -> this.binding[n] = v }
 	}
 	
 	/**

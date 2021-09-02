@@ -21,6 +21,7 @@ import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.SkinService;
+import org.snowjak.city.tools.Tool;
 import org.snowjak.city.tools.ui.ToolButtonList;
 
 import com.badlogic.ashley.core.Engine;
@@ -29,8 +30,6 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -95,22 +94,10 @@ public class GameScreen extends AbstractGameScreen {
 	@Override
 	protected Actor getRoot() {
 		
-		final ToolButtonList buttonList = new ToolButtonList(i18nService, getSkinService(), getAssetService());
+		final ToolButtonList buttonList = new ToolButtonList(i18nService, getSkinService(), getGameService(),
+				getAssetService(), () -> getStage().setScrollFocus(null));
 		
 		buttonList.addTools(getGameService().getState().getTools().values());
-		
-		buttonList.addListener(new InputListener() {
-			
-			@Override
-			public boolean mouseMoved(InputEvent event, float x, float y) {
-				
-				if (buttonList.isScrollFocus())
-					if (buttonList.hit(x, y, false) == null)
-						getStage().setScrollFocus(null);
-					
-				return super.mouseMoved(event, x, y);
-			}
-		});
 		
 		return buttonList;
 	}
@@ -127,6 +114,7 @@ public class GameScreen extends AbstractGameScreen {
 		final GameState state = getGameService().getState();
 		
 		state.setCamera(getCameraControl());
+		state.setInputProcessor(inputProcessor);
 		
 		final CityMap map = state.getMap();
 		final MapRenderer renderer = state.getRenderer();
@@ -163,6 +151,7 @@ public class GameScreen extends AbstractGameScreen {
 		super.hide();
 		
 		getGameService().getState().setCamera(null);
+		getGameService().getState().setInputProcessor(null);
 	}
 	
 	@Override
@@ -212,8 +201,9 @@ public class GameScreen extends AbstractGameScreen {
 	@Override
 	public void renderAfterStage(float delta) {
 		
-		//
-		// nothing to do here
+		final Tool activeTool = getGameService().getState().getActiveTool();
+		if (activeTool != null)
+			activeTool.update();
 	}
 	
 	@Override

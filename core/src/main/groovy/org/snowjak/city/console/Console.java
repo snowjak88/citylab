@@ -195,10 +195,11 @@ public class Console {
 	public void setHidden(boolean isHidden) {
 		
 		this.isHidden = isHidden;
+		display.setVisible(!isHidden);
 	}
 	
 	public void toggleHidden() {
 		
-		isHidden = !isHidden;
+		setHidden(!isHidden());
 	}
 }

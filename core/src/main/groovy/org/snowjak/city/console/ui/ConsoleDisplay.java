@@ -168,14 +168,6 @@ public class ConsoleDisplay {
 				if (event.getKeyCode() == console.getActivationCharacter()) {
 					
 					console.toggleHidden();
-					stage.getRoot().setVisible(!console.isHidden());
-					
-					if (console.isHidden())
-						stage.unfocusAll();
-					else {
-						stage.setKeyboardFocus(inputTextArea);
-						stage.setScrollFocus(scrollPane);
-					}
 					
 					event.cancel();
 					
@@ -188,6 +180,17 @@ public class ConsoleDisplay {
 				return super.keyTyped(event, character);
 			}
 		});
+	}
+	
+	public void setVisible(boolean visible) {
+		stage.getRoot().setVisible(visible);
+		
+		if (!visible)
+			stage.unfocusAll();
+		else {
+			stage.setKeyboardFocus(inputTextArea);
+			stage.setScrollFocus(scrollPane);
+		}
 	}
 	
 	public void init() {
@@ -261,6 +264,8 @@ public class ConsoleDisplay {
 		
 		stage.getRoot().addActor(root);
 		stage.getRoot().addActor(completionWindow);
+		
+		console.setHidden(true);
 	}
 	
 	/**

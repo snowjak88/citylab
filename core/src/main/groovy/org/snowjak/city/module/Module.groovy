@@ -81,11 +81,15 @@ public class Module extends ScriptedResource {
 	 * @param hook
 	 * @return a {@link RelativePriority prioritizer}
 	 */
-	public RelativePriority cellRenderHook(String id, CellRenderingHook hook) {
+	public RelativePriority cellRenderHook(String id, Closure hook) {
 		if(isDependencyCheckingMode())
 			return new RelativePriority()
 		
-		def newHook = new DelegatingCellRenderingHook(id, hook)
+		hook.resolveStrategy = Closure.DELEGATE_FIRST
+		hook.delegate = this
+		
+		def newHook = new DelegatingCellRenderingHook(id, hook as CellRenderingHook)
+		hook.owner = newHook
 		cellRenderingHooks << newHook
 		newHook.relativePriority
 	}
@@ -97,11 +101,15 @@ public class Module extends ScriptedResource {
 	 * @param hook
 	 * @return a {@link RelativePriority prioritizer}
 	 */
-	public RelativePriority customRenderHook(id, CustomRenderingHook hook) {
+	public RelativePriority customRenderHook(id, Closure hook) {
 		if(isDependencyCheckingMode())
 			return new RelativePriority()
 		
-		def newHook = new DelegatingCustomRenderingHook(id, hook)
+		hook.resolveStrategy = Closure.DELEGATE_FIRST
+		hook.delegate = this
+		
+		def newHook = new DelegatingCustomRenderingHook(id, hook as CustomRenderingHook)
+		hook.owner = newHook
 		customRenderingHooks << newHook
 		newHook.relativePriority
 	}
@@ -124,17 +132,16 @@ public class Module extends ScriptedResource {
 		if(isDependencyCheckingMode())
 			return
 		
-		def imp = implementation.rehydrate(this, implementation, implementation)
-		imp.resolveStrategy = Closure.DELEGATE_FIRST
-		
 		def system = new IteratingSystem(family) {
 					
 					@Override
 					protected void processEntity(Entity entity, float deltaTime) {
 						
-						imp(entity, deltaTime)
+						implementation(entity, deltaTime)
 					}
 				}
+		implementation.owner = system
+		implementation.delegate = this
 		
 		systems << ["$id" : system]
 	}
@@ -157,26 +164,31 @@ public class Module extends ScriptedResource {
 		if(isDependencyCheckingMode())
 			return
 		
-		def add = added.rehydrate(this, added, added)
-		add.resolveStrategy = Closure.DELEGATE_FIRST
+		added.resolveStrategy = Closure.DELEGATE_FIRST
+		added.delegate = this
 		
-		def drop = dropped.rehydrate(this, dropped, dropped)
-		drop.resolveStrategy = Closure.DELEGATE_FIRST
+		dropped.resolveStrategy = Closure.DELEGATE_FIRST
+		dropped.delegate = this
 		
 		def system = new ListeningSystem(family) {
 					
 					@Override
 					public void added(Entity entity, float deltaTime) {
 						
-						add(entity, deltaTime)
+						added(entity, deltaTime)
 					}
 					
 					@Override
 					public void dropped(Entity entity, float deltaTime) {
 						
-						drop(entity, deltaTime)
+						dropped(entity, deltaTime)
 					}
 				}
+		added.owner = system
+		added.delegate = this
+		
+		dropped.owner = system
+		dropped.delegate = this
 		
 		systems << ["$id" : system]
 	}
@@ -184,8 +196,8 @@ public class Module extends ScriptedResource {
 	public void buttonGroup(String id, @DelegatesTo(value=ToolGroup, strategy=Closure.DELEGATE_FIRST) Closure groupSpec) {
 		
 		final group = new ToolGroup(id)
-		groupSpec = groupSpec.rehydrate(group, this, this)
 		groupSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		groupSpec.delegate = group
 		groupSpec()
 		
 		toolGroups << ["$id" : group]
@@ -198,9 +210,9 @@ public class Module extends ScriptedResource {
 	 */
 	public void tool(String id, @DelegatesTo(value=Tool, strategy=Closure.DELEGATE_FIRST) Closure toolSpec) {
 		
-		final tool = new Tool(id, scriptDirectory, toolGroups, gameService)
-		toolSpec = toolSpec.rehydrate(tool, this, this)
+		final tool = new Tool(id, binding, scriptDirectory, toolGroups, gameService)
 		toolSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		toolSpec.delegate = tool
 		toolSpec()
 		
 		tool.buttons.each { _, button ->
@@ -224,6 +236,8 @@ public class Module extends ScriptedResource {
 		this.customRenderingHooks.addAll module.customRenderingHooks
 		this.toolGroups.putAll module.toolGroups
 		this.tools.putAll module.tools
+		module.binding.variables.each { n,v -> this.binding[n] = v }
+		this.providedObjects.putAll module.providedObjects
 		
 		module
 	}

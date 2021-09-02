@@ -20,7 +20,6 @@ import org.snowjak.city.service.loadingtasks.GameMapEntityCreationTask
 import org.snowjak.city.service.loadingtasks.GameMapGenerationTask
 import org.snowjak.city.service.loadingtasks.GameModulesInitializationTask
 import org.snowjak.city.service.loadingtasks.GameStateObjectsSetupTask
-import org.snowjak.city.tools.ui.ToolButtonList
 import org.snowjak.city.util.PrioritizationFailedException
 
 import com.badlogic.ashley.core.Family
@@ -385,6 +384,13 @@ class GameService {
 		LOG.info "Finished uninitializing module \"{0}\".", module.id
 	}
 	
+	/**
+	 * (Re-)initialize the configured renderer.
+	 */
+	public void intializeRenderer() {
+		state.renderer.state = state
+	}
+	
 	private Collection<FileHandle> scanForFiles(FileHandle directory, String desiredExtension,
 			boolean includeSubdirectories) {
 		
@@ -398,13 +404,6 @@ class GameService {
 				result.add(child)
 		
 		return result
-	}
-	
-	/**
-	 * (Re-)initialize the configured renderer.
-	 */
-	public void intializeRenderer() {
-		state.renderer.state = state
 	}
 	
 	/**

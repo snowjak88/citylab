@@ -4,6 +4,7 @@
 package org.snowjak.city.tools.ui
 
 import org.snowjak.city.service.GameAssetService
+import org.snowjak.city.service.GameService
 import org.snowjak.city.service.I18NService
 import org.snowjak.city.service.SkinService
 import org.snowjak.city.tools.Tool
@@ -15,6 +16,7 @@ import org.snowjak.city.util.TextureUtils.MaskChannel
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.scenes.scene2d.Actor
+import com.badlogic.gdx.scenes.scene2d.InputListener
 import com.badlogic.gdx.scenes.scene2d.actions.Actions
 import com.badlogic.gdx.scenes.scene2d.ui.Button
 import com.badlogic.gdx.scenes.scene2d.ui.Label
@@ -63,6 +65,7 @@ class ToolButtonList extends Window {
 	private final ScrollPane scrollPane;
 	
 	private final SkinService skinService
+	private final GameService gameService
 	private final GameAssetService assetService
 	
 	private final Texture buttonMask, buttonSunkenMask, buttonHighlight
@@ -71,11 +74,12 @@ class ToolButtonList extends Window {
 	
 	private boolean rebuildNeeded = false
 	
-	public ToolButtonList(I18NService i18nService, SkinService skinService, GameAssetService assetService) {
+	public ToolButtonList(I18NService i18nService, SkinService skinService,GameService gameService, GameAssetService assetService, Runnable scrollFocusCanceller) {
 		
 		super(i18nService.get("tool-button-list-title"), skinService.current)
 		
 		this.skinService = skinService
+		this.gameService = gameService
 		this.assetService = assetService
 		
 		assetService.load BUTTON_MASK_FILENAME, Texture
@@ -100,6 +104,12 @@ class ToolButtonList extends Window {
 		scrollPane = new ScrollPane(buttonTable, skin)
 		scrollPane.scrollbarsVisible = false
 		scrollPane.overscrollDistance = 0
+		
+		this.addListener([
+			exit: {event, x, y, pointer, toActor ->
+				scrollFocusCanceller.run()
+			}
+		] as InputListener)
 		
 		add scrollPane
 	}
@@ -226,7 +236,11 @@ class ToolButtonList extends Window {
 		final groupLabel = new Label(group.title, skinService.current)
 		final groupExpandButton = new Button(skinService.current, "minus")
 		groupExpandButton.addListener( [ changed: { ChangeEvent e, Actor a ->
-				setToolGroupVisibility groupID, !(groupExpanded.contains(groupID))
+				final b = a as Button
+				if(b.checked) {
+					setToolGroupVisibility groupID, !(groupExpanded.contains(groupID))
+					b.checked = false
+				}
 			} ] as ChangeListener)
 		
 		groupLabels[groupID] = groupLabel
@@ -264,8 +278,10 @@ class ToolButtonList extends Window {
 		final button = createToolButton(buttonDef)
 		button.addListener( [ changed: { ChangeEvent e, Actor a ->
 				final b = a as Button
-				if(b.checked)
+				if(b.checked) {
 					buttonDef.tool.activate()
+					b.checked = false
+				}
 			} ] as ChangeListener )
 		
 		buttonDef.tool.enabledListeners << { Tool t -> setToolButtonEnabled(buttonDef.id, t.enabled) }

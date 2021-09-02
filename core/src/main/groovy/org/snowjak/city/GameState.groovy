@@ -3,6 +3,7 @@
  */
 package org.snowjak.city
 
+import org.snowjak.city.input.GameInputProcessor
 import org.snowjak.city.input.hotkeys.HotkeyRegistry
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.renderer.MapRenderer
@@ -12,7 +13,6 @@ import org.snowjak.city.tools.ui.ToolButtonList
 
 import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.PooledEngine
-import com.badlogic.gdx.scenes.scene2d.ui.Skin
 
 public class GameState {
 	
@@ -30,6 +30,11 @@ public class GameState {
 	 * Active camera-controller (may be {@code null})
 	 */
 	GameCameraControl camera
+	
+	/**
+	 * Active {@link GameInputProcessor} (may be {@code null})
+	 */
+	GameInputProcessor inputProcessor
 	
 	/**
 	 * Registry/Dispatcher for all active {@link Hotkey}s

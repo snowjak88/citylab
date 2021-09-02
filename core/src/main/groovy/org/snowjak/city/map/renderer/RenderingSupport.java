@@ -69,7 +69,8 @@ public interface RenderingSupport {
 	 * 
 	 * @param cellX
 	 * @param cellY
-	 * @return {@code true} if the given cell is currently visible
+	 * @return {@code true} if the given cell is both a valid cell and currently
+	 *         visible
 	 */
 	public boolean isCellVisible(int cellX, int cellY);
 	
