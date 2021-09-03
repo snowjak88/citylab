@@ -124,3 +124,23 @@ tile {
 		altDelta(TOP, [RIGHT, BOTTOM, LEFT], -1)
 	}
 }
+
+tile {
+	id = 'grass-slope-saddle-ns'
+	filename = 'grass-slope-saddle00.png'
+	provides 'grass'
+	base = TOP
+	rule {
+		altDelta(TOP, [BOTTOM], 0) && altDelta(TOP, [RIGHT, LEFT], +1)
+	}
+}
+
+tile {
+	id = 'grass-slope-saddle-ew'
+	filename = 'grass-slope-saddle01.png'
+	provides 'grass'
+	base = LEFT
+	rule {
+		altDelta(LEFT, [RIGHT], 0) && altDelta(LEFT, [TOP, BOTTOM], +1)
+	}
+}

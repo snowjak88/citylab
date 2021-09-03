@@ -9,6 +9,8 @@ buttonGroup 'terrain-tools', {
 }
 
 
+minTerrainHeight = preferences.getInteger('min-terrain-height', 0)
+maxTerrainHeight = preferences.getInteger('max-terrain-height', 10)
 
 
 //
@@ -54,14 +56,14 @@ invalidateNeighbors = { int vertexX, int vertexY ->
 	}
 }
 
-modifyVertexAltitude = { int vertexX, int vertexY, int altitudeDelta ->
+modifyVertexAltitude = { int vertexX, int vertexY, desiredAltitude ->
 	final vx = vertexX, vy = vertexY
 	
 	if(!state.map.isValidVertex(vx,vy))
 		return
 	
 	final altitude = state.map.getVertexAltitude(vx, vy)
-	final int newAltitude = Util.clamp(altitude + altitudeDelta, 0, 8)
+	final int newAltitude = Util.clamp(desiredAltitude, minTerrainHeight, maxTerrainHeight)
 	
 	state.map.setVertexAltitude(vx, vy, newAltitude)
 	
@@ -71,57 +73,134 @@ modifyVertexAltitude = { int vertexX, int vertexY, int altitudeDelta ->
 //
 // Define a tool
 tool 'terrainRaise', {
-			
-			title = i18n.get 'terrain-tools-raise'
-			
-			button 'terrain.raise', {
-				buttonUp = 'terrain_raise_button.png'
-				buttonDown = 'terrain_raise_button.png'
-				group = 'terrain-tools'
-			}
-			
-			key 'terrain.raise', {
-				keys = 'Shift+R'
-			}
-			
-			mapHover { cellX, cellY ->
-				mapCellOutliner.active = true
-				mapCellOutliner.cellX = cellX
-				mapCellOutliner.cellY = cellY
-			}
-			
-			mapClick Buttons.LEFT, { cellX, cellY ->
-				
-				def lowestAlt = 999
-				final lowestCorners = []
-				int cx = cellX, cy = cellY
-				for(def corner in TileCorner.values()) {
-					final int vx = cx + corner.offsetX, vy = cy + corner.offsetY
-					
-					if(!state.map.isValidVertex(vx, vy))
-					continue
-					
-					final altitude = state.map.getVertexAltitude(vx, vy)
-					
-					if(altitude < lowestAlt) {
-						lowestAlt = altitude
-						lowestCorners.clear()
-					}
-					if(altitude <= lowestAlt)
-					lowestCorners << corner
-				}
-				
-				lowestCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, +1 }
-				lowestCorners.each { constrainVertexDeltas cx + it.offsetX, cy + it.offsetY }
-				
-				//
-				// Ensure the map-cell-outliner recalculates the lifted-cell's vertices
-				mapCellOutliner.refresh = true
+	
+	title = i18n.get 'terrain-tools-raise'
+	
+	button 'terrain.raise', {
+		buttonUp = 'terrain_raise_button.png'
+		buttonDown = 'terrain_raise_button.png'
+		group = 'terrain-tools'
 	}
+	
+	key 'terrain.raise', {
+		keys = 'Shift+R'
+	}
+	
+	activeRaise = false
+	raiseAlt = 0
+	raiseCell = { cellX, cellY ->
+		if(!activeRaise)
+			return
+			
+		def lowestAlt = 999
+		final lowestCorners = []
+		int cx = cellX, cy = cellY
+		for(def corner in TileCorner.values()) {
+			final int vx = cx + corner.offsetX, vy = cy + corner.offsetY
+			
+			if(!state.map.isValidVertex(vx, vy))
+				continue
+			
+			final altitude = state.map.getVertexAltitude(vx, vy)
+			
+			if(altitude < lowestAlt) {
+				lowestAlt = altitude
+				lowestCorners.clear()
+			}
+			if(altitude <= lowestAlt)
+				lowestCorners << corner
+		}
+		
+		if(raiseAlt == 999)
+			raiseAlt = lowestAlt + 1
+	
+		lowestCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, raiseAlt }
+		lowestCorners.each { constrainVertexDeltas cx + it.offsetX, cy + it.offsetY }
+		
+		//
+		// Ensure the map-cell-outliner recalculates the lifted-cell's vertices
+		mapCellOutliner.refresh = true
+		mapCellOutliner.cellX = cellX
+		mapCellOutliner.cellY = cellY
+	}
+	startRaise = { cellX, cellY ->
+		raiseAlt = 999
+		activeRaise = true
+		raiseCell cellX, cellY
+	}
+	
+	mapHover { cellX, cellY ->
+		mapCellOutliner.active = true
+		mapCellOutliner.cellX = cellX
+		mapCellOutliner.cellY = cellY
+	}
+	
+	mapClick Buttons.LEFT, startRaise
+	mapDragStart Buttons.LEFT, startRaise
+	mapDragUpdate Buttons.LEFT, raiseCell
+	mapDragEnd Buttons.LEFT, { cellX, cellY -> activeRaise = false }
 	
 	inactive {
 		mapCellOutliner.active = false
 	}
+}
+
+tool 'terrainLevel', {
+	
+	button 'terrain.level', {
+		title = i18n.get 'terrain-tools-level'
+		buttonUp = 'terrain_level_button.png'
+		buttonDown = 'terrain_level_button.png'
+		group = 'terrain-tools'
+	}
+	
+	activeLevel = false
+	levelAlt = 999
+	levelCell = { cellX, cellY ->
+		if(!activeLevel)
+			return
+			
+		final adjustCorners = []
+		int cx = cellX, cy = cellY
+		for(def corner in TileCorner.values()) {
+			final int vx = cx + corner.offsetX, vy = cy + corner.offsetY
+			
+			if(!state.map.isValidVertex(vx, vy))
+				continue
+			
+			final altitude = state.map.getVertexAltitude(vx, vy)
+			
+			if(levelAlt == 999)
+				levelAlt = altitude
+				
+			if(altitude != levelAlt)
+				adjustCorners << corner
+		}
+	
+		adjustCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, levelAlt }
+		adjustCorners.each { constrainVertexDeltas cx + it.offsetX, cy + it.offsetY }
+		
+		//
+		// Ensure the map-cell-outliner recalculates the lifted-cell's vertices
+		mapCellOutliner.refresh = true
+		mapCellOutliner.cellX = cellX
+		mapCellOutliner.cellY = cellY
+	}
+	startLevel = { cellX, cellY ->
+		levelAlt = 999
+		activeLevel = true
+		levelCell cellX, cellY
+	}
+	
+	mapHover { cellX, cellY ->
+		mapCellOutliner.active = true
+		mapCellOutliner.cellX = cellX
+		mapCellOutliner.cellY = cellY
+	}
+	
+	mapDragStart Buttons.LEFT, startLevel
+	mapDragUpdate Buttons.LEFT, levelCell
+	mapDragEnd Buttons.LEFT, { cellX, cellY -> activeRaise = false }
 }
 
 tool 'terrainLower', {
@@ -139,7 +218,12 @@ tool 'terrainLower', {
 		mapCellOutliner.cellY = cellY
 	}
 	
-	mapClick Buttons.LEFT, { cellX, cellY ->
+	activeLower = false
+	lowerAlt = 0
+	lowerCell = { cellX, cellY ->
+		if(!activeLower)
+			return
+			
 		def highestAlt = -999
 		final highestCorners = []
 		int cx = cellX, cy = cellY
@@ -147,7 +231,7 @@ tool 'terrainLower', {
 			final int vx = cx + corner.offsetX, vy = cy + corner.offsetY
 			
 			if(!state.map.isValidVertex(vx, vy))
-			continue
+				continue
 			
 			final altitude = state.map.getVertexAltitude(vx, vy)
 			
@@ -155,17 +239,32 @@ tool 'terrainLower', {
 				highestAlt = altitude
 				highestCorners.clear()
 			}
-			if(altitude >= highestAlt)
-			highestCorners << corner
+			if(altitude <= highestAlt)
+				highestCorners << corner
 		}
 		
-		highestCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, -1 }
+		if(lowerAlt == -999)
+			lowerAlt = highestAlt - 1
+		
+		highestCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, lowerAlt }
 		highestCorners.each { constrainVertexDeltas cx + it.offsetX, cy + it.offsetY }
 		
 		//
-		// Ensure the map-cell-outliner recalculates the lifted-cell's vertices
+		// Ensure the map-cell-outliner recalculates the lowered-cell's vertices
 		mapCellOutliner.refresh = true
+		mapCellOutliner.cellX = cellX
+		mapCellOutliner.cellY = cellY
 	}
+	startLower = { cellX, cellY ->
+		lowerAlt = -999
+		activeLower = true
+		lowerCell cellX, cellY
+	}
+	
+	mapClick Buttons.LEFT, startLower
+	mapDragStart Buttons.LEFT, startLower
+	mapDragUpdate Buttons.LEFT, lowerCell
+	mapDragEnd Buttons.LEFT, { cellX, cellY -> activeLower = false }
 	
 	inactive {
 		mapCellOutliner.active = false

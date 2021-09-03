@@ -7,20 +7,10 @@ dependencies {
 	api "com.badlogicgames.gdx:gdx:$gdxVersion"
 	api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
 	api "com.badlogicgames.ashley:ashley:$ashleyVersion"
-	//api "com.badlogicgames.gdx:gdx-ai:$aiVersion"
 	api "com.sudoplay.joise:joise:$joiseVersion"
-	api "com.rafaskoberg.gdx:typing-label:$typingLabelVersion"
-	api "com.github.tommyettinger:regexodus:$regExodusVersion"
-	//api "de.tomgrill.gdxdialogs:gdx-dialogs-core:$dialogsVersion"
-	//api "com.strongjoshua:libgdx-inGameConsole:$inGameConsoleVersion"
-	//api "com.github.payne911:PieMenu:$pieMenuVersion"
 	api "space.earlygrey:shapedrawer:$shapeDrawerVersion"
-	//api "com.github.czyzby:gdx-autumn-mvc:$autumnMvcVersion"
-	//api "com.github.czyzby:gdx-lml:$lmlVersion"
 	api "com.github.czyzby:gdx-kiwi:$kiwiVersion"
 	api "com.github.czyzby:gdx-autumn:$autumnVersion"
-	//api "com.github.czyzby:gdx-lml-vis:$lmlVisVersion"
-	//api "com.kotcrab.vis:vis-ui:$visUiVersion"
 	
 	implementation 'com.kotcrab.vis:vis-usl:0.2.1'
 }

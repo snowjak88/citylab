@@ -25,9 +25,21 @@ tileset = assets.getByID tilesetName, TileSet
 //
 // This module's systems need this Component-class.
 //
-class IsTerrainTile implements Component {
+class IsTerrainTile implements Component, Poolable {
 	
 	List<Tile> tiles = []
+	
+	//
+	// Poolable components require a "reset" method,
+	// to return them to a blank state
+	void reset() {
+	}
+}
+
+class NeedsReplacementTerrainTile implements Component, Poolable {
+
+	void reset() {
+	}
 }
 
 //

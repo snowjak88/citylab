@@ -9,7 +9,7 @@ package org.snowjak.city.input;
  */
 public abstract class AbstractDragEndEvent extends AbstractInputEvent {
 	
-	private int x, y;
+	private int x, y, button;
 	
 	public AbstractDragEndEvent() {
 		
@@ -35,11 +35,22 @@ public abstract class AbstractDragEndEvent extends AbstractInputEvent {
 		this.y = y;
 	}
 	
+	public int getButton() {
+		
+		return button;
+	}
+	
+	public void setButton(int button) {
+		
+		this.button = button;
+	}
+	
 	@Override
 	void reset() {
 		
 		x = 0;
 		y = 0;
+		button = 0;
 	}
 	
 }

@@ -118,7 +118,7 @@ class GameService {
 		for(def entity : entities) {
 			def component = (IsMapCell) entity.remove(IsMapCell)
 			if(component && map)
-				map.setEntity component.cellX, component.cellY, null
+				map.setEntity( (int) component.cellX, (int) component.cellY, null )
 			
 			state.engine.removeEntity entity
 			

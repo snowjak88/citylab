@@ -24,7 +24,6 @@ import org.snowjak.city.util.RelativePriority
 import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.core.Family
-import com.badlogic.ashley.systems.IteratingSystem
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Texture
 
@@ -143,16 +142,30 @@ public class Module extends ScriptedResource {
 		if(isDependencyCheckingMode())
 			return
 		
-		def system = new IteratingSystem(family) {
-					
-					@Override
-					protected void processEntity(Entity entity, float deltaTime) {
-						
-						implementation(entity, deltaTime)
-					}
-				}
+		//
+		// This bit of horror is necessitated because Ashley expects every System that you
+		// insert to be a unique type -- and any anonymous inner-classes we create here
+		// all appear to have the same type!
+		//
+		// So we have to ensure that we generate a brand-new Class, with the ID the user specifies.
+		//
+		final legalID = id.trim().replaceAll(/[\=?<>,.;:|!@#%\^\&()\[\]{}\-+*\/ ]/, "").replaceFirst(/^[0-9]*/, "")
+		final systemClassDefinition = '''
+class ''' + legalID + ''' extends com.badlogic.ashley.systems.IteratingSystem {
+	final Closure implementation
+	public ''' + legalID + '''(Family family, Closure implementation) {
+		super(family);
+		this.implementation = implementation
+	}
+	
+	protected void processEntity(Entity entity, float deltaTime) { implementation(entity, deltaTime) }
+}'''
+		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
+		final system = systemClass.newInstance(family, implementation)
+		
 		implementation.owner = system
 		implementation.delegate = this
+		implementation.resolveStrategy = Closure.DELEGATE_FIRST
 		
 		systems << ["$id" : system]
 	}
@@ -175,31 +188,29 @@ public class Module extends ScriptedResource {
 		if(isDependencyCheckingMode())
 			return
 		
-		added.resolveStrategy = Closure.DELEGATE_FIRST
-		added.delegate = this
+			final legalID = id.trim().replaceAll(/[\=?<>,.;:|!@#%\^\&()\[\]{}\-+*\/ ]/, "").replaceFirst(/^[0-9]*/, "")
+			final systemClassDefinition = '''
+class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
+	final Closure onAdd, onDrop
+	public ''' + legalID + '''(Family family, Closure onAdd, Closure onDrop) {
+			super(family);
+			this.onAdd = onAdd
+			this.onDrop = onDrop
+		}
 		
-		dropped.resolveStrategy = Closure.DELEGATE_FIRST
-		dropped.delegate = this
-		
-		def system = new ListeningSystem(family) {
-					
-					@Override
-					public void added(Entity entity, float deltaTime) {
-						
-						added(entity, deltaTime)
-					}
-					
-					@Override
-					public void dropped(Entity entity, float deltaTime) {
-						
-						dropped(entity, deltaTime)
-					}
-				}
+		public void added(Entity entity, float deltaTime) { onAdd(entity, deltaTime) }
+		public void dropped(Entity entity, float deltaTime) { onDrop(entity, deltaTime) }
+	}'''
+		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
+		final system = systemClass.newInstance(family, added, dropped)
+			
 		added.owner = system
 		added.delegate = this
+		added.resolveStrategy = Closure.DELEGATE_FIRST
 		
 		dropped.owner = system
 		dropped.delegate = this
+		dropped.resolveStrategy = Closure.DELEGATE_FIRST
 		
 		systems << ["$id" : system]
 	}

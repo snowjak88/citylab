@@ -59,7 +59,8 @@ public class GameInputProcessor extends InputAdapter {
 			final InputEventReceiver<E> receiver) {
 		
 		if (receiver == null)
-			return () -> {};
+			return () -> {
+			};
 		
 		synchronized (receiversByParameter) {
 			receiversByParameter.computeIfAbsent(eventType, (t) -> new LinkedHashSet<>()).add(receiver);
@@ -228,6 +229,7 @@ public class GameInputProcessor extends InputAdapter {
 				final ScreenDragEndEvent e = getEventInstance(ScreenDragEndEvent.class);
 				e.setX(screenX);
 				e.setY(screenY);
+				e.setButton(touchButton.get(pointer, Input.Buttons.LEFT));
 				sendEvent(e);
 			}
 			if (hasReceiversFor(MapDragEndEvent.class)) {
@@ -236,6 +238,7 @@ public class GameInputProcessor extends InputAdapter {
 				final Vector2 result = screenToMapConverter.apply(scratch);
 				e.setX((int) result.x);
 				e.setY((int) result.y);
+				e.setButton(touchButton.get(pointer, Input.Buttons.LEFT));
 				sendEvent(e);
 			}
 		}
@@ -272,6 +275,7 @@ public class GameInputProcessor extends InputAdapter {
 				final ScreenDragUpdateEvent e = getEventInstance(ScreenDragUpdateEvent.class);
 				e.setX(screenX);
 				e.setY(screenY);
+				e.setButton(touchButton.get(pointer, Input.Buttons.LEFT));
 				sendEvent(e);
 			}
 			if (hasReceiversFor(MapDragUpdateEvent.class)) {
@@ -280,6 +284,7 @@ public class GameInputProcessor extends InputAdapter {
 				final Vector2 result = screenToMapConverter.apply(scratch);
 				e.setX((int) result.x);
 				e.setY((int) result.y);
+				e.setButton(touchButton.get(pointer, Input.Buttons.LEFT));
 				sendEvent(e);
 			}
 		}

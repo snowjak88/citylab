@@ -23,6 +23,7 @@ import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.utils.I18NBundle;
+import com.badlogic.gdx.utils.Pool.Poolable;
 import com.github.czyzby.autumn.annotation.Component;
 
 import groovy.util.DelegatingScript;
@@ -62,6 +63,7 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		customizer.addStarImports("com.badlogic.gdx.math");
 		customizer.addStarImports("com.badlogic.gdx.utils");
 		customizer.addImport("Buttons", Input.Buttons.class.getName());
+		customizer.addImport("Poolable", Poolable.class.getName());
 		customizer.addImports(
 				// jCity types
 				CityMap.class.getName(), Tile.class.getName(), TileSet.class.getName(), TileCorner.class.getName(),

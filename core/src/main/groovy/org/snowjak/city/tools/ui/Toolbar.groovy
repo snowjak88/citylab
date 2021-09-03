@@ -3,6 +3,8 @@
  */
 package org.snowjak.city.tools.ui
 
+import java.util.function.Consumer
+
 import org.snowjak.city.service.GameAssetService
 import org.snowjak.city.service.GameService
 import org.snowjak.city.service.I18NService
@@ -342,13 +344,19 @@ class Toolbar extends Window {
 		final button = createToolButton(buttonDef)
 		button.addListener( [ changed: { ChangeEvent e, Actor a ->
 				final b = a as Button
-				if(b.checked) {
-					buttonDef.tool.activate()
-					b.checked = false
+				if(b.disabled) {
+					e.cancel()
+					return
 				}
+				if(b.checked)
+					buttonDef.tool.activate()
+				else
+					buttonDef.tool.deactivate()
 			} ] as ChangeListener )
 		
-		buttonDef.tool.enabledListeners << { Tool t -> setToolButtonEnabled(buttonDef.id, t.enabled) }
+		buttonDef.tool.enabledListeners << ( { Tool t -> setToolButtonEnabled(buttonDef.id, t.enabled) } as Consumer<Tool> )
+		buttonDef.tool.activateListeners << ( { Tool t -> setToolButtonActive(buttonDef.id, true) } as Consumer<Tool> )
+		buttonDef.tool.deactivateListeners << ( { Tool t -> setToolButtonActive(buttonDef.id, false) } as Consumer<Tool> )
 		
 		buttonDefs[buttonDef.id] = buttonDef
 		groupButtonDefs.computeIfAbsent(groupID, { _ -> new LinkedHashSet<>() }) << buttonDef
@@ -375,6 +383,10 @@ class Toolbar extends Window {
 	private void setToolButtonEnabled(String buttonID, boolean enabled) {
 		
 		buttons[buttonID]?.disabled = !enabled
+	}
+	
+	private void setToolButtonActive(String buttonID, boolean active) {
+		buttons[buttonID]?.checked = active
 	}
 	
 	/**

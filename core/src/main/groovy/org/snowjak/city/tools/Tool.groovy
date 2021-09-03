@@ -7,6 +7,9 @@ import java.util.function.Consumer
 
 import org.snowjak.city.input.InputEventReceiver
 import org.snowjak.city.input.MapClickEvent
+import org.snowjak.city.input.MapDragEndEvent
+import org.snowjak.city.input.MapDragStartEvent
+import org.snowjak.city.input.MapDragUpdateEvent
 import org.snowjak.city.input.MapHoverEvent
 import org.snowjak.city.input.hotkeys.Hotkey
 import org.snowjak.city.module.Module
@@ -38,7 +41,15 @@ class Tool {
 	/**
 	 * Add a Consumer for this Tool if you want to be notified whenever {@link #enabled} is changed.
 	 */
-	final Set<Consumer<Tool>> enabledListeners = Collections.synchronizedSet(new LinkedHashSet<>())
+	final Set<Consumer<Tool>> enabledListeners = Collections.synchronizedSet(new LinkedHashSet<>()),
+	/**
+	 * Add a Consumer for this Tool if you want to be notified whenever {@link #activate()} is called.
+	 */
+	activateListeners = Collections.synchronizedCollection(new LinkedHashSet<>()),
+	/**
+	 * Add a Consumer for this Tool if you want to be notified whenever {@link #deactivate()} is called.
+	 */
+	deactivateListeners = Collections.synchronizedCollection(new LinkedHashSet<>())
 	
 	final String id
 	
@@ -120,9 +131,8 @@ class Tool {
 	 * passed the coordinates of the map-cell that the cursor is over. (<strong>Note</strong> that the given map-cell may
 	 * not be a valid cell at all!)
 	 * @param mapHoverSpec
-	 * @return
 	 */
-	public Activity mapHover(@DelegatesTo(value=MapCoordReceiver, strategy=Closure.DELEGATE_FIRST) Closure mapHoverSpec) {
+	public void mapHover(@DelegatesTo(value=MapCoordReceiver, strategy=Closure.DELEGATE_FIRST) Closure mapHoverSpec) {
 		
 		mapHoverSpec.delegate = this
 		mapHoverSpec.resolveStrategy = Closure.DELEGATE_FIRST
@@ -133,30 +143,6 @@ class Tool {
 		
 		final activity = new InputReceivingActivity(this, gameService, MapHoverEvent, adapter)
 		activities << activity
-		activity
-	}
-	
-	/**
-	 * Register a map-click activity. While the associated tool is active, this activity will
-	 * be called whenever the user clicks a map-cell with any mouse-button. This activity will
-	 * be passed the coordinates of the map-cell that was clicked, along with the button-# (c.f. {@link Input.Buttons}).
-	 * (<strong>Note</strong> that the given map-cell may not be a valid cell at all!)
-	 * @param mapClickSpec
-	 * @return
-	 */
-	public Activity mapClick(@DelegatesTo(value=MapCoordButtonfulReceiver, strategy=Closure.DELEGATE_FIRST) Closure mapClickSpec) {
-		
-		mapClickSpec.delegate = this
-		mapClickSpec.resolveStrategy = Closure.DELEGATE_FIRST
-		final mapClickReceiver = mapClickSpec as MapCoordButtonfulReceiver
-		
-		final adapter = [ receive: { MapClickEvent e ->
-				mapClickReceiver.receive e.x, e.y, e.button
-			} ] as InputEventReceiver<MapClickEvent>
-		
-		final activity = new InputReceivingActivity(this, gameService, MapClickEvent, adapter)
-		activities << activity
-		activity
 	}
 	
 	/**
@@ -166,9 +152,8 @@ class Tool {
 	 * (<strong>Note</strong> that the given map-cell may not be a valid cell at all!)
 	 * @param button c.f. {@link Input.Buttons}
 	 * @param mapClickSpec
-	 * @return
 	 */
-	public Activity mapClick(int button, @DelegatesTo(value=MapCoordButtonfulReceiver, strategy=Closure.DELEGATE_FIRST) Closure mapClickSpec) {
+	public void mapClick(int button, @DelegatesTo(value=MapCoordReceiver, strategy=Closure.DELEGATE_FIRST) Closure mapClickSpec) {
 		
 		mapClickSpec.delegate = this
 		mapClickSpec.resolveStrategy = Closure.DELEGATE_FIRST
@@ -182,17 +167,77 @@ class Tool {
 		
 		final activity = new InputReceivingActivity(this, gameService, MapClickEvent, adapter)
 		activities << activity
-		activity
+	}
+	
+	/**
+	 * Register a map-drag-start activity. While the associated tool is active, this activity will
+	 * be called whenever the user initiates a drag across the map using the given mouse-button. This activity will
+	 * be passed the coordinates of the map-cell that was clicked. (<strong>Note</strong> that the given map-cell may not be a valid cell at all!)
+	 * @param button c.f. {@link Input.Buttons}
+	 * @param mapStartDragSpec
+	 */
+	public void mapDragStart(int button, @DelegatesTo(value=MapCoordReceiver, strategy=Closure.DELEGATE_FIRST) Closure mapStartDragSpec) {
+		
+		mapStartDragSpec.delegate = this
+		mapStartDragSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		final mapStartDragReceiver = mapStartDragSpec as MapCoordReceiver
+		
+		final requiredButton = button
+		final adapter = [ receive: { MapDragStartEvent e ->
+				if(e.button == requiredButton)
+					mapStartDragReceiver.receive e.x, e.y
+			} ] as InputEventReceiver<MapDragStartEvent>
+		final activity = new InputReceivingActivity(this, gameService, MapDragStartEvent, adapter)
+		activities << activity
+	}
+	
+	/**
+	 * Register a map-drag-update activity. While the associated tool is active, this activity will
+	 * be called whenever the user continues a drag across the map using the given mouse-button. This activity will
+	 * be passed the coordinates of the map-cell that was clicked. (<strong>Note</strong> that the given map-cell may not be a valid cell at all!)
+	 * @param button c.f. {@link Input.Buttons}
+	 * @param mapUpdateDragSpec
+	 */
+	public void mapDragUpdate(int button, @DelegatesTo(value=MapCoordReceiver, strategy=Closure.DELEGATE_FIRST) Closure mapUpdateDragSpec) {
+		
+		mapUpdateDragSpec.delegate = this
+		mapUpdateDragSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		final mapUpdateDragReceiver = mapUpdateDragSpec as MapCoordReceiver
+		
+		final requiredButton = button
+		final adapter = [ receive: { MapDragUpdateEvent e ->
+				if(e.button == requiredButton)
+					mapUpdateDragReceiver.receive e.x, e.y
+			} ] as InputEventReceiver<MapDragUpdateEvent>
+		final activity = new InputReceivingActivity(this, gameService, MapDragUpdateEvent, adapter)
+		activities << activity
+	}
+	
+	/**
+	 * Register a map-drag-end activity. While the associated tool is active, this activity will
+	 * be called whenever the user concludes a drag across the map using the given mouse-button. This activity will
+	 * be passed the coordinates of the map-cell that was clicked. (<strong>Note</strong> that the given map-cell may not be a valid cell at all!)
+	 * @param button c.f. {@link Input.Buttons}
+	 * @param mapEndDragSpec
+	 */
+	public void mapDragEnd(int button, @DelegatesTo(value=MapCoordReceiver, strategy=Closure.DELEGATE_FIRST) Closure mapEndDragSpec) {
+		
+		mapEndDragSpec.delegate = this
+		mapEndDragSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		final mapEndDragReceiver = mapEndDragSpec as MapCoordReceiver
+		
+		final requiredButton = button
+		final adapter = [ receive: { MapDragEndEvent e ->
+				if(e.button == requiredButton)
+					mapEndDragReceiver.receive e.x, e.y
+			} ] as InputEventReceiver<MapDragEndEvent>
+		final activity = new InputReceivingActivity(this, gameService, MapDragEndEvent, adapter)
+		activities << activity
 	}
 	
 	@FunctionalInterface
 	public interface MapCoordReceiver {
 		public void receive(float cellX, float cellY)
-	}
-	
-	@FunctionalInterface
-	public interface MapCoordButtonfulReceiver {
-		public void receive(float cellX, float cellY, int button)
 	}
 	
 	//
@@ -209,7 +254,7 @@ class Tool {
 		
 		gameService.state.activeTool?.deactivate()
 		gameService.state.activeTool = this
-		
+		activateListeners.each { it.accept thisObject }
 		if(enabled)
 			activities.each { it.activate() }
 	}
@@ -222,6 +267,7 @@ class Tool {
 	
 	public void deactivate() {
 		
+		deactivateListeners.each { it.accept thisObject }
 		inactivities.each { it.run() }
 		activities.each { it.deactivate() }
 		gameService.state.activeTool = null

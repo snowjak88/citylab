@@ -65,10 +65,7 @@ public class IsMapCellManagementSystem extends ListeningSystem {
 	@Override
 	public void dropped(Entity entity, float deltaTime) {
 		
-		final CityMap map = gameState.getMap();
-		
-		final IsMapCell cell = isCellMapper.get(entity);
-		
-		map.setEntity((int) cell.getCellX(), (int) cell.getCellY(), null);
+		//
+		// nothing to do here, really ...
 	}
 }
