@@ -72,6 +72,7 @@ public class GameScreen extends AbstractGameScreen {
 	private MapRenderer renderer;
 	float minWorldX, minWorldY, maxWorldX, maxWorldY;
 	
+	private ToolButtonList buttonList;
 	private GameScreenInputHandler inputHandler;
 	
 	@Initiate(priority = InitPriority.LOWEST_PRIORITY)
@@ -95,10 +96,9 @@ public class GameScreen extends AbstractGameScreen {
 	@Override
 	protected Actor getRoot() {
 		
-		final ToolButtonList buttonList = new ToolButtonList(i18nService, getSkinService(), getGameService(),
+		buttonList = new ToolButtonList(i18nService, getSkinService(), getGameService(),
 				getAssetService(), () -> getStage().setScrollFocus(null));
 		
-		buttonList.addTools(getGameService().getState().getTools().values());
 		buttonList.setPosition(0, getStage().getHeight(), Align.topLeft);
 		
 		return buttonList;
@@ -115,8 +115,11 @@ public class GameScreen extends AbstractGameScreen {
 		
 		final GameState state = getGameService().getState();
 		
+		state.setButtonRenderer(buttonList);
 		state.setCamera(getCameraControl());
 		state.setInputProcessor(inputProcessor);
+		
+		getGameService().initializeToolbar();
 		
 		final CityMap map = state.getMap();
 		final MapRenderer renderer = state.getRenderer();
@@ -154,6 +157,7 @@ public class GameScreen extends AbstractGameScreen {
 		
 		getGameService().getState().setCamera(null);
 		getGameService().getState().setInputProcessor(null);
+		getGameService().getState().setButtonRenderer(null);
 	}
 	
 	@Override

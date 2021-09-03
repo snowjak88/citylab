@@ -336,6 +336,8 @@ class GameService {
 				LOG.info "Adding tool \"{0}\" ...", toolEntry.key
 				state.tools << ["$toolEntry.key" : toolEntry.value]
 			}
+			
+			initializeToolbar()
 		}
 		
 		progressReporter?.accept 1
@@ -361,7 +363,7 @@ class GameService {
 				state.renderer.removeCellRenderingHook hook
 		}
 		
-		progressReporter?.accept 0.334
+		progressReporter?.accept 0.25
 		
 		if(!module.customRenderingHooks.isEmpty()) {
 			LOG.info "Removing custom-rendering hooks ..."
@@ -369,7 +371,7 @@ class GameService {
 				state.renderer.removeCustomRenderingHook hook
 		}
 		
-		progressReporter?.accept 0.667
+		progressReporter?.accept 0.5
 		
 		//
 		// Remove this module's entity-processing systems
@@ -377,6 +379,14 @@ class GameService {
 			LOG.info "Removing entity-processing systems ..."
 			for(def systemEntry : module.systems)
 				state.engine.removeSystem(systemEntry.value)
+		}
+		
+		if(!module.tools.isEmpty()) {
+			LOG.info "Removing tools ..."
+			for(def tool : module.tools)
+				state.tools.remove tool.key
+			
+			initializeToolbar()
 		}
 		
 		progressReporter?.accept 1
@@ -389,6 +399,17 @@ class GameService {
 	 */
 	public void intializeRenderer() {
 		state.renderer.state = state
+	}
+	
+	/**
+	 * (Re-)Initialize the toolbar, if it's available.
+	 * (It might not be available yet, in which case this method does nothing.)
+	 */
+	public void initializeToolbar() {
+		
+		state.activeTool?.deactivate()
+		state.buttonRenderer?.removeAllTools()
+		state.buttonRenderer?.addTools state.tools.values()
 	}
 	
 	private Collection<FileHandle> scanForFiles(FileHandle directory, String desiredExtension,

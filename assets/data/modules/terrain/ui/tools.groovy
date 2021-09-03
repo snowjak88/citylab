@@ -1,4 +1,3 @@
-import javax.management.remote.rmi.RMIConnector.Util
 
 //
 // Here we define the terrain tools -- raise and lower, really
@@ -19,7 +18,7 @@ buttonGroup 'terrain-tools', {
 // to bring it within range, and then this closure is executed against that neighbor.
 //
 
-constrainVertexDeltas = { vertexX, vertexY, maxDelta = 1 ->
+constrainVertexDeltas = { int vertexX, vertexY, int maxDelta = 1 ->
 	final int vx = vertexX, vy = vertexY
 	if(!state.map.isValidVertex(vx, vy))
 		return
@@ -27,17 +26,16 @@ constrainVertexDeltas = { vertexX, vertexY, maxDelta = 1 ->
 	final thisAltitude = state.map.getVertexAltitude(vx, vy)
 	for(def dx =-1; dx<=1; dx++)
 		for (def dy=-1; dy<=1; dy++) {
-			if (dx == 0 && dy == 0)
-				continue
+			
 			final int nx = vx + dx, ny = vy + dy
 			if (!state.map.isValidVertex(nx, ny))
 				continue
 			
 			final neighborAltitude = state.map.getVertexAltitude(nx, ny)
 			final delta = thisAltitude - neighborAltitude
-			if((int) Math.abs(delta) > (int) maxDelta) {
+			if(Math.abs(delta) > maxDelta) {
 				final constrainedDelta = Util.clamp(delta, -maxDelta, +maxDelta)
-				final newAltitude = neighborAltitude + constrainedDelta
+				final newAltitude = thisAltitude - constrainedDelta
 				
 				state.map.setVertexAltitude(nx, ny, newAltitude)
 				constrainVertexDeltas(nx, ny, maxDelta)
@@ -46,19 +44,18 @@ constrainVertexDeltas = { vertexX, vertexY, maxDelta = 1 ->
 		}
 }
 
-invalidateNeighbors = { cellX, cellY ->
-	final int cx = cellX, cy = cellY
-	
-	for(def dx=-1; dx<=1; dx++)
-		for(def dy=-1; dy<=1; dy++) {
-			if(!state.map.isValidCell(cx+dx, cy+dy))
-				continue
-			state.map.getEntity(cx+dx, cy+dy).add state.engine.createComponent( IsMapCellRearranged )
-		}
+invalidateNeighbors = { int vertexX, int vertexY ->
+	for(def corner : TileCorner.values()) {
+		final cx = vertexX - corner.offsetX,
+		cy = vertexY - corner.offsetY
+		
+		if(state.map.isValidCell(cx, cy))
+			state.map.getEntity(cx,cy)?.add( state.engine.createComponent( IsMapCellRearranged ) )
+	}
 }
 
-modifyVertexAltitude = { vertexX, vertexY, altitudeDelta ->
-	final int vx = vertexX, vy = vertexY
+modifyVertexAltitude = { int vertexX, int vertexY, int altitudeDelta ->
+	final vx = vertexX, vy = vertexY
 	
 	if(!state.map.isValidVertex(vx,vy))
 		return
@@ -67,55 +64,59 @@ modifyVertexAltitude = { vertexX, vertexY, altitudeDelta ->
 	final int newAltitude = Util.clamp(altitude + altitudeDelta, 0, 8)
 	
 	state.map.setVertexAltitude(vx, vy, newAltitude)
-	constrainVertexDeltas(vx, vx)
-	for(def corner : TileCorner.values())
-		invalidateNeighbors(vx - corner.offsetX, vy - corner.offsetY)
+	
+	invalidateNeighbors(vx, vy)
 }
 
 //
 // Define a tool
 tool 'terrainRaise', {
-	
-	title = i18n.get 'terrain-tools-raise'
-	
-	button 'terrain.raise', {
-		buttonUp = 'terrain_raise_button.png'
-		buttonDown = 'terrain_raise_button.png'
-		group = 'terrain-tools'
-	}
-	
-	key 'terrain.raise', {
-		keys = 'Shift+R'
-	}
-	
-	mapHover { cellX, cellY ->
-		mapCellOutliner.active = true
-		mapCellOutliner.cellX = cellX
-		mapCellOutliner.cellY = cellY
-	}
-	
-	mapClick Buttons.LEFT, { cellX, cellY ->
-		
-		def lowestAlt = 999
-		def lowestCorners = []
-		int cx = cellX, cy = cellY
-		for(def corner in TileCorner.values()) {
-			final int vx = cx + corner.offsetX, vy = cy + corner.offsetY
 			
-			if(!state.map.isValidVertex(vx, vy))
-				continue
+			title = i18n.get 'terrain-tools-raise'
 			
-			final altitude = state.map.getVertexAltitude(vx, vy)
-			
-			if(altitude < lowestAlt) {
-				lowestAlt = altitude
-				lowestCorners.clear()
+			button 'terrain.raise', {
+				buttonUp = 'terrain_raise_button.png'
+				buttonDown = 'terrain_raise_button.png'
+				group = 'terrain-tools'
 			}
-			if(altitude <= lowestAlt)
-				lowestCorners << corner
-		}
-		
-		lowestCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, +1 }
+			
+			key 'terrain.raise', {
+				keys = 'Shift+R'
+			}
+			
+			mapHover { cellX, cellY ->
+				mapCellOutliner.active = true
+				mapCellOutliner.cellX = cellX
+				mapCellOutliner.cellY = cellY
+			}
+			
+			mapClick Buttons.LEFT, { cellX, cellY ->
+				
+				def lowestAlt = 999
+				final lowestCorners = []
+				int cx = cellX, cy = cellY
+				for(def corner in TileCorner.values()) {
+					final int vx = cx + corner.offsetX, vy = cy + corner.offsetY
+					
+					if(!state.map.isValidVertex(vx, vy))
+					continue
+					
+					final altitude = state.map.getVertexAltitude(vx, vy)
+					
+					if(altitude < lowestAlt) {
+						lowestAlt = altitude
+						lowestCorners.clear()
+					}
+					if(altitude <= lowestAlt)
+					lowestCorners << corner
+				}
+				
+				lowestCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, +1 }
+				lowestCorners.each { constrainVertexDeltas cx + it.offsetX, cy + it.offsetY }
+				
+				//
+				// Ensure the map-cell-outliner recalculates the lifted-cell's vertices
+				mapCellOutliner.refresh = true
 	}
 	
 	inactive {
@@ -140,13 +141,13 @@ tool 'terrainLower', {
 	
 	mapClick Buttons.LEFT, { cellX, cellY ->
 		def highestAlt = -999
-		def highestCorners = []
+		final highestCorners = []
 		int cx = cellX, cy = cellY
 		for(def corner in TileCorner.values()) {
 			final int vx = cx + corner.offsetX, vy = cy + corner.offsetY
 			
 			if(!state.map.isValidVertex(vx, vy))
-				continue
+			continue
 			
 			final altitude = state.map.getVertexAltitude(vx, vy)
 			
@@ -155,10 +156,15 @@ tool 'terrainLower', {
 				highestCorners.clear()
 			}
 			if(altitude >= highestAlt)
-				highestCorners << corner
+			highestCorners << corner
 		}
 		
 		highestCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, -1 }
+		highestCorners.each { constrainVertexDeltas cx + it.offsetX, cy + it.offsetY }
+		
+		//
+		// Ensure the map-cell-outliner recalculates the lifted-cell's vertices
+		mapCellOutliner.refresh = true
 	}
 	
 	inactive {

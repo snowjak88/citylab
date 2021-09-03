@@ -172,6 +172,13 @@ class ToolButtonList extends Window {
 		// Add all buttons and groups and things.
 		//
 		tools.each { tool ->
+			//
+			// If we'd already registered a tool under this same ID,
+			// we'd better make sure we remove the old tool.
+			if(this.tools.containsKey(tool.id))
+				removeTools this.tools[tool.id]
+			
+			this.tools << [ "$tool.id" : tool ]
 			tool.groups.each { id, group -> addToolGroup group }
 			tool.buttons.each { id, button -> addToolButton button }
 		}
@@ -179,6 +186,23 @@ class ToolButtonList extends Window {
 		//
 		// Rebuild the table
 		//
+		checkRebuild()
+	}
+	
+	public void removeAllTools() {
+		removeTools tools.values()
+	}
+	
+	public void removeTools(Collection<Tool> tools) {
+		removeTools tools.toArray(new Tool[0])
+	}
+	
+	public void removeTools(Tool... tools) {
+		tools.each { tool ->
+			//tool.groups.each { id, group -> removeToolGroup group }
+			tool.buttons.each { id, button -> removeToolButton button }
+		}
+		
 		checkRebuild()
 	}
 	
@@ -275,6 +299,21 @@ class ToolButtonList extends Window {
 		rebuildNeeded = true
 	}
 	
+	private void removeToolGroup(ToolGroup group) {
+		
+		final groupID = group.id
+		
+		groupLabels.remove(groupID)?.remove()
+		groupExpandButtons.remove(groupID)?.remove()
+		
+		groupExpanded.remove groupID
+		
+		groups.remove groupID
+		groupButtonDefs.remove groupID
+		groupToolButtons.remove(groupID)?.each { it.remove() }
+		rebuildNeeded = true
+	}
+	
 	/**
 	 * Adds the given tool-button to the list.
 	 * <p>
@@ -324,11 +363,10 @@ class ToolButtonList extends Window {
 		if(!buttons.containsKey(buttonDef.id))
 			return
 		
-		final button = buttons[buttonDef.id]
-		buttons.remove[buttonDef.id]
+		final button = buttons.remove(buttonDef.id)
 		buttonDefs.remove buttonDef.id
 		groupButtonDefs[buttonDef.group]?.remove buttonDef
-		groupToolButtons[buttonDef.group]?.remove button
+		groupToolButtons[buttonDef.group]?.remove(button)
 		button.remove()
 		
 		rebuildNeeded = true

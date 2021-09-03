@@ -52,6 +52,12 @@ public abstract class ScriptedResource {
 	private final Map<Class<?>, Set<String>> scriptedDependencies = [:]
 	private final Map<FileHandle, Class<?>> assetDependencies = [:]
 	
+	public ScriptedResource() {
+		ScriptedResource.metaClass.methodMissing = { name, args ->
+			getProperty(name).call(*args)
+		}
+	}
+	
 	def propertyMissing(name) {
 		binding[name]
 	}

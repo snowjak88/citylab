@@ -6,33 +6,41 @@ description = 'Helper objects used by other modules'
 // We can publish the controls to a map-cell-outliner.
 // This interface comes in the form of a provided object:
 //
-//  * mapCellOutliner.active (boolean) -- is the map-cell-outliner active?
-//  * mapCellOutliner.cellX (int)      -- the X-coordinate of the map-cell to outline
-//  * mapCellOutliner.cellY (int)      -- the Y-coordinate ...
+//  * mapCellOutliner.active (boolean)  -- is the map-cell-outliner active?
+//  * mapCellOutliner.cellX (int)       -- the X-coordinate of the map-cell to outline
+//  * mapCellOutliner.cellY (int)       -- the Y-coordinate ...
+//  * mapCellOutliner.refresh (boolean) -- force a re-calculation of the outliner's vertices
 //
 //
 class MapCellOutliner {
-	boolean active
+	boolean active, refresh
 	int cellX, cellY
 }
 mapCellOutliner = [
 	active: false,
 	cellX: 0,
-	cellY: 0
+	cellY: 0,
+	refresh: false
 ] as MapCellOutliner
 
+//
+// We'll make this interface-object available to other Modules under the name "mapCellOutliner"
+//
 provides mapCellOutliner named 'mapCellOutliner'
 
+//
+//
+//
 oldCellX = -1i
 oldCellY = -1i
-vertex0x = 0
-vertex0y = 0
-vertex1x = 0
-vertex1y = 0
-vertex2x = 0
-vertex2y = 0
-vertex3x = 0
-vertex3y = 0
+vertex0x = 0f
+vertex0y = 0f
+vertex1x = 0f
+vertex1y = 0f
+vertex2x = 0f
+vertex2y = 0f
+vertex3x = 0f
+vertex3y = 0f
 
 customRenderHook 'tool-mapCellOutliner', { delta, batch, shapeDrawer, renderingSupport ->
 	if(!mapCellOutliner.active)
@@ -40,7 +48,7 @@ customRenderHook 'tool-mapCellOutliner', { delta, batch, shapeDrawer, renderingS
 	if( !renderingSupport.isCellVisible(mapCellOutliner.cellX, mapCellOutliner.cellY) )
 		return
 	
-	if(oldCellX != mapCellOutliner.cellX || oldCellY != mapCellOutliner.cellY) {
+	if(mapCellOutliner.refresh || oldCellX != mapCellOutliner.cellX || oldCellY != mapCellOutliner.cellY) {
 		final vertices = renderingSupport.getCellVertices( mapCellOutliner.cellX, mapCellOutliner.cellY, null )
 		vertex0x = vertices[0].x
 		vertex0y = vertices[0].y
@@ -52,6 +60,7 @@ customRenderHook 'tool-mapCellOutliner', { delta, batch, shapeDrawer, renderingS
 		vertex3y = vertices[3].y
 		oldCellX = mapCellOutliner.cellX
 		oldCellY = mapCellOutliner.cellY
+		mapCellOutliner.refresh = false
 	}
 	
 	shapeDrawer.line vertex0x, vertex0y, vertex1x, vertex1y, Color.WHITE
