@@ -113,4 +113,22 @@ public interface RenderingSupport {
 	 * @return
 	 */
 	public Vector2[] getCellVertices(int cellX, int cellY, TileCorner base);
+	
+	/**
+	 * Given a map-vertex, compute that vertex's location in terms of the viewport's
+	 * coordinate system.
+	 * <p>
+	 * <strong>Note</strong> that, to save on garbage-collection, the Vector2
+	 * instance that's returned should be considered to be owned by this
+	 * RenderingSupport instance. Do not plan on the value of this object remaining
+	 * stable over time.
+	 * </p>
+	 * 
+	 * @param vertexX
+	 * @param vertexY
+	 * @return {@code null} if this RenderingSupport isn't ready to perform
+	 *         map-vertex calculations -- probably because the map hasn't been
+	 *         initialized yet
+	 */
+	public Vector2 getVertex(int vertexX, int vertexY);
 }

@@ -222,7 +222,7 @@ public class Module extends ScriptedResource {
 	public void tool(String id, @DelegatesTo(value=Tool, strategy=Closure.DELEGATE_FIRST) Closure toolSpec) {
 		
 		final tool = new Tool(id, this, scriptDirectory, toolGroups, gameService)
-		toolSpec = toolSpec.rehydrate(tool, this, toolSpec)
+		toolSpec.delegate = tool
 		toolSpec.resolveStrategy = Closure.DELEGATE_FIRST
 		toolSpec()
 		

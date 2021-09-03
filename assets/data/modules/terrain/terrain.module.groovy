@@ -3,6 +3,8 @@ import java.lang.Math
 id = 'terrain'
 description = 'Handles fitting terrain-tiles to the map.'
 
+dependsOn 'cursor-highlighters'
+
 //
 // Ensure our I18N bundle is properly registered.
 i18n.addBundle 'i18n/terrain'

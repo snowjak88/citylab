@@ -43,9 +43,19 @@ public class CityMap {
 	 * @return
 	 */
 	public boolean isValidCell(int cellX, int cellY) {
-		( (entities != null)
-				&& (cellX >= 0) && (cellY >= 0)
+		( (cellX >= 0) && (cellY >= 0)
 				&& (cellX < getWidth()) && ( cellY < getHeight()) )
+	}
+	
+	/**
+	 * Are the given vertex-coordinates valid?
+	 * @param vertexX
+	 * @param vertexY
+	 * @return
+	 */
+	public boolean isValidVertex(int vertexX, int vertexY) {
+		( (vertexX >= 0) && (vertexY >= 0)
+				&& (vertexX < vertices.length ) && (vertexY < vertices[vertexX].length))
 	}
 	
 	/**
@@ -126,7 +136,7 @@ public class CityMap {
 	 *             if ({@code cellX + corner.getOffsetX()}) or
 	 *             ({@code cellY + corner.getOffsetY()}) fall outside the map
 	 */
-	public int getTileAltitude(int cellX, int cellY, TileCorner corner) {
+	public int getCellAltitude(int cellX, int cellY, TileCorner corner) {
 		
 		if (corner == null)
 			throw new NullPointerException("Cannot get corner altitude for null corner.")
@@ -161,7 +171,7 @@ public class CityMap {
 	 * @param corner
 	 * @param altitude
 	 */
-	public void setTileCornerAltitude(int cellX, int cellY, TileCorner corner, int altitude) {
+	public void setCellAltitude(int cellX, int cellY, TileCorner corner, int altitude) {
 		
 		if (corner == null)
 			throw new NullPointerException("Cannot set corner altitude for null corner.")
@@ -199,7 +209,7 @@ public class CityMap {
 	 * @param corner
 	 * @param flavors
 	 */
-	public void setTileCornerFlavors(int cellX, int cellY, TileCorner corner, List<String> flavors) {
+	public void setCellFlavors(int cellX, int cellY, TileCorner corner, List<String> flavors) {
 		
 		if (corner == null)
 			throw new NullPointerException("Cannot set corner flavors for null corner.")

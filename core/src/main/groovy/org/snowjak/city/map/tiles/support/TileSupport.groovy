@@ -88,9 +88,9 @@ class TileSupport {
 	 */
 	public int alt(int dx, int dy, TileCorner corner) {
 		if(!map.isValidCell(cellX + dx, cellY + dy))
-			return map.getTileAltitude(cellX, cellY, corner)
+			return map.getCellAltitude(cellX, cellY, corner)
 		
-		map.getTileAltitude(cellX + dx, cellY + dy, corner)
+		map.getCellAltitude(cellX + dx, cellY + dy, corner)
 	}
 	
 	/**

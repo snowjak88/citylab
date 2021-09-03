@@ -127,6 +127,11 @@ public class MapRenderer implements RenderingSupport {
 	 */
 	private final Vector2[] cellVertices = new Vector2[4];
 	
+	/**
+	 * Scratch Vector2 used for computing cell-vertices.
+	 */
+	private final Vector2 cellVertex = new Vector2();
+	
 	private GameState state;
 	private Batch batch;
 	private ShapeDrawer shapeDrawer;
@@ -560,9 +565,21 @@ public class MapRenderer implements RenderingSupport {
 		for (TileCorner corner : TileCorner.values()) {
 			vertices[index++].set(computeCellVertexX(col + corner.getOffsetX(), row + corner.getOffsetY()),
 					computeCellVertexY(col + corner.getOffsetX(), row + corner.getOffsetY(),
-							(base == null || base == corner) ? map.getTileAltitude(col, row, corner)
-									: map.getTileAltitude(col, row, base)));
+							(base == null || base == corner) ? map.getCellAltitude(col, row, corner)
+									: map.getCellAltitude(col, row, base)));
 		}
+	}
+	
+	@Override
+	public Vector2 getVertex(int vertexX, int vertexY) {
+		
+		if (state == null || state.getMap() == null)
+			return null;
+		final int altitude = (state.getMap().isValidVertex(vertexX, vertexY))
+				? state.getMap().getVertexAltitude(vertexX, vertexY)
+				: 0;
+		cellVertex.set(computeCellVertexX(vertexX, vertexY), computeCellVertexY(vertexX, vertexY, altitude));
+		return cellVertex;
 	}
 	
 	private float computeCellVertexX(int vertexX, int vertexY) {

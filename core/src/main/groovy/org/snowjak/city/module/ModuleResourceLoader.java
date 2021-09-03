@@ -7,6 +7,7 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.tiles.Tile;
+import org.snowjak.city.map.tiles.TileCorner;
 import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.module.ModuleResourceLoader.ModuleResourceLoaderParameters;
 import org.snowjak.city.resources.ScriptedResourceLoader;
@@ -15,6 +16,8 @@ import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.PreferencesService;
 
+import com.badlogic.ashley.core.ComponentMapper;
+import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetLoaderParameters;
@@ -61,9 +64,11 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		customizer.addImport("Buttons", Input.Buttons.class.getName());
 		customizer.addImports(
 				// jCity types
-				CityMap.class.getName(), Tile.class.getName(), TileSet.class.getName(),
+				CityMap.class.getName(), Tile.class.getName(), TileSet.class.getName(), TileCorner.class.getName(),
 				// Misc. LibGDX types
-				AssetDescriptor.class.getName(), Color.class.getName());
+				AssetDescriptor.class.getName(), Color.class.getName(),
+				// Ashley ECS types
+				ComponentMapper.class.getName(), Entity.class.getName());
 		
 		config.addCompilationCustomizers(customizer);
 		config.setScriptBaseClass(DelegatingScript.class.getName());
