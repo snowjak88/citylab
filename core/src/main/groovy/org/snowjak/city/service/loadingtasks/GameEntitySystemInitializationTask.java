@@ -3,7 +3,7 @@
  */
 package org.snowjak.city.service.loadingtasks;
 
-import org.snowjak.city.CityGame;
+import org.snowjak.city.screens.loadingtasks.BackgroundLoadingTask;
 import org.snowjak.city.screens.loadingtasks.LoadingTask;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
@@ -13,8 +13,6 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntitySystem;
 import com.github.czyzby.kiwi.log.Logger;
-import com.google.common.util.concurrent.AtomicDouble;
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * {@link LoadingTask} that sets up the game's entity-processing {@link Engine},
@@ -27,15 +25,12 @@ import com.google.common.util.concurrent.ListenableFuture;
  * @author snowjak88
  *
  */
-public class GameEntitySystemInitializationTask extends LoadingTask {
+public class GameEntitySystemInitializationTask extends BackgroundLoadingTask {
 	
 	private static final Logger LOG = LoggerService.forClass(GameEntitySystemInitializationTask.class);
 	
-	private ListenableFuture<?> taskFuture = null;
-	
 	private final GameService gameService;
 	private final I18NService i18nService;
-	private final AtomicDouble progress = new AtomicDouble();
 	
 	public GameEntitySystemInitializationTask(GameService gameService, I18NService i18NService) {
 		
@@ -52,41 +47,16 @@ public class GameEntitySystemInitializationTask extends LoadingTask {
 	}
 	
 	@Override
-	public void initiate() {
+	protected Runnable getTask() {
 		
-		if (taskFuture == null)
-			synchronized (this) {
-				if (taskFuture == null)
-					initializeTask();
-			}
-	}
-	
-	@Override
-	public float getProgress() {
-		
-		return (float) progress.get();
-	}
-	
-	@Override
-	public boolean isComplete() {
-		
-		if (taskFuture == null)
-			return false;
-		
-		return taskFuture.isDone();
-	}
-	
-	private void initializeTask() {
-		
-		progress.set(0);
-		
-		taskFuture = CityGame.EXECUTOR.submit(() -> {
+		return () -> {
 			
 			LOG.info("Adding default entity-processing systems ...");
 			
-			gameService.initializeBaseEntityEngine((p) -> progress.set(p));
+			gameService.initializeBaseEntityEngine((p) -> setProgress(p));
 			
 			LOG.info("Done!");
-		});
+		};
 	}
+	
 }

@@ -32,7 +32,7 @@ public class AssetServiceLoadingTask extends LoadingTask {
 	}
 	
 	@Override
-	public float getProgress() {
+	public double getProgress() {
 		
 		assetService.update();
 		return assetService.getProgress();

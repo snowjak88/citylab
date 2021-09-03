@@ -24,8 +24,7 @@ import static com.badlogic.gdx.graphics.g2d.Batch.Y2;
 import static com.badlogic.gdx.graphics.g2d.Batch.Y3;
 import static com.badlogic.gdx.graphics.g2d.Batch.Y4;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.function.Predicate;
 
 import org.snowjak.city.GameState;
@@ -36,7 +35,6 @@ import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileCorner;
 import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.util.PrioritizationFailedException;
-import org.snowjak.city.util.RelativePriorityList;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -91,33 +89,6 @@ public class MapRenderer implements RenderingSupport {
 	private int mapVisibleMinX = 0, mapVisibleMinY = 0, mapVisibleMaxX = 0, mapVisibleMaxY = 0;
 	
 	/**
-	 * Hooks into the {@link CityMap}-rendering process. These are called every
-	 * frame, in ascending order of their priority, for every visible map-cell.
-	 * <p>
-	 * Note that
-	 * </p>
-	 */
-	private final Map<String, AbstractCellRenderingHook> cellRenderingHooks = new LinkedHashMap<>();
-	
-	/**
-	 * Prioritized version of {@link #cellRenderingHooks}.
-	 */
-	private final RelativePriorityList<String, AbstractCellRenderingHook> prioritizedCellRenderingHooks = new RelativePriorityList<>();
-	
-	/**
-	 * Hooks into the {@link CityMap}-rendering process. These are called every
-	 * frame, in ascending order of their priority. The map-renderer itself has
-	 * priority 0; hooks with negative priority are called before, while those with
-	 * positive priority are called after.
-	 */
-	private final Map<String, AbstractCustomRenderingHook> customRenderingHooks = new LinkedHashMap<>();
-	
-	/**
-	 * Prioritized version of {@link #customRenderingHooks}.
-	 */
-	private final RelativePriorityList<String, AbstractCustomRenderingHook> prioritizedCustomRenderingHooks = new RelativePriorityList<>();
-	
-	/**
 	 * Scratch packed float[] array for delivering vertex-data to OpenGL
 	 */
 	private final float[] vertices = new float[NUM_VERTICES];
@@ -132,7 +103,7 @@ public class MapRenderer implements RenderingSupport {
 	 */
 	private final Vector2 cellVertex = new Vector2();
 	
-	private GameState state;
+	private final GameState state;
 	private Batch batch;
 	private ShapeDrawer shapeDrawer;
 	private boolean ownsBatch = false;
@@ -154,7 +125,8 @@ public class MapRenderer implements RenderingSupport {
 				return;
 			
 			final CityMap map = state.getMap();
-			
+			final List<AbstractCellRenderingHook> prioritizedCellRenderingHooks = state.getRenderingHookRegistry()
+					.getPrioritizedCellRenderingHooks();
 			if (prioritizedCellRenderingHooks.isEmpty())
 				return;
 			
@@ -167,8 +139,9 @@ public class MapRenderer implements RenderingSupport {
 		
 	};
 	
-	public MapRenderer() {
+	public MapRenderer(GameState state) {
 		
+		this.state = state;
 		setBatch(null);
 		init();
 	}
@@ -192,79 +165,12 @@ public class MapRenderer implements RenderingSupport {
 		invIsotransform = new Matrix4(isoTransform);
 		invIsotransform.inv();
 		
-		customRenderingHooks.put(MAP_RENDERING_HOOK.getId(), MAP_RENDERING_HOOK);
-		prioritizedCustomRenderingHooks.add(MAP_RENDERING_HOOK);
-	}
-	
-	public void setState(GameState state) {
-		
-		this.state = state;
-	}
-	
-	public void addCellRenderingHook(AbstractCellRenderingHook hook) throws PrioritizationFailedException {
-		
-		final AbstractCellRenderingHook previous = cellRenderingHooks.put(hook.getId(), hook);
-		
-		if (previous != null)
-			prioritizedCellRenderingHooks.remove(previous);
-		
 		try {
 			
-			prioritizedCellRenderingHooks.add(hook);
+			state.getRenderingHookRegistry().addCustomRenderingHook(MAP_RENDERING_HOOK);
 			
-		} catch (RuntimeException e) {
-			
-			if (!(e.getCause() instanceof PrioritizationFailedException))
-				throw e;
-			
-			if (previous == null)
-				cellRenderingHooks.remove(hook.getId());
-			else {
-				cellRenderingHooks.put(hook.getId(), previous);
-				prioritizedCellRenderingHooks.add(previous);
-			}
-			
-			throw (PrioritizationFailedException) e.getCause();
-		}
-	}
-	
-	public void removeCellRenderingHook(AbstractCellRenderingHook hook) {
-		
-		cellRenderingHooks.remove(hook.getId());
-		prioritizedCellRenderingHooks.remove(hook);
-		
-	}
-	
-	public void removeCustomRenderingHook(AbstractCustomRenderingHook hook) {
-		
-		customRenderingHooks.remove(hook.getId());
-		prioritizedCustomRenderingHooks.remove(hook);
-	}
-	
-	public void addCustomRenderingHook(AbstractCustomRenderingHook hook) throws PrioritizationFailedException {
-		
-		final AbstractCustomRenderingHook previous = customRenderingHooks.put(hook.getId(), hook);
-		
-		if (previous != null)
-			prioritizedCustomRenderingHooks.remove(previous);
-		
-		try {
-			
-			prioritizedCustomRenderingHooks.add(hook);
-			
-		} catch (RuntimeException e) {
-			
-			if (!(e.getCause() instanceof PrioritizationFailedException))
-				throw e;
-			
-			if (previous == null)
-				customRenderingHooks.remove(hook.getId());
-			else {
-				customRenderingHooks.put(hook.getId(), previous);
-				prioritizedCustomRenderingHooks.add(previous);
-			}
-			
-			throw (PrioritizationFailedException) e.getCause();
+		} catch (PrioritizationFailedException e) {
+			throw new RuntimeException("Cannot initialize main map-renderer!", e);
 		}
 	}
 	
@@ -354,7 +260,7 @@ public class MapRenderer implements RenderingSupport {
 		
 		batch.begin();
 		
-		for (AbstractCustomRenderingHook hook : prioritizedCustomRenderingHooks)
+		for (AbstractCustomRenderingHook hook : state.getRenderingHookRegistry().getPrioritizedCustomRenderingHooks())
 			hook.render(delta, batch, shapeDrawer, this);
 		
 		batch.end();

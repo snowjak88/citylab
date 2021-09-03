@@ -83,7 +83,7 @@ public class CompositeLoadingTask extends LoadingTask {
 	}
 	
 	@Override
-	public float getProgress() {
+	public double getProgress() {
 		
 		if (activeTasks.isEmpty())
 			return 1;
@@ -110,6 +110,24 @@ public class CompositeLoadingTask extends LoadingTask {
 		}
 		
 		return false;
+	}
+	
+	@Override
+	public Throwable getException() {
+		
+		if (activeTasks.isEmpty())
+			return null;
+		
+		return activeTasks.peek().getException();
+	}
+	
+	@Override
+	public boolean isFailed() {
+		
+		if (activeTasks.isEmpty())
+			return false;
+		
+		return activeTasks.peek().isFailed();
 	}
 	
 }

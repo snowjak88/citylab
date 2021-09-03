@@ -28,7 +28,7 @@ public abstract class LoadingTask implements RelativelyPrioritized<LoadingTask, 
 	/**
 	 * @return a fraction, in {@code [0,1]}, describing how complete this task is
 	 */
-	public abstract float getProgress();
+	public abstract double getProgress();
 	
 	/**
 	 * @return if this task is complete
@@ -45,5 +45,23 @@ public abstract class LoadingTask implements RelativelyPrioritized<LoadingTask, 
 	public RelativePriority<Class<?>> getRelativePriority() {
 		
 		return relativePriority;
+	}
+	
+	/**
+	 * @return the Throwable thrown off by this task, if any (by default, this
+	 *         method returns {@code null})
+	 */
+	public Throwable getException() {
+		
+		return null;
+	}
+	
+	/**
+	 * @return {@code true} if this task has failed with an exception (by default,
+	 *         this method returns {@code false})
+	 */
+	public boolean isFailed() {
+		
+		return false;
 	}
 }

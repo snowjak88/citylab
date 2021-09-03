@@ -6,14 +6,17 @@ package org.snowjak.city
 import org.snowjak.city.input.GameInputProcessor
 import org.snowjak.city.input.hotkeys.HotkeyRegistry
 import org.snowjak.city.map.CityMap
-import org.snowjak.city.map.renderer.MapRenderer
+import org.snowjak.city.map.renderer.RenderingHookRegistry
 import org.snowjak.city.screens.GameScreen.GameCameraControl
 import org.snowjak.city.tools.Tool
-import org.snowjak.city.tools.ui.ToolButtonList
+import org.snowjak.city.tools.ui.Toolbar
 
 import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.PooledEngine
 
+import groovy.beans.Bindable
+
+@Bindable
 public class GameState {
 	
 	/**
@@ -57,12 +60,12 @@ public class GameState {
 	final Engine engine = new PooledEngine(64, 512, 8, 64)
 	
 	/**
-	 * The main world renderer
+	 * Endpoint for registering/un-registering your rendering-hooks
 	 */
-	final MapRenderer renderer = new MapRenderer()
+	final RenderingHookRegistry renderingHookRegistry = new RenderingHookRegistry()
 	
 	/**
 	 * Renderer for registered button-activated tools
 	 */
-	ToolButtonList buttonRenderer
+	Toolbar toolbar
 }

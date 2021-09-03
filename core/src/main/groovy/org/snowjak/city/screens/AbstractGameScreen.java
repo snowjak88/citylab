@@ -29,7 +29,7 @@ import com.github.czyzby.kiwi.util.gdx.GdxUtilities;
  */
 public abstract class AbstractGameScreen extends ScreenAdapter {
 	
-	public static final float SCREEN_FADE_TIME = 0.4f;
+	public static final float SCREEN_FADE_TIME = 0.2f;
 	
 	private final LinkedList<Runnable> postShowActions = new LinkedList<>();
 	

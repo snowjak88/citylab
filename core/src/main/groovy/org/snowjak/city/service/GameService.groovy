@@ -3,6 +3,8 @@
  */
 package org.snowjak.city.service
 
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import java.util.function.DoubleConsumer
 
 import org.snowjak.city.CityGame
@@ -19,7 +21,6 @@ import org.snowjak.city.service.loadingtasks.GameEntitySystemInitializationTask
 import org.snowjak.city.service.loadingtasks.GameMapEntityCreationTask
 import org.snowjak.city.service.loadingtasks.GameMapGenerationTask
 import org.snowjak.city.service.loadingtasks.GameModulesInitializationTask
-import org.snowjak.city.service.loadingtasks.GameStateObjectsSetupTask
 import org.snowjak.city.util.PrioritizationFailedException
 
 import com.badlogic.ashley.core.Family
@@ -55,6 +56,17 @@ class GameService {
 	
 	private final GameState state = new GameState()
 	
+	public GameService() {
+		
+		//
+		// Whenever we get around to setting these state-objects,
+		// ensure they get completely configured
+		state.addPropertyChangeListener 'toolbar', { PropertyChangeEvent e ->
+			if(e.newValue)
+				initializeToolbar()
+		} as PropertyChangeListener
+	}
+	
 	public GameState getState() {
 		return state
 	}
@@ -70,15 +82,13 @@ class GameService {
 				new GameMapGenerationTask(state, param, i18nService),
 				new GameEntitySystemInitializationTask(this, i18nService),
 				new GameMapEntityCreationTask(this, i18nService),
-				new GameModulesInitializationTask(this, i18nService),
-				new GameStateObjectsSetupTask(this, i18nService))
+				new GameModulesInitializationTask(this, i18nService) )
 	}
 	
 	/**
 	 * Reset the entity-processing {@link Engine} to its base condition, without any Module's systems.
 	 */
-	public void initializeBaseEntityEngine(DoubleConsumer progressUpdater = { p ->
-			}) {
+	public void initializeBaseEntityEngine(DoubleConsumer progressUpdater = { p -> }) {
 		
 		progressUpdater?.accept 0
 		
@@ -147,52 +157,10 @@ class GameService {
 		}
 	}
 	
-	public void loadAllModules(DoubleConsumer progressReporter = { p ->
-			}) {
-		
-		LOG.info "Scanning for module-scripts ..."
-		
-		final resolver = GameAssetService.FILE_HANDLE_RESOLVER
-		final moduleFiles = scanForFiles(resolver.resolve(CityGame.EXTERNAL_ROOT_MODULES), ".module.groovy", true)
-		
-		final progressStep = 1d / (double) moduleFiles.size()
-		def progress = 0d
-		
-		for(def f : moduleFiles) {
-			LOG.info "Loading module-script [{0}] ...", f.path()
-			assetService.load(f.path(), Module.class)
-			
-			progress += progressStep
-			progressReporter?.accept progress
-		}
-		
-		LOG.info "Finished scanning for module-scripts."
-	}
-	
-	public void unloadAllModules(DoubleConsumer progressReporter = { p ->
-			}) {
-		
-		LOG.info "Unloading all modules ..."
-		
-		final modules = assetService.getAllByType(Module)
-		
-		final progressStep = 1d / (double) modules.size()
-		def progress = 0d
-		
-		for(def m : modules) {
-			assetService.unload m.id, Module
-			
-			progress += progressStep
-			progressReporter?.accept progress
-		}
-		
-		LOG.info "Finished unloading all modules."
-	}
-	
 	/**
 	 * Reloads all loaded {@link Module}s from their script-files.
 	 * Blocks until all Modules are uninitialized, reloaded, and re-initialized.
-	 * 
+	 *
 	 * @param progressReporter
 	 */
 	public void reloadAllModules(DoubleConsumer progressReporter = { p ->
@@ -223,6 +191,62 @@ class GameService {
 		}
 		
 		LOG.info "Finished reloading all modules."
+	}
+	
+	/**
+	 * Load module-scripts. Skips over all module-scripts that are already loaded.
+	 * @param progressReporter
+	 */
+	public void loadAllModules(DoubleConsumer progressReporter = { p ->
+			}) {
+		
+		LOG.info "Scanning for module-scripts ..."
+		
+		final resolver = GameAssetService.FILE_HANDLE_RESOLVER
+		final moduleFiles = scanForFiles(resolver.resolve(CityGame.EXTERNAL_ROOT_MODULES), ".module.groovy", true)
+		
+		final progressStep = 1d / (double) moduleFiles.size()
+		def progress = 0d
+		
+		for(def f : moduleFiles) {
+			
+			if(assetService.isLoaded(f.path(), Module)) {
+				LOG.info "Module-script [{0}] is already loaded, skipping ...", f.path()
+				continue
+			}
+			
+			LOG.info "Loading module-script [{0}] ...", f.path()
+			assetService.load(f.path(), Module.class)
+			
+			progress += progressStep
+			progressReporter?.accept progress
+		}
+		
+		LOG.info "Finished scanning for module-scripts."
+	}
+	
+	/**
+	 * Un-load all loaded module-scripts.
+	 * @param progressReporter
+	 */
+	public void unloadAllModules(DoubleConsumer progressReporter = { p ->
+			}) {
+		
+		LOG.info "Unloading all modules ..."
+		
+		final modules = assetService.getAllByType(Module)
+		
+		final progressStep = 1d / (double) modules.size()
+		def progress = 0d
+		
+		for(def m : modules) {
+			assetService.unload m.id, Module
+			
+			progress += progressStep
+			progressReporter?.accept progress
+		}
+		
+		LOG.info "Finished unloading all modules."
 	}
 	
 	/**
@@ -284,7 +308,7 @@ class GameService {
 	public void initializeModule(Module module, DoubleConsumer progressReporter = { p ->
 			}) {
 		
-		LOG.info "Initializing module \"{0}\"", module.id
+		LOG.info "Initializing module \"{0}\" ...", module.id
 		
 		//
 		// Register rendering hooks with the main GameData instance
@@ -292,29 +316,7 @@ class GameService {
 		
 		progressReporter?.accept 0
 		
-		if (!module.cellRenderingHooks.isEmpty()) {
-			LOG.info "Adding cell rendering hooks ..."
-			for (def hook : module.cellRenderingHooks)
-				try {
-					state.renderer.addCellRenderingHook hook
-				} catch (PrioritizationFailedException e) {
-					LOG.error "Cannot initialize cell-rendering hook [{0}] for module [{1}] -- too many conflicting priorities!",
-							hook.id, module.id
-				}
-		}
-		
-		progressReporter?.accept 0.25
-		
-		if (!module.customRenderingHooks.isEmpty()) {
-			LOG.info "Adding custom rendering hooks ..."
-			for (def hook : module.customRenderingHooks)
-				try {
-					state.renderer.addCustomRenderingHook hook
-				} catch (PrioritizationFailedException e) {
-					LOG.error "Cannot initialize custom-rendering hook [{0}] for module [{1}] -- too many conflicting priorities!",
-							hook.id, module.id
-				}
-		}
+		initializeModuleRenderingHooks module, { p -> progressReporter?.accept p * 0.5f }
 		
 		progressReporter?.accept 0.5
 		
@@ -357,19 +359,8 @@ class GameService {
 		
 		//
 		// Remove this module's rendering-hooks
-		if(!module.cellRenderingHooks.isEmpty()) {
-			LOG.info "Removing cell-rendering hooks ..."
-			for(def hook : module.cellRenderingHooks)
-				state.renderer.removeCellRenderingHook hook
-		}
 		
-		progressReporter?.accept 0.25
-		
-		if(!module.customRenderingHooks.isEmpty()) {
-			LOG.info "Removing custom-rendering hooks ..."
-			for(def hook : module.customRenderingHooks)
-				state.renderer.removeCustomRenderingHook hook
-		}
+		uninitializeModuleRenderingHooks module, { p -> progressReporter?.accept p * 0.5f }
 		
 		progressReporter?.accept 0.5
 		
@@ -394,11 +385,80 @@ class GameService {
 		LOG.info "Finished uninitializing module \"{0}\".", module.id
 	}
 	
-	/**
-	 * (Re-)initialize the configured renderer.
-	 */
-	public void intializeRenderer() {
-		state.renderer.state = state
+	public void initializeModuleRenderingHooks(Module module, DoubleConsumer progressReporter = {p -> }) {
+		
+		progressReporter?.accept 0
+		
+		if (!module.cellRenderingHooks.isEmpty()) {
+			
+			LOG.info "Adding cell rendering hooks ..."
+			final progressStep = 2f / (float)module.cellRenderingHooks.size()
+			def progress = 0
+			
+			for (def hook : module.cellRenderingHooks)
+				try {
+					state.renderingHookRegistry.addCellRenderingHook hook
+				} catch (PrioritizationFailedException e) {
+					LOG.error "Cannot initialize cell-rendering hook [{0}] for module [{1}] -- too many conflicting priorities!",
+							hook.id, module.id
+				} finally {
+					progress += progressStep
+					progressReporter?.accept progress
+				}
+		}
+		
+		progressReporter?.accept 0.5
+		
+		if (!module.customRenderingHooks.isEmpty()) {
+			LOG.info "Adding custom rendering hooks ..."
+			final progressStep = 2f / (float)module.customRenderingHooks.size()
+			def progress = 0
+			
+			for (def hook : module.customRenderingHooks)
+				try {
+					state.renderingHookRegistry.addCustomRenderingHook hook
+				} catch (PrioritizationFailedException e) {
+					LOG.error "Cannot initialize custom-rendering hook [{0}] for module [{1}] -- too many conflicting priorities!",
+							hook.id, module.id
+				} finally {
+					progress += progressStep
+					progressReporter?.accept progress + 0.5f
+				}
+		}
+	}
+	
+	public void uninitializeModuleRenderingHooks(Module module, DoubleConsumer progressReporter = {p -> }) {
+		
+		if(!module.cellRenderingHooks.isEmpty()) {
+			LOG.info "Removing cell-rendering hooks ..."
+			
+			final progressStep = 2f / (float)module.cellRenderingHooks.size()
+			def progress = 0
+			
+			for(def hook : module.cellRenderingHooks) {
+				state.renderingHookRegistry.removeCellRenderingHook hook
+				
+				progress += progressStep
+				progressReporter?.accept progress
+			}
+		}
+		
+		progressReporter?.accept 0.5
+		
+		if(!module.customRenderingHooks.isEmpty()) {
+			LOG.info "Removing custom-rendering hooks ..."
+			
+			final progressStep = 2f / (float)module.customRenderingHooks.size()
+			def progress = 0
+			
+			for(def hook : module.customRenderingHooks) {
+				state.renderingHookRegistry.removeCustomRenderingHook hook
+				
+				progress += progressStep
+				progressReporter?.accept progress + 0.5f
+			}
+		}
+		
 	}
 	
 	/**
@@ -408,8 +468,8 @@ class GameService {
 	public void initializeToolbar() {
 		
 		state.activeTool?.deactivate()
-		state.buttonRenderer?.removeAllTools()
-		state.buttonRenderer?.addTools state.tools.values()
+		state.toolbar?.removeAllTools()
+		state.toolbar?.addTools state.tools.values()
 	}
 	
 	private Collection<FileHandle> scanForFiles(FileHandle directory, String desiredExtension,

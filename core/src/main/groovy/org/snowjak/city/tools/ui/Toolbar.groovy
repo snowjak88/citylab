@@ -36,7 +36,7 @@ import com.badlogic.gdx.utils.Align
  * @author snowjak88
  *
  */
-class ToolButtonList extends Window {
+class Toolbar extends Window {
 	
 	public static final String BUTTON_MASK_FILENAME = "ui/buttons/button_mask.png"
 	public static final String BUTTON_MASK_SUNKEN_FILENAME = "ui/buttons/button_mask_sunken.png"
@@ -79,7 +79,7 @@ class ToolButtonList extends Window {
 	
 	private boolean rebuildNeeded = false
 	
-	public ToolButtonList(I18NService i18nService, SkinService skinService, GameService gameService, GameAssetService assetService, Runnable scrollFocusCanceller) {
+	public Toolbar(I18NService i18nService, SkinService skinService, GameService gameService, GameAssetService assetService, Runnable scrollFocusCanceller) {
 		
 		super(i18nService.get("tool-button-list-title"), skinService.current)
 		

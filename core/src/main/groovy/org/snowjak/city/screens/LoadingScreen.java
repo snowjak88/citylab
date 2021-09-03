@@ -59,13 +59,16 @@ public class LoadingScreen extends AbstractGameScreen {
 		taskDescription.setAlignment(Align.center);
 		
 		progressBar = new ProgressBar(0f, 1f, 0.1f, false, defaultSkin);
-		progressBar.setAnimateDuration(0.25f);
+		progressBar.setAnimateDuration(0.1f);
 		
 		final Table root = new Table();
 		root.setFillParent(true);
 		root.center();
 		
+		root.row();
 		root.add(taskDescription);
+		
+		root.row();
 		root.add(progressBar);
 		
 		return root;
@@ -94,8 +97,11 @@ public class LoadingScreen extends AbstractGameScreen {
 			isInitiated = true;
 		}
 		
-		progressBar.setValue(loadingTask.getProgress());
+		progressBar.setValue((float) loadingTask.getProgress());
 		taskDescription.setText(loadingTask.getDescription());
+		
+		if (loadingTask.getException() != null)
+			LOG.error(loadingTask.getException(), "Loading task reported an exception!");
 	}
 	
 	@Override

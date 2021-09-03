@@ -22,7 +22,7 @@ import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.SkinService;
 import org.snowjak.city.tools.Tool;
-import org.snowjak.city.tools.ui.ToolButtonList;
+import org.snowjak.city.tools.ui.Toolbar;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Input;
@@ -60,7 +60,7 @@ public class GameScreen extends AbstractGameScreen {
 		
 		this.i18nService = i18nService;
 		this.mainMenuScreen = mainMenuScreen;
-		this.renderer = gameService.getState().getRenderer();
+		this.renderer = new MapRenderer(gameService.getState());
 	}
 	
 	private GameInputProcessor inputProcessor;
@@ -69,10 +69,10 @@ public class GameScreen extends AbstractGameScreen {
 	private float cameraOffsetX, cameraOffsetY;
 	private boolean cameraUpdated = true;
 	
-	private MapRenderer renderer;
+	private final MapRenderer renderer;
 	float minWorldX, minWorldY, maxWorldX, maxWorldY;
 	
-	private ToolButtonList buttonList;
+	private Toolbar buttonList;
 	private GameScreenInputHandler inputHandler;
 	
 	@Initiate(priority = InitPriority.LOWEST_PRIORITY)
@@ -96,8 +96,8 @@ public class GameScreen extends AbstractGameScreen {
 	@Override
 	protected Actor getRoot() {
 		
-		buttonList = new ToolButtonList(i18nService, getSkinService(), getGameService(),
-				getAssetService(), () -> getStage().setScrollFocus(null));
+		buttonList = new Toolbar(i18nService, getSkinService(), getGameService(), getAssetService(),
+				() -> getStage().setScrollFocus(null));
 		
 		buttonList.setPosition(0, getStage().getHeight(), Align.topLeft);
 		
@@ -115,14 +115,11 @@ public class GameScreen extends AbstractGameScreen {
 		
 		final GameState state = getGameService().getState();
 		
-		state.setButtonRenderer(buttonList);
+		state.setToolbar(buttonList);
 		state.setCamera(getCameraControl());
 		state.setInputProcessor(inputProcessor);
 		
-		getGameService().initializeToolbar();
-		
 		final CityMap map = state.getMap();
-		final MapRenderer renderer = state.getRenderer();
 		
 		final Vector2 scratch = new Vector2();
 		scratch.set(0, 0);
@@ -157,7 +154,7 @@ public class GameScreen extends AbstractGameScreen {
 		
 		getGameService().getState().setCamera(null);
 		getGameService().getState().setInputProcessor(null);
-		getGameService().getState().setButtonRenderer(null);
+		getGameService().getState().setToolbar(null);
 	}
 	
 	@Override
