@@ -38,7 +38,7 @@ public class CityGame extends Game {
 	/**
 	 * Directory holding internal skin-definitions.
 	 */
-	public static final String INTERNAL_SKIN_BASE = "ui/skins/";
+	public static final String EXTERNAL_ROOT_SKINS = "data/skins/";
 	
 	/**
 	 * Directory holding map-generator scripts

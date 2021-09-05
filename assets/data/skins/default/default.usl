@@ -1,0 +1,46 @@
+//
+// Default skin.
+//
+// Extension of Minty-Fresh-UI (see related sub-folder "minty-fresh-ui").
+//
+// Currently, skin-extension is wonky. The USL Parser implementation we're using
+// assumes that:
+//
+//  1) your "constant" definitions (e.g., BitmapFont, Color) occur before your "include" statement(s)
+//  2) this skin-directory contains *all* the assets required by the skin you're extending
+//    a) you need to copy the *.fnt files
+//    b) you also need to copy the .atlas file and its associated .png
+//    c) then you need to *rename* the .atlas and .png files to [this-directory].atlas and [this-directory].png
+//    d) then you need to *edit* the .atlas, changing the referenced image-name to [this-directory].png
+//
+// This URL Parser is a candidate for a re-write in the future.
+//
+//
+//
+package com.badlogic.gdx.graphics {
+	#g2d.BitmapFont: {
+		mono: { file: IBMPlexMono-Regular.fnt }
+		mono-white: { file: IBMPlexMono-Regular-white.fnt }
+		mono-italic: { file: IBMPlexMono-Italic.fnt }
+		mono-italic-white: { file: IBMPlexMono-Italic-white.fnt }
+	}
+	
+	#Color: {
+		console-background: { r: 1, g: 1, b: 1, a: 0.75 }
+	}
+}
+
+include "data/skins/minty-fresh-ui/minty-fresh-ui.usl"
+
+package com.badlogic.gdx.scenes.scene2d.ui {
+	^TintedDrawable: {
+		console-background: { name: white, color: console-background }
+	}
+	
+	^LabelStyle: {
+		console: { font: mono }
+		console-white: { font: mono-white }
+		console-italic: { font: mono-italic }
+		console-italic-white: { font: mono-italic-white }
+	}
+}

@@ -38,7 +38,7 @@ public class Configuration {
 	 */
 	public static final String PREFERENCES_NAME = "jCity";
 	
-	public static final String SKIN_NAME = "minty-fresh-ui";
+	public static final String DEFAULT_SKIN_NAME = "default";
 	
 	@InjectAll(ScriptedResourceLoader.class)
 	private Collection<ScriptedResourceLoader<ScriptedResource, ?>> scriptedResourceLoaders;

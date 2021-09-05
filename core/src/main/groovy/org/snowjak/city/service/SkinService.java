@@ -93,11 +93,16 @@ public class SkinService {
 		
 		LOG.info("Initializing ...");
 		
-		scanForSkins(GameAssetService.FILE_HANDLE_RESOLVER.resolve(CityGame.INTERNAL_SKIN_BASE));
+		final FileHandle skinBaseDirectory = GameAssetService.FILE_HANDLE_RESOLVER
+				.resolve(CityGame.EXTERNAL_ROOT_SKINS);
+		
+		LOG.info("Scanning for skins in [{0}] ({1})", skinBaseDirectory.path(),
+				skinBaseDirectory.getClass().getSimpleName());
+		scanForSkins(skinBaseDirectory);
 		
 		//
 		// TODO Load current skin-name from preferences
-		currentSkin = getSkin(Configuration.SKIN_NAME);
+		currentSkin = getSkin(Configuration.DEFAULT_SKIN_NAME);
 		
 		LOG.info("Finished initialization.");
 	}
@@ -123,34 +128,34 @@ public class SkinService {
 			final FileHandle jsonFile = subdirectory.child(skinName + ".json"),
 					uslFile = subdirectory.child(skinName + ".usl");
 			
-			if (jsonFile.exists()) {
-				LOG.info("Loading skin \"{0}\" from [{1}].", skinName, jsonFile.path());
-				
-				assetService.load(jsonFile.path(), Skin.class);
-				loadedSkins.put(skinName, jsonFile);
-				
-			} else if (uslFile.exists()) {
+			if (uslFile.exists()) {
 				LOG.info("Compiling skin \"{0}\" from [{1}]", skinName, uslFile.path());
 				
-				final FileHandle tempDirectory = FileHandle.tempDirectory("skin_compile_" + skinName);
-				final FileHandle tempJson = tempDirectory.child(skinName + ".json");
+				//final FileHandle tempDirectory = FileHandle.tempDirectory("skin_compile_" + skinName);
+				//final FileHandle tempJson = tempDirectory.child(skinName + ".json");
 				
-				LOG.info("Copying dependencies to compile-directory ...");
-				for (FileHandle child : subdirectory.list())
-					child.copyTo(tempDirectory);
+//				LOG.info("Copying dependencies to compile-directory ...");
+//				for (FileHandle child : subdirectory.list())
+//					child.copyTo(tempDirectory);
 				
 				LOG.info("Compiling skin to JSON ...");
-				try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempJson.file()))) {
-					bw.write(USL.parse(tempDirectory.file(), uslFile.readString()));
+				try (BufferedWriter bw = new BufferedWriter(new FileWriter(jsonFile.file()))) {
+					bw.write(USL.parse(subdirectory.file(), uslFile.readString()));
 				} catch (IOException e) {
 					LOG.error(e, "Cannot compile skin \"{0}\" from [{1}]", skinName, uslFile.path());
 				}
 				
 				LOG.info("Loading compiled skin \"{0}\".", skinName);
-				assetService.load(tempJson.path(), Skin.class);
-				loadedSkins.put(skinName, tempJson);
+				assetService.load(jsonFile.path(), Skin.class);
+				loadedSkins.put(skinName, jsonFile);
 				
-				assetService.addOnLoadAction(() -> tempDirectory.deleteDirectory());
+				//assetService.addOnLoadAction(() -> tempDirectory.deleteDirectory());
+			} else if (jsonFile.exists()) {
+				LOG.info("Loading skin \"{0}\" from [{1}].", skinName, jsonFile.path());
+				
+				assetService.load(jsonFile.path(), Skin.class);
+				loadedSkins.put(skinName, jsonFile);
+				
 			}
 		}
 	}

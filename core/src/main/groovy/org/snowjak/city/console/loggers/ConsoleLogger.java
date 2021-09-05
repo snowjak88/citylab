@@ -26,11 +26,13 @@ public class ConsoleLogger extends DefaultLogger {
 	private ConsolePrintStream printStream;
 	
 	private final List<Object[]> bufferedLogEntries;
+	private final boolean logToDefault;
 	
-	public ConsoleLogger(Console console, LoggerService service, List<Object[]> bufferedLogEntries, Class<?> forClass) {
+	public ConsoleLogger(Console console, LoggerService service, List<Object[]> bufferedLogEntries, Class<?> forClass, boolean logToDefault) {
 		
 		super(service, forClass);
 		this.bufferedLogEntries = bufferedLogEntries;
+		this.logToDefault = logToDefault;
 		setConsole(console);
 	}
 	
@@ -44,6 +46,8 @@ public class ConsoleLogger extends DefaultLogger {
 	
 	@Override
 	protected void logDebug(String tag, String message) {
+		if(logToDefault)
+		super.logDebug(tag, message);
 		
 		if (console != null && console.isReady())
 			printStream.println(tag + ": " + message);
@@ -53,6 +57,8 @@ public class ConsoleLogger extends DefaultLogger {
 	
 	@Override
 	protected void logDebug(String tag, String message, Throwable exception) {
+		if(logToDefault)
+		super.logDebug(tag, message, exception);
 		
 		if (console != null && console.isReady()) {
 			printStream.println(tag + ": " + message);
@@ -67,7 +73,7 @@ public class ConsoleLogger extends DefaultLogger {
 	
 	@Override
 	protected void logInfo(String tag, String message) {
-		
+		super.logInfo(tag, message);
 		if (console != null && console.isReady())
 			printStream.println(tag + ": " + message);
 		else
@@ -76,6 +82,8 @@ public class ConsoleLogger extends DefaultLogger {
 	
 	@Override
 	protected void logInfo(String tag, String message, Throwable exception) {
+		if(logToDefault)
+		super.logInfo(tag, message, exception);
 		
 		if (console != null && console.isReady()) {
 			printStream.println(tag + ": " + message);
@@ -90,6 +98,8 @@ public class ConsoleLogger extends DefaultLogger {
 	
 	@Override
 	protected void logError(String tag, String message) {
+		if(logToDefault)
+		super.logError(tag, message);
 		
 		if (console != null && console.isReady())
 			printStream.println(tag + ": " + message);
@@ -99,6 +109,9 @@ public class ConsoleLogger extends DefaultLogger {
 	
 	@Override
 	protected void logError(String tag, String message, Throwable exception) {
+		
+		if(logToDefault)
+			super.logError(tag, message, exception);
 		
 		if (console != null && console.isReady()) {
 			printStream.println(tag + ": " + message);
