@@ -34,17 +34,19 @@ class ModuleExceptionRegistry {
 	public void reportFailure(Module module, FailureDomain domain, Throwable exception) {
 		failures.offer new Failure(
 				moduleID: module.id,
-				moduleFile: assetService.getFileByID(module.id, Module),
+				moduleFile: assetService.getFileByID(module.id, Module).name(),
+				moduleFullFile: assetService.getFileByID(module.id, Module).path(),
 				domain: domain,
 				exceptionType: exception.class.simpleName,
 				exceptionMessage: exception.message,
 				stacktrace: Throwables.getStackTraceAsString(exception))
 	}
 	
-	public void reportFailure(String moduleID, String moduleFilename, FailureDomain domain, Throwable exception) {
+	public void reportFailure(String moduleID, String moduleFilename, String moduleFullFilename, FailureDomain domain, Throwable exception) {
 		failures.offer new Failure(
 				moduleID: moduleID,
 				moduleFile: moduleFilename,
+				moduleFullFile: moduleFullFilename,
 				domain: domain,
 				exceptionType: exception.class.simpleName,
 				exceptionMessage: exception.message,
@@ -71,7 +73,7 @@ class ModuleExceptionRegistry {
 	@EqualsAndHashCode
 	@Immutable
 	public static class Failure {
-		String moduleID, moduleFile
+		String moduleID, moduleFile, moduleFullFile
 		FailureDomain domain
 		String exceptionType, exceptionMessage, stacktrace
 	}

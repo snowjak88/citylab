@@ -62,7 +62,8 @@ public class Configuration {
 		
 		assetService.setThrowUnhandledExceptions(false);
 		assetService.addFailureHandler(Module.class, Throwable.class, (ad, t) -> {
-			gameService.getState().getModuleExceptionRegistry().reportFailure("?", ad.fileName, FailureDomain.LOAD, t);
+			gameService.getState().getModuleExceptionRegistry().reportFailure("?", ad.file.name(), ad.file.path(),
+					FailureDomain.LOAD, t);
 		});
 		
 		initiateScriptScanning(gameService, assetService, GameAssetService.FILE_HANDLE_RESOLVER);

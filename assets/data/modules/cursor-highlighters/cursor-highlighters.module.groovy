@@ -43,6 +43,7 @@ vertex3x = 0f
 vertex3y = 0f
 
 customRenderHook 'tool-mapCellOutliner', { delta, batch, shapeDrawer, renderingSupport ->
+	
 	if(!mapCellOutliner.active)
 		return
 	if( !renderingSupport.isCellVisible(mapCellOutliner.cellX, mapCellOutliner.cellY) )

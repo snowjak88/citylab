@@ -10,6 +10,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextTooltip;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 
@@ -27,6 +28,7 @@ public class ModuleExceptionReportingWindow extends Window {
 	private Failure failure = null;
 	
 	private final Label moduleId, moduleFilename, failureDomain, failureMessage;
+	private final TextTooltip moduleFullFilename;
 	private final TextButton copyStacktraceButton, dismissButton;
 	
 	public ModuleExceptionReportingWindow(I18NService i18nService, SkinService skinService) {
@@ -48,6 +50,8 @@ public class ModuleExceptionReportingWindow extends Window {
 		
 		final Label moduleFilenameLabel = new Label(i18nService.get("module-failure-window-modulefile"), skin);
 		moduleFilename = new Label("", skin, "mono");
+		moduleFullFilename = new TextTooltip("???", skin);
+		moduleFilename.addListener(moduleFullFilename);
 		
 		failureDomain = new Label("???", skin);
 		failureMessage = new Label("???", skin, "mono");
@@ -86,24 +90,26 @@ public class ModuleExceptionReportingWindow extends Window {
 			}
 		});
 		
+		defaults().padLeft(25).padRight(25);
+		
 		row().colspan(2);
-		add(textLabel);
+		add(textLabel).padTop(25).padBottom(25);
 		
-		row();
-		add(moduleIdLabel).left();
-		add(moduleId).right();
+		row().left().top();
+		add(moduleIdLabel).padLeft(25);
+		add(moduleId).padRight(25);
 		
-		row();
-		add(moduleFilenameLabel).left();
-		add(moduleFilename).right();
+		row().left().top();
+		add(moduleFilenameLabel).padLeft(25);
+		add(moduleFilename).padRight(25);
 		
-		row();
-		add(failureDomain).left();
-		add(failureMessage).right();
+		row().left().top();
+		add(failureDomain).padLeft(25);
+		add(failureMessage).fill().padRight(25);
 		
-		row();
-		add(copyStacktraceButton).center();
-		add(dismissButton).center();
+		row().padTop(50).padBottom(25);
+		add(copyStacktraceButton).right();
+		add(dismissButton).left();
 		
 		pack();
 	}
@@ -116,6 +122,7 @@ public class ModuleExceptionReportingWindow extends Window {
 		
 		moduleId.setText(failure.getModuleID());
 		moduleFilename.setText(failure.getModuleFile());
+		moduleFullFilename.getActor().setText(failure.getModuleFullFile());
 		if (failure.getDomain().getBundleKey() != null)
 			failureDomain.setText(i18nService.get(failure.getDomain().getBundleKey()));
 		
@@ -128,6 +135,7 @@ public class ModuleExceptionReportingWindow extends Window {
 		
 		moduleId.setText("???");
 		moduleFilename.setText("???");
+		moduleFullFilename.getActor().setText("???");
 		failureDomain.setText("???");
 		failureMessage.setText("???");
 		copyStacktraceButton.setText(i18nService.get("module-failure-window-copystack"));
