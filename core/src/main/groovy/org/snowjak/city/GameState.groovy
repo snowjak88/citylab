@@ -7,7 +7,9 @@ import org.snowjak.city.input.GameInputProcessor
 import org.snowjak.city.input.hotkeys.HotkeyRegistry
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.renderer.RenderingHookRegistry
+import org.snowjak.city.module.ModuleExceptionRegistry
 import org.snowjak.city.screens.GameScreen.GameCameraControl
+import org.snowjak.city.service.GameAssetService
 import org.snowjak.city.tools.Tool
 import org.snowjak.city.tools.ui.Toolbar
 
@@ -68,4 +70,13 @@ public class GameState {
 	 * Renderer for registered button-activated tools
 	 */
 	Toolbar toolbar
+	
+	/**
+	 * Registry for Module-execution failures
+	 */
+	final ModuleExceptionRegistry moduleExceptionRegistry
+	
+	public GameState(GameAssetService assetService) {
+		this.moduleExceptionRegistry = new ModuleExceptionRegistry(assetService)
+	}
 }

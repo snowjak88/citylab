@@ -10,6 +10,8 @@ import org.snowjak.city.console.loggers.ConsoleLoggerFactory;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.generator.MapGeneratorLoader;
 import org.snowjak.city.map.tiles.TileSet;
+import org.snowjak.city.module.Module;
+import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain;
 import org.snowjak.city.resources.ScriptedResource;
 import org.snowjak.city.resources.ScriptedResourceLoader;
 import org.snowjak.city.service.GameAssetService;
@@ -59,6 +61,9 @@ public class Configuration {
 		scriptedResourceLoaders.forEach(l -> assetService.setLoader(l.getResourceType(), l));
 		
 		assetService.setThrowUnhandledExceptions(false);
+		assetService.addFailureHandler(Module.class, Throwable.class, (ad, t) -> {
+			gameService.getState().getModuleExceptionRegistry().reportFailure("?", ad.fileName, FailureDomain.LOAD, t);
+		});
 		
 		initiateScriptScanning(gameService, assetService, GameAssetService.FILE_HANDLE_RESOLVER);
 	}

@@ -4,6 +4,9 @@
 package org.snowjak.city.map.renderer.hooks;
 
 import org.snowjak.city.map.renderer.RenderingSupport;
+import org.snowjak.city.module.Module;
+import org.snowjak.city.module.ModuleExceptionRegistry;
+import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain;
 
 import com.badlogic.gdx.graphics.g2d.Batch;
 
@@ -25,7 +28,11 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
  */
 public class DelegatingCustomRenderingHook extends AbstractCustomRenderingHook {
 	
+	private final ModuleExceptionRegistry exceptionRegistry;
+	private final Module module;
 	private final CustomRenderingHook implementation;
+	
+	private boolean enabled = true;
 	
 	/**
 	 * Create a new custom-rendering hook with the given {@code id}.
@@ -33,16 +40,40 @@ public class DelegatingCustomRenderingHook extends AbstractCustomRenderingHook {
 	 * @param id
 	 * @param implementation
 	 */
-	public DelegatingCustomRenderingHook(String id, CustomRenderingHook implementation) {
+	public DelegatingCustomRenderingHook(String id, ModuleExceptionRegistry exceptionRegistry, Module module,
+			CustomRenderingHook implementation) {
 		
 		super(id);
 		
+		this.exceptionRegistry = exceptionRegistry;
+		this.module = module;
 		this.implementation = implementation;
+	}
+	
+	public Module getModule() {
+		
+		return module;
+	}
+	
+	@Override
+	public boolean isEnabled() {
+		
+		return enabled;
+	}
+	
+	public void setEnabled(boolean enabled) {
+		
+		this.enabled = enabled;
 	}
 	
 	@Override
 	public void render(float delta, Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
 		
-		implementation.render(delta, batch, shapeDrawer, support);
+		try {
+			implementation.render(delta, batch, shapeDrawer, support);
+		} catch (Throwable t) {
+			exceptionRegistry.reportFailure(module, FailureDomain.CUSTOM_RENDERER, t);
+			enabled = false;
+		}
 	}
 }

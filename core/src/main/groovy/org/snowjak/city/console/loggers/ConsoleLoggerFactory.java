@@ -52,7 +52,7 @@ public class ConsoleLoggerFactory implements LoggerFactory {
 	public Logger newLogger(LoggerService service, Class<?> forClass) {
 		
 		return loggers.computeIfAbsent(forClass,
-				(c) -> new ConsoleLogger(console, service, bufferedLogEntries, forClass, false));
+				(c) -> new ConsoleLogger(console, service, bufferedLogEntries, forClass, true));
 	}
 	
 }

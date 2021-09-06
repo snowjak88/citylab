@@ -56,6 +56,10 @@ public class I18NService {
 	public I18NService(GameAssetService assetService) {
 		
 		this.assetService = assetService;
+		
+		internalBundleBase = Gdx.files.internal(CityGame.INTERNAL_BUNDLE_BASE);
+		
+		setLocale(Locale.getDefault());
 	}
 	
 	/**
@@ -168,9 +172,9 @@ public class I18NService {
 	@Initiate(priority = InitPriority.VERY_HIGH_PRIORITY)
 	public void init() {
 		
-		internalBundleBase = Gdx.files.internal(CityGame.INTERNAL_BUNDLE_BASE);
-		
-		setLocale(Locale.getDefault());
+		// internalBundleBase = Gdx.files.internal(CityGame.INTERNAL_BUNDLE_BASE);
+		//
+		// setLocale(Locale.getDefault());
 	}
 	
 	public void setLocale(Locale locale) {

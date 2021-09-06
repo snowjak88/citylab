@@ -134,7 +134,8 @@ public class MapRenderer implements RenderingSupport {
 				for (int cellX = mapVisibleMinX; cellX <= mapVisibleMaxX; cellX++)
 					if (map.isValidCell(cellX, cellY))
 						for (AbstractCellRenderingHook hook : prioritizedCellRenderingHooks)
-							hook.renderCell(delta, cellX, cellY, support);
+							if (hook.isEnabled())
+								hook.renderCell(delta, cellX, cellY, support);
 		}
 		
 	};
@@ -261,8 +262,9 @@ public class MapRenderer implements RenderingSupport {
 		batch.begin();
 		
 		for (AbstractCustomRenderingHook hook : state.getRenderingHookRegistry().getPrioritizedCustomRenderingHooks())
-			hook.render(delta, batch, shapeDrawer, this);
-		
+			if (hook.isEnabled())
+				hook.render(delta, batch, shapeDrawer, this);
+			
 		batch.end();
 	}
 	

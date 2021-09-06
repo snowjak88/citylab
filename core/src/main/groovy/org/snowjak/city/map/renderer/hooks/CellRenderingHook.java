@@ -16,4 +16,11 @@ import org.snowjak.city.map.renderer.RenderingSupport;
 public interface CellRenderingHook {
 	
 	public void renderCell(float delta, int cellX, int cellY, RenderingSupport support);
+	
+	/**
+	 * @return {@code true} if this rendering-hook is eligible to be executed
+	 */
+	public default boolean isEnabled() {
+		return true;
+	}
 }

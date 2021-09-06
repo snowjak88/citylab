@@ -66,6 +66,7 @@ com.badlogic.gdx.scenes.scene2d.ui.Label$LabelStyle: {
 	white: {font: white },
 	path: {font: white, background: folder-icon },
 	white-bold: {font: white-bold },
+	mono: {font: mono },
 	console: {font: mono },
 	console-white: {font: mono-white },
 	console-italic: {font: mono-italic },

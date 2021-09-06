@@ -58,6 +58,11 @@ public class GameAssetService extends AssetManager {
 	private final Map<Class<?>, Set<String>> pendingResourceLoads = new LinkedHashMap<>()
 	
 	/**
+	 * {@link #pendingResourceLoads} that were identified as failed, and should be cleaned up
+	 */
+	private final Map<Class<?>, Set<String>> failedPendingResourceLoads = new LinkedHashMap<>()
+	
+	/**
 	 * Should be equal to the size of {@link #pendingResourceLoads}
 	 */
 	private final AtomicInteger pendingResourceLoadsCount = new AtomicInteger()
@@ -67,7 +72,7 @@ public class GameAssetService extends AssetManager {
 	 */
 	private final Map<Class<?>, Map<String, FileHandle>> scriptedResourceIDs = new LinkedHashMap<>()
 	
-	private final Map<Class<?>, Map<Class<? extends Throwable>, BiConsumer<AssetDescriptor<?>, Throwable>>> exceptionHandlers = new LinkedHashMap<>()
+	private final Map<Class<?>, Map<Class<? extends Throwable>, Set<BiConsumer<AssetDescriptor<?>, Throwable>>>> exceptionHandlers = new LinkedHashMap<>()
 	private final LinkedList<Runnable> onLoadActions = new LinkedList<>()
 	
 	private final List<LoadFailureBean> loadFailures = new LinkedList<>()
@@ -98,9 +103,9 @@ public class GameAssetService extends AssetManager {
 			//
 			// If a ScriptedResource fails, we should remove it from the list of pending ScriptedResources!
 			addFailureHandler(type, Throwable, { asset, ex ->
+				
 				synchronized(pendingResourceLoads) {
-					if( pendingResourceLoads[asset.type].remove(asset.fileName) )
-						pendingResourceLoadsCount.decrementAndGet()
+					failedPendingResourceLoads.computeIfAbsent(asset.type, { _ -> new LinkedHashSet<>() }) << asset.fileName
 				}
 			})
 		}
@@ -121,7 +126,7 @@ public class GameAssetService extends AssetManager {
 		
 		exceptionHandlers.computeIfAbsent(assetType, { a ->
 			new LinkedHashMap<>()
-		}).put exceptionType, exceptionHandler
+		}).computeIfAbsent(exceptionType, { _ -> new LinkedHashSet<>() }) << exceptionHandler
 	}
 	
 	/**
@@ -364,14 +369,23 @@ public class GameAssetService extends AssetManager {
 				while (fileNameIterator.hasNext()) {
 					
 					final String fileName = fileNameIterator.next()
+					final ScriptedResourceLoader<?, ?> loader = scriptResourceLoaders.get(pendingType)
+					final FileHandle fileHandle = loader.resolve(fileName)
+					
+					//
+					// If we've flagged this pending-resource as failed,
+					// then we should remove it from the pending-list.
+					if(failedPendingResourceLoads[pendingType]?.contains(fileName)) {
+						fileNameIterator.remove()
+						pendingResourceLoadsCount.decrementAndGet()
+						failedPendingResourceLoads[pendingType].remove fileName
+						continue
+					}
 					
 					//
 					// For the given pending resource, see if it has any resource-dependencies that
 					// aren't loaded.
 					//
-					final ScriptedResourceLoader<?, ?> loader = scriptResourceLoaders.get(pendingType)
-					final FileHandle fileHandle = loader.resolve(fileName)
-					
 					try {
 						
 						boolean anyNotLoaded = false
@@ -486,31 +500,27 @@ public class GameAssetService extends AssetManager {
 			else {
 				loadFailures.add(new LoadFailureBean(assetDesc.type, assetDesc.file, t))
 				
-				if (exceptionHandlers.containsKey(assetDesc.type))
-					//
-					// We have an exception-handler that matches this asset-type
-					handleForAssetType(assetDesc, t, exceptionHandlers.get(assetDesc.type))
-				
-				else {
-					
-					//
-					// Grab the first exception-handler we come to whose registered type is a
-					// superclass of the caught exception.
-					//
-					final Map<Class<? extends Throwable>, BiConsumer<AssetDescriptor<?>, Throwable>> handlers = exceptionHandlers
-							.entrySet().stream().filter({it.key.isAssignableFrom(assetDesc.type)}).findFirst()
-							.map({it.value}).orElse(null)
-					
-					if (handlers != null)
-						//
-						// We have an exception handler for a superclass of this asset-type
-						handleForAssetType(assetDesc, t, handlers)
-					
-					else {
-						if (isThrowUnhandledExceptions())
-							throw ex
-					}
+				//
+				// Execute all exception-handlers for which:
+				//  - asset-type matches or is a superclass of the failed-asset
+				//  - exception-type matches or is a superclass of the thrown exception
+				//
+				final Set<BiConsumer<AssetDescriptor<?>, Throwable>> validExceptionHandlers = []
+				exceptionHandlers.each { assetType, exceptionHandlers ->
+					if(assetType.isAssignableFrom(assetDesc.type))
+						exceptionHandlers.each { exceptionType, handlers ->
+							if(exceptionType.isAssignableFrom(t.class))
+								validExceptionHandlers.addAll handlers
+						}
 				}
+				
+				validExceptionHandlers.each { it.accept assetDesc, t }
+				
+				//
+				// Of course -- if we found no exception-handlers, then maybe we
+				// have to simply re-throw this exception.
+				if(validExceptionHandlers.isEmpty() && throwUnhandledExceptions)
+					throw ex
 			}
 			
 		} catch (Throwable t) {
@@ -523,20 +533,14 @@ public class GameAssetService extends AssetManager {
 	throws Throwable {
 		
 		//
-		// Look for exception-handlers that match the exception-class
-		if (exceptionHandlers.containsKey(t.getClass()))
-			exceptionHandlers.get(t.getClass()).accept(assetDesc, t)
-		
 		//
-		// Look for the first exception-handler that handles a superclass of this
-		// exception-class
-		final BiConsumer<AssetDescriptor<?>, Throwable> exceptionHandler = exceptionHandlers.entrySet().stream()
-				.filter({it.key.isAssignableFrom(t.getClass())}).findFirst().map({it.value}).orElse(null)
+		// Call all exception-handlers that accept this exception-type or one if its supertypes
+		final validExceptionHandlers = exceptionHandlers.findAll { exceptionType, exceptionHandler -> exceptionType.isAssignableFrom(t.class) }
 		
-		if (exceptionHandler != null)
-			exceptionHandler.accept(assetDesc, t)
-		else
+		if(validExceptionHandlers.isEmpty())
 			throw t
+		else
+			validExceptionHandlers.each { exceptionType, exceptionHandler -> exceptionHandler.accept assetDesc, t }
 	}
 	
 	/**

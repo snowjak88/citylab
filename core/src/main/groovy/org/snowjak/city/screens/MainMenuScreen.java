@@ -56,10 +56,10 @@ public class MainMenuScreen extends AbstractGameScreen {
 	
 	private final GameSetupMenuPage gameSetupMenuPage;
 	
-	public MainMenuScreen(GameService gameService, Console console, SkinService skinService,
+	public MainMenuScreen(GameService gameService, Console console, I18NService i18nService, SkinService skinService,
 			GameAssetService assetService, Stage stage, GameSetupMenuPage gameSetupMenuPage) {
 		
-		super(gameService, console, skinService, assetService, stage);
+		super(gameService, console, i18nService, skinService, assetService, stage);
 		this.skinService = skinService;
 		this.gameSetupMenuPage = gameSetupMenuPage;
 	}

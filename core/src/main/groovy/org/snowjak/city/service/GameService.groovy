@@ -9,6 +9,7 @@ import java.util.function.DoubleConsumer
 
 import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
+import org.snowjak.city.configuration.InitPriority
 import org.snowjak.city.ecs.components.IsMapCell
 import org.snowjak.city.ecs.systems.impl.IsMapCellManagementSystem
 import org.snowjak.city.ecs.systems.impl.RemoveMapCellRearrangedSystem
@@ -28,6 +29,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.github.czyzby.autumn.annotation.Component
+import com.github.czyzby.autumn.annotation.Initiate
 import com.github.czyzby.autumn.annotation.Inject
 import com.github.czyzby.kiwi.log.Logger
 
@@ -43,9 +45,6 @@ class GameService {
 	private static final Logger LOG = LoggerService.forClass(GameService)
 	
 	@Inject
-	private GameAssetService assetService
-	
-	@Inject
 	private SkinService skinService
 	
 	@Inject
@@ -54,10 +53,16 @@ class GameService {
 	@Inject
 	private Stage stage
 	
-	private final GameState state = new GameState()
+	private final GameAssetService assetService
+	private final GameState state
 	
-	public GameService() {
-		
+	public GameService(GameAssetService assetService) {
+		this.assetService = assetService
+		this.state = new GameState(assetService)
+	}
+	
+	@Initiate(priority=InitPriority.HIGHEST_PRIORITY)
+	public void init() {
 		//
 		// Whenever we get around to setting these state-objects,
 		// ensure they get completely configured

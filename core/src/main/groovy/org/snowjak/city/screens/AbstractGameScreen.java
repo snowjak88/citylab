@@ -6,8 +6,10 @@ package org.snowjak.city.screens;
 import java.util.LinkedList;
 
 import org.snowjak.city.console.Console;
+import org.snowjak.city.module.ui.ModuleExceptionReportingWindow;
 import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.GameService;
+import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.SkinService;
 
 import com.badlogic.gdx.Game;
@@ -21,6 +23,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.utils.Align;
 import com.github.czyzby.kiwi.util.gdx.GdxUtilities;
 
 /**
@@ -35,9 +38,13 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	
 	private final GameService gameService;
 	private final Console console;
+	private final I18NService i18nService;
 	private final SkinService skinService;
 	private final GameAssetService assetService;
 	private final Stage stage;
+	
+	private ModuleExceptionReportingWindow exceptionReportingWindow;
+	
 	private Actor root;
 	
 	private Skin skin;
@@ -45,12 +52,13 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	
 	private Game game;
 	
-	public AbstractGameScreen(GameService gameService, Console console, SkinService skinService,
-			GameAssetService assetService, Stage stage) {
+	public AbstractGameScreen(GameService gameService, Console console, I18NService i18nService,
+			SkinService skinService, GameAssetService assetService, Stage stage) {
 		
 		this.gameService = gameService;
 		this.console = console;
 		this.stage = stage;
+		this.i18nService = i18nService;
 		this.skinService = skinService;
 		this.assetService = assetService;
 	}
@@ -110,6 +118,9 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 			
 			root.addAction(Actions.fadeIn(SCREEN_FADE_TIME));
 		}
+		
+		this.exceptionReportingWindow = new ModuleExceptionReportingWindow(i18nService, skinService);
+		stage.addActor(exceptionReportingWindow);
 		
 		while (!postShowActions.isEmpty())
 			postShowActions.pop().run();
@@ -172,6 +183,12 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		else
 			GdxUtilities.clearScreen();
 		
+		if (gameService.getState().getModuleExceptionRegistry().hasUnreportedFailure()
+				&& !exceptionReportingWindow.isVisible()) {
+			exceptionReportingWindow.setFailure(gameService.getState().getModuleExceptionRegistry().nextFailure());
+			exceptionReportingWindow.setVisible(true);
+		}
+		
 		console.act(delta);
 		
 		beforeStageAct(delta);
@@ -198,6 +215,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		
 		stage.getViewport().update(width, height, true);
 		console.resize(width, height);
+		
+		exceptionReportingWindow.setPosition(width / 2, height / 2, Align.center);
 	}
 	
 	@Override
@@ -205,6 +224,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		
 		if (root != null)
 			root.remove();
+		
+		exceptionReportingWindow.remove();
 	}
 	
 	@Override

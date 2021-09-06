@@ -56,7 +56,7 @@ public class GameScreen extends AbstractGameScreen {
 	public GameScreen(GameService gameService, Console console, I18NService i18nService, SkinService skinService,
 			GameAssetService assetService, Stage stage, MainMenuScreen mainMenuScreen) {
 		
-		super(gameService, console, skinService, assetService, stage);
+		super(gameService, console, i18nService, skinService, assetService, stage);
 		
 		this.i18nService = i18nService;
 		this.mainMenuScreen = mainMenuScreen;

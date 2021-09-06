@@ -38,7 +38,8 @@ package com.badlogic.gdx.scenes.scene2d.ui {
 	}
 	
 	^LabelStyle: {
-		console: { font: mono }
+		mono: { font: mono }
+		console inherits mono: { }
 		console-white: { font: mono-white }
 		console-italic: { font: mono-italic }
 		console-italic-white: { font: mono-italic-white }

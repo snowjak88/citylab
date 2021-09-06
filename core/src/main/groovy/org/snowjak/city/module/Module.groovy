@@ -3,7 +3,6 @@ package org.snowjak.city.module
 import java.util.function.Consumer
 
 import org.snowjak.city.GameState
-import org.snowjak.city.ecs.systems.ListeningSystem
 import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook
 import org.snowjak.city.map.renderer.hooks.CellRenderingHook
@@ -21,7 +20,6 @@ import org.snowjak.city.tools.Tool
 import org.snowjak.city.tools.ToolGroup
 import org.snowjak.city.util.RelativePriority
 
-import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.core.Family
 import com.badlogic.gdx.files.FileHandle
@@ -98,7 +96,7 @@ public class Module extends ScriptedResource {
 		hook.resolveStrategy = Closure.DELEGATE_FIRST
 		hook.delegate = this
 		
-		def newHook = new DelegatingCellRenderingHook(id, hook as CellRenderingHook)
+		def newHook = new DelegatingCellRenderingHook(id, state.moduleExceptionRegistry, this, hook as CellRenderingHook)
 		hook.owner = newHook
 		cellRenderingHooks << newHook
 		newHook.relativePriority
@@ -118,7 +116,7 @@ public class Module extends ScriptedResource {
 		hook.resolveStrategy = Closure.DELEGATE_FIRST
 		hook.delegate = this
 		
-		def newHook = new DelegatingCustomRenderingHook(id, hook as CustomRenderingHook)
+		def newHook = new DelegatingCustomRenderingHook(id, state.moduleExceptionRegistry, this, hook as CustomRenderingHook)
 		hook.owner = newHook
 		customRenderingHooks << newHook
 		newHook.relativePriority
@@ -188,8 +186,8 @@ class ''' + legalID + ''' extends com.badlogic.ashley.systems.IteratingSystem {
 		if(isDependencyCheckingMode())
 			return
 		
-			final legalID = id.trim().replaceAll(/[\=?<>,.;:|!@#%\^\&()\[\]{}\-+*\/ ]/, "").replaceFirst(/^[0-9]*/, "")
-			final systemClassDefinition = '''
+		final legalID = id.trim().replaceAll(/[\=?<>,.;:|!@#%\^\&()\[\]{}\-+*\/ ]/, "").replaceFirst(/^[0-9]*/, "")
+		final systemClassDefinition = '''
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 	final Closure onAdd, onDrop
 	public ''' + legalID + '''(Family family, Closure onAdd, Closure onDrop) {
@@ -203,7 +201,7 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 	}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
 		final system = systemClass.newInstance(family, added, dropped)
-			
+		
 		added.owner = system
 		added.delegate = this
 		added.resolveStrategy = Closure.DELEGATE_FIRST

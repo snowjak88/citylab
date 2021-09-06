@@ -17,4 +17,11 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 public interface CustomRenderingHook {
 	
 	public void render(float delta, Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support);
+	
+	/**
+	 * @return {@code true} if this rendering-hook is eligible to be executed
+	 */
+	public default boolean isEnabled() {
+		return true;
+	}
 }

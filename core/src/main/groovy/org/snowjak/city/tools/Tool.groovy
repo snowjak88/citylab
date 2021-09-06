@@ -3,6 +3,9 @@
  */
 package org.snowjak.city.tools
 
+import static org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain.TOOL_DEACTIVATE
+import static org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain.TOOL_UPDATE
+
 import java.util.function.Consumer
 
 import org.snowjak.city.input.InputEventReceiver
@@ -13,6 +16,7 @@ import org.snowjak.city.input.MapDragUpdateEvent
 import org.snowjak.city.input.MapHoverEvent
 import org.snowjak.city.input.hotkeys.Hotkey
 import org.snowjak.city.module.Module
+import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain
 import org.snowjak.city.service.GameService
 import org.snowjak.city.tools.activity.Activity
 import org.snowjak.city.tools.activity.InputReceivingActivity
@@ -56,7 +60,7 @@ class Tool {
 	String title
 	boolean enabled = true
 	
-	private final Module module
+	final Module module
 	private final Binding binding = new Binding()
 	private final FileHandle baseDirectory
 	private final GameService gameService
@@ -255,21 +259,37 @@ class Tool {
 		gameService.state.activeTool?.deactivate()
 		gameService.state.activeTool = this
 		activateListeners.each { it.accept thisObject }
-		if(enabled)
-			activities.each { it.activate() }
+		
+		try {
+			if(enabled)
+				activities.each { it.activate() }
+		} catch(Throwable t) {
+			gameService.state.moduleExceptionRegistry.reportFailure(module, FailureDomain.TOOL_ACTIVATE, t)
+			deactivate()
+		}
 	}
 	
 	public void update() {
 		
-		if(enabled)
-			activities.each { it.update() }
+		try {
+			if(enabled)
+				activities.each { it.update() }
+		} catch(Throwable t) {
+			gameService.state.moduleExceptionRegistry.reportFailure(module, TOOL_UPDATE, t)
+			deactivate()
+		}
 	}
 	
 	public void deactivate() {
 		
 		deactivateListeners.each { it.accept thisObject }
-		inactivities.each { it.run() }
-		activities.each { it.deactivate() }
-		gameService.state.activeTool = null
+		try {
+			inactivities.each { it.run() }
+			activities.each { it.deactivate() }
+		} catch(Throwable t) {
+			gameService.state.moduleExceptionRegistry.reportFailure(module, TOOL_DEACTIVATE, t)
+		} finally {
+			gameService.state.activeTool = null
+		}
 	}
 }
