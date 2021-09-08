@@ -498,7 +498,7 @@ public class GameAssetService extends AssetManager {
 					throw ex
 			}
 			else {
-				loadFailures.add(new LoadFailureBean(assetDesc.type, assetDesc.file, t))
+				loadFailures.add(new LoadFailureBean(assetDesc.type, assetDesc.file?.path() ?: assetDesc.fileName, t))
 				
 				//
 				// Execute all exception-handlers for which:
@@ -559,10 +559,10 @@ public class GameAssetService extends AssetManager {
 		}
 		
 		private final Class<?> assetType
-		private final FileHandle file
+		private final String file
 		private final Throwable exception
 		
-		public LoadFailureBean(Class<?> assetType, FileHandle file, Throwable exception) {
+		public LoadFailureBean(Class<?> assetType, String file, Throwable exception) {
 			
 			this.assetType = assetType
 			this.file = file
@@ -574,7 +574,7 @@ public class GameAssetService extends AssetManager {
 			return assetType
 		}
 		
-		public FileHandle getFile() {
+		public String getFile() {
 			
 			return file
 		}

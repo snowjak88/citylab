@@ -10,7 +10,6 @@ import org.snowjak.city.console.loggers.ConsoleLoggerFactory;
 import org.snowjak.city.map.generator.MapGenerator;
 import org.snowjak.city.map.generator.MapGeneratorLoader;
 import org.snowjak.city.map.tiles.TileSet;
-import org.snowjak.city.module.Module;
 import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain;
 import org.snowjak.city.resources.ScriptedResource;
 import org.snowjak.city.resources.ScriptedResourceLoader;
@@ -62,7 +61,8 @@ public class Configuration {
 		
 		assetService.setThrowUnhandledExceptions(false);
 		assetService.addFailureHandler(Module.class, Throwable.class, (ad, t) -> {
-			gameService.getState().getModuleExceptionRegistry().reportFailure("?", ad.file.name(), ad.file.path(),
+			gameService.getState().getModuleExceptionRegistry().reportFailure("?",
+					(ad.file != null) ? ad.file.name() : ad.fileName, (ad.file != null) ? ad.file.path() : ad.fileName,
 					FailureDomain.LOAD, t);
 		});
 		

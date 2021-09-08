@@ -1,7 +1,11 @@
 package org.snowjak.city.module
 
+import static org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain.OTHER
+
+import java.util.concurrent.Callable
 import java.util.function.Consumer
 
+import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
 import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook
@@ -24,6 +28,7 @@ import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.core.Family
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Texture
+import com.google.common.util.concurrent.ListenableFuture
 
 /**
  * A Module provides game functionality.
@@ -122,6 +127,10 @@ public class Module extends ScriptedResource {
 		newHook.relativePriority
 	}
 	
+	private String legalizeID(String id) {
+		id.trim().replaceAll(/[\=?<>,.;:|!@#%\^\&()\[\]{}\-+*\/ ]/, "").replaceFirst(/^[0-9]*/, "")
+	}
+	
 	/**
 	 * Create a new {@link IteratingSystem}.
 	 * <p>
@@ -147,7 +156,7 @@ public class Module extends ScriptedResource {
 		//
 		// So we have to ensure that we generate a brand-new Class, with the ID the user specifies.
 		//
-		final legalID = id.trim().replaceAll(/[\=?<>,.;:|!@#%\^\&()\[\]{}\-+*\/ ]/, "").replaceFirst(/^[0-9]*/, "")
+		final legalID = legalizeID(id)
 		final systemClassDefinition = '''
 class ''' + legalID + ''' extends com.badlogic.ashley.systems.IteratingSystem {
 	final Closure implementation
@@ -160,6 +169,85 @@ class ''' + legalID + ''' extends com.badlogic.ashley.systems.IteratingSystem {
 }'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
 		final system = systemClass.newInstance(family, implementation)
+		
+		implementation.owner = system
+		implementation.delegate = this
+		implementation.resolveStrategy = Closure.DELEGATE_FIRST
+		
+		systems << ["$id" : system]
+	}
+	
+	/**
+	 * Create a new {@link IntervalSystem}.
+	 * <p>
+	 * {@code implementation} is expected to be of the form:
+	 * <pre>
+	 * { float deltaTime -> ... }
+	 * </pre>
+	 * </p>
+	 *
+	 * @param id
+	 * @param interval time between executions, in seconds
+	 * @param implementation
+	 */
+	public void intervalSystem(String id, float interval, Closure implementation) {
+		
+		if(isDependencyCheckingMode())
+			return
+		
+		final legalID = legalizeID(id)
+		final systemClassDefinition = '''
+class ''' + legalID + ''' extends com.badlogic.ashley.systems.IntervalSystem {
+	final Closure implementation
+	public ''' + legalID + '''(float interval, Closure implementation) {
+			super(interval);
+			this.implementation = implementation
+		}
+		
+		protected void updateInterval() { implementation(interval) }
+	}'''
+		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
+		final system = systemClass.newInstance(interval, implementation)
+		
+		implementation.owner = system
+		implementation.delegate = this
+		implementation.resolveStrategy = Closure.DELEGATE_FIRST
+		
+		systems << ["$id" : system]
+	}
+	
+	/**
+	 * Create a new {@link IntervalIteratingSystem}.
+	 * <p>
+	 * {@code implementation} is expected to be of the form:
+	 * <pre>
+	 * { Entity entity, float deltaTime -> ... }
+	 * </pre>
+	 * </p>
+	 * 
+	 * @param id
+	 * @param family
+	 * @param interval time between executions, in seconds
+	 * @param implementation
+	 */
+	public void intervalIteratingSystem(String id, Family family, float interval, Closure implementation) {
+		
+		if(isDependencyCheckingMode())
+			return
+		
+		final legalID = legalizeID(id)
+		final systemClassDefinition = '''
+class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.IntervalIteratingSystem {
+	final Closure implementation
+	public ''' + legalID + '''(Family family, float interval, Closure implementation) {
+			super(family, interval);
+			this.implementation = implementation
+		}
+		
+		protected void processEntity(Entity entity, float deltaTime) { implementation(entity, deltaTime) }
+	}'''
+		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
+		final system = systemClass.newInstance(family, interval, implementation)
 		
 		implementation.owner = system
 		implementation.delegate = this
@@ -186,7 +274,7 @@ class ''' + legalID + ''' extends com.badlogic.ashley.systems.IteratingSystem {
 		if(isDependencyCheckingMode())
 			return
 		
-		final legalID = id.trim().replaceAll(/[\=?<>,.;:|!@#%\^\&()\[\]{}\-+*\/ ]/, "").replaceFirst(/^[0-9]*/, "")
+		final legalID = legalizeID(id)
 		final systemClassDefinition = '''
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 	final Closure onAdd, onDrop
@@ -241,6 +329,55 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 		}
 		
 		tools << ["$id" : tool]
+	}
+	
+	/**
+	 * Submit the given task for background execution. Immediately returns a {@link ListenableFuture}
+	 * so you can monitor your task from the main thread and, possibly, retrieve its eventual result.
+	 * <p>
+	 * Primarily, this delegates to the {@link CityGame#EXECUTOR shared} {@link ListeningExecutorService},
+	 * so you could bypass this method and simply submit your task yourself.
+	 * </p>
+	 * <p>
+	 * <em>However</em>, this method automatically wraps your task so as to capture any exceptions
+	 * your task might generate, so they can be subsequently presented on the main thread.
+	 * </p>
+	 * @param task
+	 * @return
+	 */
+	public ListenableFuture<?> submitResultTask(Callable<?> task) {
+		return CityGame.EXECUTOR.submit({ ->
+			try {
+				return task.call()
+			} catch(Throwable t) {
+				gameService.state.moduleExceptionRegistry.reportFailure this, OTHER, t
+				return null
+			}
+		} as Callable<?>)
+	}
+	
+	/**
+	 * Submit the given task for background execution. Immediately returns a {@link ListenableFuture}
+	 * so you can monitor your task from the main thread and, possibly, retrieve its eventual result.
+	 * <p>
+	 * Primarily, this delegates to the {@link CityGame#EXECUTOR shared} {@link ListeningExecutorService},
+	 * so you could bypass this method and simply submit your task yourself.
+	 * </p>
+	 * <p>
+	 * <em>However</em>, this method automatically wraps your task so as to capture any exceptions
+	 * your task might generate, so they can be subsequently presented on the main thread.
+	 * </p>
+	 * @param task
+	 * @return
+	 */
+	public ListenableFuture<?> submitTask(Runnable task) {
+		return CityGame.EXECUTOR.submit({ ->
+			try {
+				task.run()
+			} catch(Throwable t) {
+				gameService.state.moduleExceptionRegistry.reportFailure this, OTHER, t
+			}
+		} as Runnable)
 	}
 	
 	@Override

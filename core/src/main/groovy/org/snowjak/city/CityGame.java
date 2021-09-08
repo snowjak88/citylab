@@ -1,7 +1,6 @@
 package org.snowjak.city;
 
 import java.time.Duration;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -60,7 +59,7 @@ public class CityGame extends Game {
 	//
 	
 	/**
-	 * Thread-caching {@link ExecutorService}.
+	 * Shared {@link ListeningExecutorService}.
 	 */
 	public static final ListeningExecutorService EXECUTOR = MoreExecutors.listeningDecorator(MoreExecutors
 			.getExitingExecutorService((ThreadPoolExecutor) Executors.newCachedThreadPool(), Duration.ofSeconds(5)));

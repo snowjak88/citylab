@@ -4,6 +4,7 @@
 package org.snowjak.city.map.tiles
 
 import java.util.function.Consumer
+
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.tiles.support.TileSupport
 import org.snowjak.city.resources.ScriptedResource
@@ -168,7 +169,7 @@ class TileSet extends ScriptedResource implements Disposable {
 			base: base,
 			decoration: decoration,
 			ruleHelpers: ruleHelpers
-			] as TileSet
+		] as TileSet
 		configurer.accept tileset
 		
 		script.run()
@@ -181,10 +182,6 @@ class TileSet extends ScriptedResource implements Disposable {
 	/**
 	 * Get the minimum set of Tiles that can fit the given map at the given
 	 * location.
-	 * <p>
-	 * You should probably execute {@link #mutate(CityMap, int, int) mutate()}
-	 * against this location before attempting to look for fitting tiles.
-	 * </p>
 	 * <p>
 	 * Note that this should only look at vertex-altitudes and -flavors (barring any
 	 * special Tile rules, which would be executed normally).
@@ -225,12 +222,12 @@ class TileSet extends ScriptedResource implements Disposable {
 			// If the tile is non-transparent and we're not allowing that -- skip it.
 			if (nonDecorative == tile.isDecoration())
 				continue
-				
+			
 			//
 			// If we've already added this tile to the current chain -- skip it.
 			if (currentTiles.contains(tile))
 				continue
-				
+			
 			//
 			// The tile must not add anything we don't already need
 			boolean addsExtra = false
@@ -245,7 +242,7 @@ class TileSet extends ScriptedResource implements Disposable {
 			}
 			if (addsExtra)
 				continue
-				
+			
 			//
 			// The "new remaining" list of flavors is the old list, minus the
 			// currently-selected tile's flavors
@@ -253,17 +250,18 @@ class TileSet extends ScriptedResource implements Disposable {
 			final EnumMap<TileCorner, List<String>> newRemaining = new EnumMap<>(TileCorner)
 			for (TileCorner corner : remainingFlavors.keySet()) {
 				final List<String> remaining = new LinkedList<String>(remainingFlavors.get(corner))
-				fulfillsAnyFlavors = fulfillsAnyFlavors || remaining.removeAll(tile.getProvision().get(corner))
+				if(tile.getProvision().containsKey(corner))
+					fulfillsAnyFlavors = fulfillsAnyFlavors || remaining.removeAll(tile.getProvision().get(corner))
 				newRemaining[corner] = remaining
 			}
 			if (!fulfillsAnyFlavors)
 				continue
-				
+			
 			//
 			// If the tile's rules don't allow it to fit here -- skip it.
 			if (!tile.isAcceptable(map, cellX, cellY))
 				continue
-				
+			
 			//
 			// OK -- now get ready to go a level deeper.
 			//

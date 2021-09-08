@@ -114,3 +114,5 @@ padding = 0
 // define rule-helpers in an included script and use them in the includer.
 //
 include 'default/landscape/landscape.groovy'
+
+include 'default/water/water.groovy'

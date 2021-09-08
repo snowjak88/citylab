@@ -1,5 +1,3 @@
-import java.lang.Math
-
 id = 'terrain'
 description = 'Handles fitting terrain-tiles to the map.'
 
@@ -23,7 +21,11 @@ dependsOn tilesetName, TileSet
 tileset = assets.getByID tilesetName, TileSet
 
 //
-// This module's systems need this Component-class.
+// We need to declare a couple of components for this Module to work.
+//
+// IsTerrainTile: marks an entity as having terrain-tile(s) assigned to it.
+// IsTerrainTile is populated by the terrain-tile-fitter (in "systems.groovy"), and
+// is read by the terrain-cell-renderer ("renderers/terrainRenderer.groovy").
 //
 class IsTerrainTile implements Component, Poolable {
 	
@@ -33,40 +35,38 @@ class IsTerrainTile implements Component, Poolable {
 	// Poolable components require a "reset" method,
 	// to return them to a blank state
 	void reset() {
-	}
-}
-
-class NeedsReplacementTerrainTile implements Component, Poolable {
-
-	void reset() {
+		tiles.clear()
 	}
 }
 
 //
-// ComponentMappers make us faster at querying and retrieving Components from entities
-terrainMapper = ComponentMapper.getFor(IsTerrainTile)
+// NeedsReplacementTerrainTile: marks an entity as requiring its IsTerrainTile
+// to be recomputed (because the map has changed somehow at that location).
+// This is a "marker" component, with no fields.
+//
+class NeedsReplacementTerrainTile implements Component, Poolable {
+	void reset() { }
+}
+
+//
+// PendingTerrainTile: marks an entity as waiting on its terrain-tiles to
+// be (re-)computed. Has a Future, giving us an endpoint for the background-task
+// that's busy doing that terrain-tile-fitting.
+//
+class PendingTerrainTile implements Component, Poolable {
+	ListenableFuture<?> future
+	void reset() { future = null }
+}
+
+//
+// The "terrain" renderer will automatically share every variable we've declared so far.
+include 'renderers/terrainRenderer.groovy'
 
 //
 // This module declares its entity-processing systems in another file.
 // That file is loaded and processed now.
 //
 include 'systems.groovy'
-
-//
-// Declare a cell-rendering hook into the map-rendering loop.
-// This will be called every frame for every on-screen map-cell.
-//
-// Note that this hook as a name.
-// Names must be unique for cell-rendering hooks. Hooks that are
-// registered later will overwrite those registered earlier.
-//
-cellRenderHook 'terrainRender', { delta, cellX, cellY, support ->
-	def entity = state.map.getEntity(cellX, cellY)
-	if(entity)
-		if(terrainMapper.has(entity))
-			for(def tile in terrainMapper.get(entity).tiles)
-				support.renderTile cellX, cellY, tile
-}
 
 //
 // We define a "clouds" renderer in this file ...

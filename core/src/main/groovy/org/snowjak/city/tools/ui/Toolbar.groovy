@@ -274,8 +274,9 @@ class Toolbar extends Window {
 		
 		if(groups.containsKey(groupID)) {
 			//
-			// Only update group-label
-			groupLabels[groupID].text = group.title
+			// Only update group-label if necessary
+			if(group.title?.trim())
+				groupLabels[groupID].text = group.title
 			
 			rebuildNeeded = true
 			return

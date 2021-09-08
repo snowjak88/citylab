@@ -14,19 +14,19 @@ public enum TileCorner {
 	/**
 	 * Top of tile-diamond.
 	 */
-	TOP(0, +1, -1, +1, 2),
+	TOP(0, +1, -1, +1, 3),
 	/**
 	 * Right of tile-diamond.
 	 */
-	RIGHT(+1, +1, +1, +1, 3),
-	/**
-	 * Bottom of tile-diamond.
-	 */
-	BOTTOM(+1, 0, +1, -1, 0),
+	RIGHT(+1, +1, +1, +1, 2),
 	/**
 	 * Left of tile-diamond.
 	 */
-	LEFT(0, 0, -1, -1, 1);
+	LEFT(0, 0, -1, -1, 1),
+	/**
+	 * Bottom of tile-diamond.
+	 */
+	BOTTOM(+1, 0, +1, -1, 0);
 	
 	private final int offsetX, offsetY, dx, dy, oppositeIndex;
 	

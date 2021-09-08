@@ -24,6 +24,7 @@ import static com.badlogic.gdx.graphics.g2d.Batch.Y2;
 import static com.badlogic.gdx.graphics.g2d.Batch.Y3;
 import static com.badlogic.gdx.graphics.g2d.Batch.Y4;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -470,7 +471,7 @@ public class MapRenderer implements RenderingSupport {
 		final CityMap map = state.getMap();
 		
 		int index = 0;
-		for (TileCorner corner : TileCorner.values()) {
+		for (TileCorner corner : Arrays.asList(TileCorner.LEFT, TileCorner.TOP, TileCorner.RIGHT, TileCorner.BOTTOM)) {
 			vertices[index++].set(computeCellVertexX(col + corner.getOffsetX(), row + corner.getOffsetY()),
 					computeCellVertexY(col + corner.getOffsetX(), row + corner.getOffsetY(),
 							(base == null || base == corner) ? map.getCellAltitude(col, row, corner)

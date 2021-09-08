@@ -1,44 +1,79 @@
 
 isCellMapper = ComponentMapper.getFor(IsMapCell)
-isTerrainTile = ComponentMapper.getFor(IsTerrainTile)
+terrainTileMapper = ComponentMapper.getFor(IsTerrainTile)
+pendingTerrainTileMapper = ComponentMapper.getFor(PendingTerrainTile)
 
 //
 // Any map-cell that doesn't already have a terrain-tile should get one!
 // Any map-cell that needs a replement
 //
-iteratingSystem 'newTerrainFittingSystem', Family.all(IsMapCell).exclude(IsTerrainTile).get(), { entity, deltaTime ->
+iteratingSystem 'newTerrainFittingSystem', Family.all(IsMapCell).exclude(IsTerrainTile, PendingTerrainTile).get(), { entity, deltaTime ->
 	final mapCell = isCellMapper.get(entity)
+	final int cellX = mapCell.cellX
+	final int cellY = mapCell.cellY
 	
-	//
-	// Note that we use the Engine to create a new IsTerrainTile component
-	// This lets us take advantage of the Engine's built-in Component-pooling functionality,
-	// reducing the amount of garbage-collection we have to do.
-	//
-	final terrainTile = entity.addAndReturn(state.engine.createComponent(IsTerrainTile))
-	terrainTile.tiles = tileset.getMinimalTilesFor(state.map, (int) mapCell.cellX, (int) mapCell.cellY)
+	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
+	pendingTerrain.future = submitResultTask { ->
+		tileset.getMinimalTilesFor state.map, cellX, cellY
+	}
+	entity.add pendingTerrain
+	
+//	final terrainTile = state.engine.createComponent(IsTerrainTile)
+//	terrainTile.tiles = tileset.getMinimalTilesFor state.map, cellX, cellY
+//	entity.add terrainTile
 }
 
-iteratingSystem 'existingTerrainUpdatingSystem', Family.all(IsMapCell, IsTerrainTile, NeedsReplacementTerrainTile).get(), { entity, deltaTime ->
+iteratingSystem 'existingTerrainUpdatingSystem', Family.all(IsMapCell, NeedsReplacementTerrainTile).exclude(PendingTerrainTile).get(), { entity, deltaTime ->
 	
 	final mapCell = isCellMapper.get(entity)
-	final terrainTile = isTerrainTile.get(entity)
+	final int cellX = mapCell.cellX
+	final int cellY = mapCell.cellY
 	
-	newTiles = tileset.getMinimalTilesFor(state.map, (int) mapCell.cellX, (int) mapCell.cellY)
-	terrainTile.tiles = newTiles
+	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
+	pendingTerrain.future = submitResultTask { ->
+		tileset.getMinimalTilesFor state.map, cellX, cellY
+	}
+	entity.add pendingTerrain
 	
 	entity.remove NeedsReplacementTerrainTile
+}
+
+iteratingSystem 'pendingTerrainUpdatingSystem', Family.all(PendingTerrainTile).get(), { entity, deltaTime ->
+	
+	final pendingTerrain = pendingTerrainTileMapper.get(entity)
+	if(!pendingTerrain.future.isDone())
+		return
+	
+	//
+	// We always want to remove the PendingTerrainTile component (at the end of this system),
+	// but we need not always create an IsTerrainTile component.
+	//
+	if(isCellMapper.has(entity)) {
+		
+		final isMapCell = isCellMapper.get(entity)
+		
+		IsTerrainTile terrainTile = null
+		if(terrainTileMapper.has(entity))
+			terrainTile = terrainTileMapper.get(entity)
+		else
+			terrainTile = entity.addAndReturn(state.engine.createComponent(IsTerrainTile))
+			
+		terrainTile.tiles = pendingTerrain.future.get() ?: []
+	}
+	
+	entity.remove PendingTerrainTile
 }
 
 //
 // When a map-cell is "rearranged" -- i.e., it changes a corner-height, or flavor, or whatever --
 // we need to make sure that we re-assign the terrain-tile.
 //
-listeningSystem 'terrainRearrangementSystem', Family.all(IsTerrainTile, IsMapCellRearranged).get(), { entity, deltaTime ->
+listeningSystem 'terrainRearrangementSystem', Family.all(IsTerrainTile, IsMapCellRearranged).exclude(NeedsReplacementTerrainTile).get(), { entity, deltaTime ->
 	//
 	// When we "hear" the IsMapCellRearranged hit our IsTerrainTile,
 	// flag the entity so we can regenerate its terrain.
 	//
-	// If this entity is still a map-cell, then the 'terrainFittingSystem'
+	// If this entity is still a map-cell, then the 'existingTerrainUpdatingSystem'
 	// will take care of reassigning the terrain-tile
 	//
 	entity.add state.engine.createComponent(NeedsReplacementTerrainTile)

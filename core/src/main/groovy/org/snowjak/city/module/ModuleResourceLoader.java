@@ -25,6 +25,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.utils.I18NBundle;
 import com.badlogic.gdx.utils.Pool.Poolable;
 import com.github.czyzby.autumn.annotation.Component;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import groovy.util.DelegatingScript;
 
@@ -70,7 +71,9 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 				// Misc. LibGDX types
 				AssetDescriptor.class.getName(), Color.class.getName(),
 				// Ashley ECS types
-				ComponentMapper.class.getName(), Entity.class.getName());
+				ComponentMapper.class.getName(), Entity.class.getName(),
+				// background-task types
+				ListenableFuture.class.getName());
 		
 		config.addCompilationCustomizers(customizer);
 		config.setScriptBaseClass(DelegatingScript.class.getName());

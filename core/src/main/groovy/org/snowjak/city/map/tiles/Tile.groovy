@@ -41,18 +41,18 @@ class Tile implements Disposable {
 	 * A {@link Validator} for Tile instances.
 	 */
 	public static final Validator<Tile> VALIDATOR = Validator.getFor(Tile.class)
-				.notBlank({ it.id }, "Tile ID must not be blank")
-				.greaterThan({ it.gridWidth }, 0, "Tile's grid-width must be a positive number")
-				.greaterThan({ it.gridHeight }, 0, "Tile's grid-height must be a positive number")
-				.notBlank({it.filename}, "Tile must reference an image-file")
-				.notNull({it.base},"Tile's base must not be null")
-				.andAny()
-					.notEmpty({it.provision[TileCorner.TOP]})
-					.notEmpty({it.provision[TileCorner.RIGHT]})
-					.notEmpty({it.provision[TileCorner.LEFT]})
-					.notEmpty({it.provision[TileCorner.BOTTOM]})
-				.endAny("Tile must define at least one 'provides'.")
-				.build()
+	.notBlank({ it.id }, "Tile ID must not be blank")
+	.greaterThan({ it.gridWidth }, 0, "Tile's grid-width must be a positive number")
+	.greaterThan({ it.gridHeight }, 0, "Tile's grid-height must be a positive number")
+	.notBlank({it.filename}, "Tile must reference an image-file")
+	.notNull({it.base},"Tile's base must not be null")
+	.andAny()
+	.notEmpty({it.provision[TileCorner.TOP]})
+	.notEmpty({it.provision[TileCorner.RIGHT]})
+	.notEmpty({it.provision[TileCorner.LEFT]})
+	.notEmpty({it.provision[TileCorner.BOTTOM]})
+	.endAny("Tile must define at least one 'provides'.")
+	.build()
 	
 	/**
 	 * Applies {@link #VALIDATOR} to this TileDsl
@@ -70,12 +70,7 @@ class Tile implements Disposable {
 	 * @param provision
 	 */
 	public void provides(String... provision) {
-		provides([
-			TileCorner.TOP,
-			TileCorner.RIGHT,
-			TileCorner.BOTTOM,
-			TileCorner.LEFT
-		], provision.toList())
+		provides(Arrays.asList(TileCorner.values()), provision.toList())
 	}
 	
 	/**
@@ -142,7 +137,7 @@ class Tile implements Disposable {
 		result = prime * result + y
 		result
 	}
-
+	
 	@Override
 	public void dispose() {
 		

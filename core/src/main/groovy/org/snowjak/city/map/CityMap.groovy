@@ -8,6 +8,8 @@ import org.snowjak.city.util.BiIntConsumer
 
 import com.badlogic.ashley.core.Entity
 
+import groovy.transform.Synchronized
+
 /**
  * Manages the game map.
  * <p>
@@ -237,12 +239,99 @@ public class CityMap {
 			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
 		
 		if(vertices[vertexX][vertexY] == null)
-			vertices[vertexX][vertexY] = new ArrayList<>()
+			vertices[vertexX][vertexY] = new LinkedList<>()
 		else
 			vertices[vertexX][vertexY].clear()
 		
 		vertices[vertexX][vertexY].addAll flavors
 		vertexChangedListeners.each { it.accept(vertexX, vertexY) }
+	}
+	
+	/**
+	 * Adds the given flavors to the list associated with the given vertex.
+	 * @param vertexX
+	 * @param vertexY
+	 * @param flavors
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if ({@code vertexX}) or ({@code vertexY}) fall outside the map
+	 */
+	public void addVertexFlavors(int vertexX, int vertexY, List<String> flavors) {
+		
+		if (vertexX < 0 || vertexY < 0 || vertexX >= vertexAltitudes.length
+				|| vertexY >= vertexAltitudes[vertexY].length)
+			throw new ArrayIndexOutOfBoundsException(
+			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
+		
+		flavors.each { flavor -> addInternal vertexX, vertexY, flavor }
+	}
+	
+	/**
+	 * Adds the given flavor to the list associated with the given vertex.
+	 * @param vertexX
+	 * @param vertexY
+	 * @param flavor
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if ({@code vertexX}) or ({@code vertexY}) fall outside the map
+	 */
+	public void addVertexFlavor(int vertexX, int vertexY, String flavor) {
+		
+		if (vertexX < 0 || vertexY < 0 || vertexX >= vertexAltitudes.length
+				|| vertexY >= vertexAltitudes[vertexY].length)
+			throw new ArrayIndexOutOfBoundsException(
+			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
+		
+		addInternal vertexX, vertexY, flavor
+	}
+	
+	private void addInternal(int vertexX, int vertexY, String flavor) {
+		if(vertices[vertexX][vertexY] == null)
+			vertices[vertexX][vertexY] = new LinkedList<>()
+		
+		if(!vertices[vertexX][vertexY].contains(flavor))
+			vertices[vertexX][vertexY] << flavor
+	}
+	
+	/**
+	 * Removes the given flavors from the list associated with the given vertex.
+	 * @param vertexX
+	 * @param vertexY
+	 * @param flavors
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if ({@code vertexX}) or ({@code vertexY}) fall outside the map
+	 */
+	public void removeVertexFlavors(int vertexX, int vertexY, List<String> flavors) {
+		
+		if (vertexX < 0 || vertexY < 0 || vertexX >= vertexAltitudes.length
+				|| vertexY >= vertexAltitudes[vertexY].length)
+			throw new ArrayIndexOutOfBoundsException(
+			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
+		
+		flavors.each { flavor -> removeInternal vertexX, vertexY, flavor }
+	}
+	
+	/**
+	 * Removes the given flavor from the list associated with the given vertex.
+	 * @param vertexX
+	 * @param vertexY
+	 * @param flavor
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if ({@code vertexX}) or ({@code vertexY}) fall outside the map
+	 */
+	public void removeVertexFlavors(int vertexX, int vertexY, String flavor) {
+		
+		if (vertexX < 0 || vertexY < 0 || vertexX >= vertexAltitudes.length
+				|| vertexY >= vertexAltitudes[vertexY].length)
+			throw new ArrayIndexOutOfBoundsException(
+			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
+		
+		removeInternal vertexX, vertexY, flavor
+	}
+	
+	private void removeInternal(int vertexX, int vertexY, String flavor) {
+		if(vertices[vertexX][vertexY] == null)
+			return
+		
+		vertices[vertexX][vertexY].remove flavor
 	}
 	
 	/**

@@ -14,7 +14,7 @@ class TileRule<S extends TileSupport> {
 	
 	Closure spec
 	S support
-
+	
 	public TileRule(Closure spec, Map<String,Closure> helpers, S support) {
 		
 		this.spec = spec.rehydrate(support, this, this)
@@ -35,10 +35,12 @@ class TileRule<S extends TileSupport> {
 	 * @return
 	 */
 	public boolean isAcceptable(CityMap map, int cellX, int cellY) {
-		support.map = map
-		support.cellX = cellX
-		support.cellY = cellY
-		
-		spec()
+		synchronized(this) {
+			support.map = map
+			support.cellX = cellX
+			support.cellY = cellY
+			
+			spec()
+		}
 	}
 }
