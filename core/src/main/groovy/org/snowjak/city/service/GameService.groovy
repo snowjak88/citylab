@@ -11,11 +11,14 @@ import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
 import org.snowjak.city.configuration.InitPriority
 import org.snowjak.city.ecs.components.IsMapCell
+import org.snowjak.city.ecs.components.IsMapVertex
 import org.snowjak.city.ecs.systems.impl.IsMapCellManagementSystem
+import org.snowjak.city.ecs.systems.impl.IsMapVertexManagementSystem
 import org.snowjak.city.ecs.systems.impl.RemoveMapCellRearrangedSystem
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.generator.MapGenerator
 import org.snowjak.city.module.Module
+import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain
 import org.snowjak.city.screens.loadingtasks.CompositeLoadingTask
 import org.snowjak.city.screens.loadingtasks.LoadingTask
 import org.snowjak.city.service.loadingtasks.GameEntitySystemInitializationTask
@@ -103,6 +106,7 @@ class GameService {
 		}
 		
 		state.engine.addSystem new IsMapCellManagementSystem(state)
+		state.engine.addSystem new IsMapVertexManagementSystem(state)
 		state.engine.addSystem new RemoveMapCellRearrangedSystem()
 		
 		progressUpdater?.accept 1.0
@@ -112,18 +116,22 @@ class GameService {
 	 * Remove all {@link IsMapCell}-bearing Entities from the entity-processing {@link Engine}.
 	 * @param map
 	 */
-	public void removeCityMapCellEntities(CityMap map, DoubleConsumer progressReporter = { p ->
+	public void removeCityMapLocationEntities(CityMap map, DoubleConsumer progressReporter = { p ->
 			}) {
 		
-		def entities = state.engine.getEntitiesFor(Family.all(IsMapCell).get())
+		def entities = state.engine.getEntitiesFor(Family.one(IsMapCell, IsMapVertex).get())
 		
 		final progressStep = 1.0 / (double) entities.size()
 		def progress = 0.0
 		
 		for(def entity : entities) {
-			def component = (IsMapCell) entity.remove(IsMapCell)
-			if(component && map)
-				map.setEntity( (int) component.cellX, (int) component.cellY, null )
+			final mapCell = (IsMapCell) entity.remove(IsMapCell)
+			if(mapCell && map)
+				map.setEntity( (int) mapCell.cellX, (int) mapCell.cellY, null )
+			
+			final mapVertex = (IsMapVertex) entity.remove(IsMapVertex)
+			if(mapVertex && map)
+				map.setVertexEntity( (int) mapVertex.vertexX, (int) mapVertex.vertexY, null )
 			
 			state.engine.removeEntity entity
 			
@@ -133,16 +141,15 @@ class GameService {
 	}
 	
 	/**
-	 * Create new {@link IsMapCell}-bearing Entities for every cell in the
+	 * Create new {@link IsMapCell} and {@link IsMapVertex}-bearing Entities for every cell/vertex in the
 	 * given Map, add those Entities to the entity-processing {@link Engine},
 	 * and associate those Entities with the Map.
 	 * @param map
 	 */
-	public void addCityMapCellEntities(CityMap map, DoubleConsumer progressReporter = { p ->
-			}) {
+	public void addCityMapLocationEntities(CityMap map, DoubleConsumer progressReporter = { p -> }) {
 		if(map) {
 			
-			final progressStep = 1.0 / ((double) map.width * (double) map.height)
+			final progressStep = 2.0 / ((double) map.width * (double) map.height)
 			def progress = 0
 			
 			for(def x=0; x<map.width; x++)
@@ -154,6 +161,21 @@ class GameService {
 					def entity = state.engine.createEntity()
 					entity.add isMapCell
 					map.setEntity x, y, entity
+					state.engine.addEntity entity
+					
+					progress += progressStep
+					progressReporter?.accept progress
+				}
+			
+			for(def x=0; x<map.width+1; x++)
+				for(def y=0; y<map.height+1; y++) {
+					def isMapVertex = state.engine.createComponent(IsMapVertex)
+					isMapVertex.vertexX = x
+					isMapVertex.vertexY = y
+					
+					def entity = state.engine.createEntity()
+					entity.add isMapVertex
+					map.setVertexEntity x, y, entity
 					state.engine.addEntity entity
 					
 					progress += progressStep
@@ -347,6 +369,18 @@ class GameService {
 			initializeToolbar()
 		}
 		
+		if(!module.onActivationActions.isEmpty()) {
+			LOG.info "Executing on-activate actions ..."
+			
+			module.onActivationActions.each {
+				try {
+					it.run()
+				} catch(Throwable t) {
+					state.moduleExceptionRegistry.reportFailure module, FailureDomain.OTHER, t
+				}
+			}
+		}
+		
 		progressReporter?.accept 1
 		
 		LOG.info "Finished initialized module \"{0}\".", module.id
@@ -361,6 +395,18 @@ class GameService {
 		LOG.info "Uninitializing module \"{0}\" ...", module.id
 		
 		progressReporter?.accept 0
+		
+		if(!module.onDeactivationActions.isEmpty()) {
+			LOG.info "Executing on-deactivate actions ..."
+			
+			module.onDeactivationActions.each {
+				try {
+					it.run()
+				} catch(Throwable t) {
+					state.moduleExceptionRegistry.reportFailure module, FailureDomain.OTHER, t
+				}
+			}
+		}
 		
 		//
 		// Remove this module's rendering-hooks

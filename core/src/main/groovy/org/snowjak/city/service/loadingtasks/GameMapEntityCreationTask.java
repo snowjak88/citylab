@@ -45,7 +45,7 @@ public class GameMapEntityCreationTask extends BackgroundLoadingTask {
 	protected Runnable getTask() {
 		
 		return () -> {
-			gameService.addCityMapCellEntities(gameService.getState().getMap(), (p) -> setProgress(p));
+			gameService.addCityMapLocationEntities(gameService.getState().getMap(), (p) -> setProgress(p));
 		};
 	}
 	

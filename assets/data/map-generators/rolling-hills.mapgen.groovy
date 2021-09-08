@@ -18,10 +18,5 @@ def heightmap = scaleDomain {
 
 altitude = heightmap
 flavors = { x,y ->
-	def result = ['grass']
-	def alt = (int) altitude.get(x,y)
-	if( alt < 1 )
-		result << 'water'
-	
-	result
+	['grass']
 }

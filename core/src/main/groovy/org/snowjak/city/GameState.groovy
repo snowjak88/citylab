@@ -3,6 +3,9 @@
  */
 package org.snowjak.city
 
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
+
 import org.snowjak.city.input.GameInputProcessor
 import org.snowjak.city.input.hotkeys.HotkeyRegistry
 import org.snowjak.city.map.CityMap
@@ -25,6 +28,8 @@ public class GameState {
 	 * Seed to be used for random-number generation.
 	 */
 	String seed = Long.toString(System.currentTimeMillis())
+	
+	final Random rnd = new Random()
 	
 	/**
 	 * Active {@link CityMap} (may be {@code null})
@@ -78,5 +83,9 @@ public class GameState {
 	
 	public GameState(GameAssetService assetService) {
 		this.moduleExceptionRegistry = new ModuleExceptionRegistry(assetService)
+		
+		this.addPropertyChangeListener('seed', { PropertyChangeEvent e ->
+			rnd.setSeed(seed.hashCode())
+		} as PropertyChangeListener)
 	}
 }

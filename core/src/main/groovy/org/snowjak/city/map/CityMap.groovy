@@ -8,8 +8,6 @@ import org.snowjak.city.util.BiIntConsumer
 
 import com.badlogic.ashley.core.Entity
 
-import groovy.transform.Synchronized
-
 /**
  * Manages the game map.
  * <p>
@@ -26,9 +24,23 @@ public class CityMap {
 	
 	private List<String>[][] vertices
 	private int[][] vertexAltitudes
-	private Entity[][] entities
+	private Entity[][] cellEntities, vertexEntities
 	
 	private final Collection<BiIntConsumer> vertexChangedListeners = Collections.synchronizedCollection( [] )
+	
+	/**
+	 * Construct a new map of the given dimensions in tiles. The number of vertices will be +1 in each direction.
+	 * 
+	 * @param width
+	 * @param height
+	 */
+	public CityMap(int width, int height) {
+		
+		vertices = new List<String>[width+1][height+1]
+		vertexAltitudes = new int[width+1][height+1]
+		cellEntities = new Entity[width][height]
+		vertexEntities = new Entity[width+1][height+1]
+	}
 	
 	/**
 	 * Add a listener (a {@link BiIntConsumer}) that will be notified whenever a vertex on this map changes in any way.
@@ -58,19 +70,6 @@ public class CityMap {
 	public boolean isValidVertex(int vertexX, int vertexY) {
 		( (vertexX >= 0) && (vertexY >= 0)
 				&& (vertexX < vertices.length ) && (vertexY < vertices[vertexX].length))
-	}
-	
-	/**
-	 * Construct a new map of the given dimensions in tiles. The number of vertices will be +1 in each direction.
-	 * 
-	 * @param width
-	 * @param height
-	 */
-	public CityMap(int width, int height) {
-		
-		vertices = new List<String>[width+1][height+1]
-		vertexAltitudes = new int[width+1][height+1]
-		entities = new Entity[width][height]
 	}
 	
 	/**
@@ -317,7 +316,7 @@ public class CityMap {
 	 * @throws ArrayIndexOutOfBoundsException
 	 *             if ({@code vertexX}) or ({@code vertexY}) fall outside the map
 	 */
-	public void removeVertexFlavors(int vertexX, int vertexY, String flavor) {
+	public void removeVertexFlavor(int vertexX, int vertexY, String flavor) {
 		
 		if (vertexX < 0 || vertexY < 0 || vertexX >= vertexAltitudes.length
 				|| vertexY >= vertexAltitudes[vertexY].length)
@@ -348,7 +347,7 @@ public class CityMap {
 		if(!isValidCell(cellX, cellY))
 			throw new ArrayIndexOutOfBoundsException(String.format("Given cell index [%d,%d] is out of bounds.", cellX, cellY))
 		
-		return entities[cellX][cellY]
+		return cellEntities[cellX][cellY]
 	}
 	
 	/**
@@ -368,7 +367,52 @@ public class CityMap {
 	 */
 	public void setEntity( int cellX, int cellY, Entity entity) {
 		
-		entities[cellX][cellY] = entity
+		if(!isValidCell(cellX, cellY))
+			throw new ArrayIndexOutOfBoundsException(String.format("Given cell index [%d,%d] is out of bounds.", cellX, cellY))
+		
+		cellEntities[cellX][cellY] = entity
+	}
+	
+	/**
+	 * Get the {@link Entity} associated with the given vertex, or null if no Entity is associated.
+	 * @param vertexX
+	 * @param vertexY
+	 * @return
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if ({@code vertexX}) or
+	 *             ({@code vertexY}) fall outside the map
+	 */
+	public Entity getVertexEntity(int vertexX, int vertexY) {
+		
+		if(!isValidVertex(vertexX, vertexY))
+			throw new ArrayIndexOutOfBoundsException(
+			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
+		
+		return vertexEntities[vertexX][vertexY]
+	}
+	
+	/**
+	 * Associate the given Entity to the given vertex. Overwrites any previous association.
+	 *
+	 * <p>
+	 * <strong>Note</strong> that this doesn't check to see if this Entity
+	 * is already associated with any other vertex -- you have to take care of that bookkeeping yourself.
+	 * </p>
+	 *
+	 * @param vertexX
+	 * @param vertexY
+	 * @param entity
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if ({@code vertexX}) or
+	 *             ({@code vertexY}) fall outside the map
+	 */
+	public void setVertexEntity( int vertexX, int vertexY, Entity entity) {
+		
+		if(!isValidVertex(vertexX, vertexY))
+			throw new ArrayIndexOutOfBoundsException(
+			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
+		
+		vertexEntities[vertexX][vertexY] = entity
 	}
 	
 	/**
@@ -376,7 +420,7 @@ public class CityMap {
 	 * @return
 	 */
 	public int getWidth() {
-		entities.length
+		cellEntities.length
 	}
 	
 	/**
@@ -384,6 +428,6 @@ public class CityMap {
 	 * @return
 	 */
 	public int getHeight() {
-		entities[0].length
+		cellEntities[0].length
 	}
 }

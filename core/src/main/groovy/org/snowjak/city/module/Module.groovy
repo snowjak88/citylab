@@ -69,7 +69,26 @@ public class Module extends ScriptedResource {
 		preferencesService.get(id)
 	}()
 	
+	/**
+	 * The active {@link GameState}
+	 */
 	final GameState state
+	
+	/**
+	 * The set of actions to execute when this Module is "activated" when starting a game.
+	 */
+	final Set<Runnable> onActivationActions = []
+	
+	/**
+	 * The set of actions to execute when this Module is "deactivated" when stopping a game.
+	 */
+	final Set<Runnable> onDeactivationActions = []
+	
+	/**
+	 * Has this Module been activated?
+	 */
+	boolean activated = false
+	
 	final Map<String,EntitySystem> systems = [:]
 	
 	final Set<AbstractCellRenderingHook> cellRenderingHooks = []
@@ -85,6 +104,22 @@ public class Module extends ScriptedResource {
 		this.i18nService = i18nService
 		
 		this.state = gameService.state
+	}
+	
+	/**
+	 * Add an action to be executed when this Module is activated (when starting a game).
+	 * @param action
+	 */
+	public void onActivate(Runnable action) {
+		onActivationActions << action
+	}
+	
+	/**
+	 * Add an action to be executed when this Module is deactivated (when stopping a game).
+	 * @param action
+	 */
+	public void onDeactivate(Runnable action) {
+		onDeactivationActions << action
 	}
 	
 	/**
@@ -257,6 +292,46 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.IntervalIterating
 	}
 	
 	/**
+	 * Create a new {@link WindowIteratingSystem}.
+	 * <p>
+	 * {@code implementation} is expected to be of the form:
+	 * <pre>
+	 * { Entity entity, float deltaTime -> ... }
+	 * </pre>
+	 * </p>
+	 *
+	 * @param id
+	 * @param family
+	 * @param window number of entities to process per cycle
+	 * @param implementation
+	 */
+	public void windowIteratingSystem(String id, Family family, int window, Closure implementation) {
+		
+		if(isDependencyCheckingMode())
+			return
+		
+		final legalID = legalizeID(id)
+		final systemClassDefinition = '''
+class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.WindowIteratingSystem {
+	final Closure implementation
+	public ''' + legalID + '''(Family family, int window, Closure implementation) {
+			super(window, family);
+			this.implementation = implementation
+		}
+		
+		protected void processEntity(Entity entity, float deltaTime) { implementation(entity, deltaTime) }
+	}'''
+		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
+		final system = systemClass.newInstance(family, window, implementation)
+		
+		implementation.owner = system
+		implementation.delegate = this
+		implementation.resolveStrategy = Closure.DELEGATE_FIRST
+		
+		systems << ["$id" : system]
+	}
+	
+	/**
 	 * Create a new {@link ListeningSystem}.
 	 * <p>
 	 * Both {@code added} and {@code dropped} are expected to be of the form:
@@ -346,7 +421,8 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 	 * @return
 	 */
 	public ListenableFuture<?> submitResultTask(Callable<?> task) {
-		return CityGame.EXECUTOR.submit({ ->
+		return CityGame.EXECUTOR.submit({
+			->
 			try {
 				return task.call()
 			} catch(Throwable t) {
@@ -371,7 +447,8 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 	 * @return
 	 */
 	public ListenableFuture<?> submitTask(Runnable task) {
-		return CityGame.EXECUTOR.submit({ ->
+		return CityGame.EXECUTOR.submit({
+			->
 			try {
 				task.run()
 			} catch(Throwable t) {
@@ -392,6 +469,8 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 		script.run()
 		
 		module.i18n.bundles.each { this.i18n.addBundle it }
+		this.onActivationActions.addAll module.onActivationActions
+		this.onDeactivationActions.addAll module.onDeactivationActions
 		this.systems.putAll module.systems
 		this.cellRenderingHooks.addAll module.cellRenderingHooks
 		this.customRenderingHooks.addAll module.customRenderingHooks

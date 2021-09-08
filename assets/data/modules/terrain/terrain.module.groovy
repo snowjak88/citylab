@@ -69,11 +69,6 @@ include 'renderers/terrainRenderer.groovy'
 include 'systems.groovy'
 
 //
-// We define a "clouds" renderer in this file ...
-//
-include 'renderers/cloudRenderer.groovy'
-
-//
 // We define all our terain-tools in this file ...
 //
 include 'ui/tools.groovy'

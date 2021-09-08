@@ -26,11 +26,8 @@ public class RelativePriorityList<V, T extends RelativelyPrioritized<T, V>> impl
 	
 	/**
 	 * {@inheritDoc}
-	 * <p>
-	 * <strong>Note</strong> that this method throws a
-	 * {@link PrioritizationFailedException} (wrapped in a {@link RuntimeException})
-	 * if this item cannot be inserted due to conflicting priorities.
-	 * </p>
+	 * 
+	 * @throws PrioritizationFailedException
 	 */
 	@Override
 	public boolean add(T e) {
@@ -51,7 +48,13 @@ public class RelativePriorityList<V, T extends RelativelyPrioritized<T, V>> impl
 			
 		}
 		
-		throw new RuntimeException(new PrioritizationFailedException());
+		System.err.println("Prioritization failed --");
+		System.err.println("Trying to insert [" + e.getRelativePriorityKey() + "] (before = "
+				+ e.getRelativePriority().getBefore().toString() + ") (after = "
+				+ e.getRelativePriority().getAfter().toString() + ")");
+		System.err.println("List content = [" + this.toString() + "]");
+		throw new PrioritizationFailedException(
+				"Cannot prioritize item [" + e.toString() + "] -- incompatible priorities.");
 	}
 	
 	/**

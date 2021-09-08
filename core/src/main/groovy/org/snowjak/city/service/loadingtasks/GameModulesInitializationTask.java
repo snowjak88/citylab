@@ -32,7 +32,8 @@ public class GameModulesInitializationTask extends BackgroundLoadingTask {
 		
 		this.gameService = gameService;
 		this.i18nService = i18nService;
-		getRelativePriority().after(GameEntitySystemInitializationTask.class);
+		getRelativePriority().after(GameMapGenerationTask.class, GameEntitySystemInitializationTask.class,
+				GameMapEntityCreationTask.class);
 	}
 	
 	@Override

@@ -1,3 +1,6 @@
+id = 'clouds'
+description = 'Adds some fluffy white clouds floating by.'
+
 //
 // Declare a "custom" rendering hook into the map-rendering loop.
 // This is called only once per frame.
@@ -14,15 +17,12 @@
 dependsOn 'cloud.png', Texture
 cloudTexture = assets.get( 'cloud.png', Texture )
 
-import java.util.Random
-RND = new Random()
-
 clouds = null
-initClouds = { ->
+onActivate { ->
 	clouds = new boolean[state.map.width / 8][state.map.height / 8]
 	for(def x=0; x<clouds.length; x++)
 		for(def y=0; y<clouds[x].length; y++)
-			clouds[x][y] = RND.nextInt(10) <= 3
+			clouds[x][y] = state.rnd.nextInt(10) <= 3
 }
 
 cloudOffsetX = 0f
@@ -34,8 +34,8 @@ cloudPosition = new Vector2()
 
 customRenderHook 'clouds', { delta, batch, shapeDrawer, support ->
 	
-	if(!clouds)
-		initClouds()
+	if(clouds == null)
+		return
 	
 	def viewBounds = support.viewportWorldBounds
 	
