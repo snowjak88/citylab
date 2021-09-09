@@ -3,7 +3,6 @@
  */
 package org.snowjak.city.map.tiles
 
-import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.tiles.support.TileSupport
 
 /**
@@ -28,17 +27,15 @@ class TileRule<S extends TileSupport> {
 	}
 	
 	/**
-	 * Does this rule fit in the given CityMap, at the given cell-coordinates {@code cx,cy}?
+	 * Does this rule fit 
 	 * @param m
 	 * @param cx
 	 * @param cy
 	 * @return
 	 */
-	public boolean isAcceptable(CityMap map, int cellX, int cellY) {
+	public boolean isAcceptable(int[][] heights) {
 		synchronized(this) {
-			support.map = map
-			support.cellX = cellX
-			support.cellY = cellY
+			support.localHeight = heights
 			
 			spec()
 		}

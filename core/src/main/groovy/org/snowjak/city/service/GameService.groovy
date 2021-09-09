@@ -17,6 +17,8 @@ import org.snowjak.city.ecs.systems.impl.IsMapVertexManagementSystem
 import org.snowjak.city.ecs.systems.impl.RemoveMapCellRearrangedSystem
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.generator.MapGenerator
+import org.snowjak.city.map.renderer.hooks.DelegatingCellRenderingHook
+import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
 import org.snowjak.city.module.Module
 import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain
 import org.snowjak.city.screens.loadingtasks.CompositeLoadingTask
@@ -284,6 +286,7 @@ class GameService {
 		LOG.info "Initializing all modules ..."
 		
 		final modules = assetService.getAllByType(Module)
+		
 		final progressStep = 1d / (double) modules.size()
 		def progress = 0d
 		
@@ -299,7 +302,7 @@ class GameService {
 		
 		progressReporter?.accept 1
 		
-		LOG.info "Finished fnitializing all modules."
+		LOG.info "Finished initializing all modules."
 	}
 	
 	/**
@@ -309,8 +312,7 @@ class GameService {
 			}) {
 		LOG.info "Uninitializing all modules ..."
 		
-		final modules = assetService.getAllByType(Module)
-		final progressStep = 1d / (double) modules.size()
+		final progressStep = 1d / (double) state.modules.size()
 		def progress = 0d
 		
 		progressReporter?.accept 0
@@ -336,6 +338,10 @@ class GameService {
 			}) {
 		
 		LOG.info "Initializing module \"{0}\" ...", module.id
+		
+		final overriddenModule = state.modules.put(module.id, module)
+		if(overriddenModule)
+			LOG.info "Module overrides a previously-loaded module (${overriddenModule.scriptFile.path()}"
 		
 		//
 		// Register rendering hooks with the main GameData instance
@@ -363,22 +369,15 @@ class GameService {
 			LOG.info "Adding tools ..."
 			for(def toolEntry : module.tools) {
 				LOG.info "Adding tool \"{0}\" ...", toolEntry.key
+				
+				final overriddenTool = state.tools[toolEntry.key]
+				if(overriddenTool)
+					LOG.info "Overrode Tool from \"${overriddenTool.module.id}\" [${overriddenTool.module.scriptFile.path()}]"
+				
 				state.tools << ["$toolEntry.key" : toolEntry.value]
 			}
 			
 			initializeToolbar()
-		}
-		
-		if(!module.onActivationActions.isEmpty()) {
-			LOG.info "Executing on-activate actions ..."
-			
-			module.onActivationActions.each {
-				try {
-					it.run()
-				} catch(Throwable t) {
-					state.moduleExceptionRegistry.reportFailure module, FailureDomain.OTHER, t
-				}
-			}
 		}
 		
 		progressReporter?.accept 1
@@ -448,7 +447,12 @@ class GameService {
 			
 			for (def hook : module.cellRenderingHooks)
 				try {
-					state.renderingHookRegistry.addCellRenderingHook hook
+					final previousHook = state.renderingHookRegistry.addCellRenderingHook hook
+					
+					if(previousHook)
+						if(previousHook instanceof DelegatingCellRenderingHook)
+							LOG.info "\"$hook.id\" overrides render-hook from \"${(previousHook as DelegatingCellRenderingHook).module.id}\" [${(previousHook as DelegatingCellRenderingHook).module.scriptFile.path()}]"
+					
 				} catch (PrioritizationFailedException e) {
 					LOG.error "Cannot initialize cell-rendering hook [{0}] for module [{1}] -- too many conflicting priorities!",
 							hook.id, module.id
@@ -467,7 +471,11 @@ class GameService {
 			
 			for (def hook : module.customRenderingHooks)
 				try {
-					state.renderingHookRegistry.addCustomRenderingHook hook
+					final previousHook = state.renderingHookRegistry.addCustomRenderingHook hook
+					
+					if(previousHook)
+						if(previousHook instanceof DelegatingCustomRenderingHook)
+							LOG.info "\"$hook.id\" overrides render-hook from \"${(previousHook as DelegatingCustomRenderingHook).module.id}\" [${(previousHook as DelegatingCustomRenderingHook).module.scriptFile.path()}]"
 				} catch (PrioritizationFailedException e) {
 					LOG.error "Cannot initialize custom-rendering hook [{0}] for module [{1}] -- too many conflicting priorities!",
 							hook.id, module.id

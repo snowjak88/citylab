@@ -45,11 +45,6 @@ class MapGeneratorDsl {
 	
 	String title, description
 	Module altitude
-	FlavorsProducer flavors
-	
-	public MapGeneratorDsl() {
-		super()
-	}
 	
 	public void setSeed(String seed) {
 		RND.setSeed(seed.hashCode())

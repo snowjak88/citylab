@@ -6,7 +6,6 @@ package org.snowjak.city.map.generator
 import java.util.function.DoubleConsumer
 
 import org.snowjak.city.map.CityMap
-import org.snowjak.city.map.generator.support.FlavorsProducer
 import org.snowjak.city.map.generator.support.MapGeneratorDsl
 
 import com.sudoplay.joise.module.Module
@@ -52,7 +51,6 @@ class MapGenerator {
 			throw new NullPointerException()
 		
 		final Module altitudeProducer = gen.altitude
-		final FlavorsProducer flavorProducer = gen.flavors
 		
 		final CityMap map = new CityMap(width, height)
 		
@@ -65,10 +63,8 @@ class MapGenerator {
 				progressUpdater.accept progress
 				
 				def altitude = (int) altitudeProducer.get(x,y)
-				List<String> flavors = flavorProducer.get(x,y)
 				
 				map.setVertexAltitude x, y, altitude
-				map.setVertexFlavors x, y, flavors
 			}
 		}
 		

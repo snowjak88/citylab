@@ -33,7 +33,8 @@ public class RenderingHookRegistry {
 		return prioritizedCustomRenderingHooks;
 	}
 	
-	public void addCellRenderingHook(AbstractCellRenderingHook hook) throws PrioritizationFailedException {
+	public AbstractCellRenderingHook addCellRenderingHook(AbstractCellRenderingHook hook)
+			throws PrioritizationFailedException {
 		
 		final AbstractCellRenderingHook previous = cellRenderingHooks.put(hook.getId(), hook);
 		
@@ -43,6 +44,8 @@ public class RenderingHookRegistry {
 		try {
 			
 			prioritizedCellRenderingHooks.add(hook);
+			
+			return previous;
 			
 		} catch (RuntimeException e) {
 			
@@ -66,7 +69,8 @@ public class RenderingHookRegistry {
 		prioritizedCellRenderingHooks.remove(hook);
 	}
 	
-	public void addCustomRenderingHook(AbstractCustomRenderingHook hook) throws PrioritizationFailedException {
+	public AbstractCustomRenderingHook addCustomRenderingHook(AbstractCustomRenderingHook hook)
+			throws PrioritizationFailedException {
 		
 		final AbstractCustomRenderingHook previous = customRenderingHooks.put(hook.getId(), hook);
 		
@@ -76,6 +80,8 @@ public class RenderingHookRegistry {
 		try {
 			
 			prioritizedCustomRenderingHooks.add(hook);
+			
+			return previous;
 			
 		} catch (RuntimeException e) {
 			

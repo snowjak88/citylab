@@ -21,8 +21,6 @@ import com.badlogic.ashley.core.Entity
  *
  */
 public class CityMap {
-	
-	private List<String>[][] vertices
 	private int[][] vertexAltitudes
 	private Entity[][] cellEntities, vertexEntities
 	
@@ -36,7 +34,6 @@ public class CityMap {
 	 */
 	public CityMap(int width, int height) {
 		
-		vertices = new List<String>[width+1][height+1]
 		vertexAltitudes = new int[width+1][height+1]
 		cellEntities = new Entity[width][height]
 		vertexEntities = new Entity[width+1][height+1]
@@ -69,56 +66,7 @@ public class CityMap {
 	 */
 	public boolean isValidVertex(int vertexX, int vertexY) {
 		( (vertexX >= 0) && (vertexY >= 0)
-				&& (vertexX < vertices.length ) && (vertexY < vertices[vertexX].length))
-	}
-	
-	/**
-	 * For the tile located at ( {@code cellX}, {@code cellY} ), return the list of
-	 * flavors associated with the given {@link TileCorner corner}.
-	 * <p>
-	 * Equivalent to {@link #getVertexFlavors(int, int) getVertexFlavors(cellX +
-	 * corner.getOffsetX(), cellY + corner.getOffsetY())}.
-	 * </p>
-	 * 
-	 * @param cellX
-	 * @param cellY
-	 * @param corner
-	 * @return
-	 * @throws NullPointerException
-	 *             if {@code corner} is {@code null}
-	 * @throws ArrayIndexOutOfBoundsException
-	 *             if ({@code cellX + corner.getOffsetX()}) or
-	 *             ({@code cellY + corner.getOffsetY()}) fall outside the map
-	 */
-	public List<String> getTileCornerFlavors(int cellX, int cellY, TileCorner corner)
-	throws NullPointerException, ArrayIndexOutOfBoundsException {
-		
-		if (corner == null)
-			throw new NullPointerException("Cannot get corner flavors for null corner.")
-		
-		getVertexFlavors(cellX + corner.offsetX, cellY + corner.offsetY)
-	}
-	
-	/**
-	 * Return list of flavors associated with the vertex located at (
-	 * {@code vertexX}, {@code vertexY} ).
-	 * 
-	 * @param vertexX
-	 * @param vertexY
-	 * @return
-	 * @throws ArrayIndexOutOfBoundsException
-	 *             if ({@code vertexX}) or ({@code vertexY}) fall outside the map
-	 */
-	public List<String> getVertexFlavors(int vertexX, int vertexY) {
-		
-		if (vertexX < 0 || vertexY < 0 || vertexX >= vertices.length || vertexY >= vertices[vertexY].length)
-			throw new ArrayIndexOutOfBoundsException(
-			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
-		
-		if (vertices[vertexX][vertexY] == null)
-			return Collections.emptyList()
-		
-		Collections.unmodifiableList(vertices[vertexX][vertexY])
+				&& (vertexX < vertexEntities.length ) && (vertexY < vertexEntities[vertexX].length))
 	}
 	
 	/**
@@ -201,136 +149,6 @@ public class CityMap {
 		
 		vertexAltitudes[vertexX][vertexY] = altitude
 		vertexChangedListeners.each { it.accept(vertexX, vertexY) }
-	}
-	
-	/**
-	 * Sets the flavors associated with the given corner of the given cell.
-	 * @param cellX
-	 * @param cellY
-	 * @param corner
-	 * @param flavors
-	 */
-	public void setCellFlavors(int cellX, int cellY, TileCorner corner, List<String> flavors) {
-		
-		if (corner == null)
-			throw new NullPointerException("Cannot set corner flavors for null corner.")
-		
-		setVertexFlavors cellX + corner.offsetX, cellY + corner.offsetY, flavors
-	}
-	
-	/**
-	 * Sets the flavors associated with the given vertex.
-	 * <p>
-	 * Note that this method doesn't change any {@link Tile} assignments by itself.
-	 * </p>
-	 * 
-	 * @param vertexX
-	 * @param vertexY
-	 * @param flavors
-	 * @throws ArrayIndexOutOfBoundsException
-	 *             if ({@code vertexX}) or ({@code vertexY}) fall outside the map
-	 */
-	public void setVertexFlavors(int vertexX, int vertexY, List<String> flavors) {
-		
-		if (vertexX < 0 || vertexY < 0 || vertexX >= vertexAltitudes.length
-				|| vertexY >= vertexAltitudes[vertexY].length)
-			throw new ArrayIndexOutOfBoundsException(
-			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
-		
-		if(vertices[vertexX][vertexY] == null)
-			vertices[vertexX][vertexY] = new LinkedList<>()
-		else
-			vertices[vertexX][vertexY].clear()
-		
-		vertices[vertexX][vertexY].addAll flavors
-		vertexChangedListeners.each { it.accept(vertexX, vertexY) }
-	}
-	
-	/**
-	 * Adds the given flavors to the list associated with the given vertex.
-	 * @param vertexX
-	 * @param vertexY
-	 * @param flavors
-	 * @throws ArrayIndexOutOfBoundsException
-	 *             if ({@code vertexX}) or ({@code vertexY}) fall outside the map
-	 */
-	public void addVertexFlavors(int vertexX, int vertexY, List<String> flavors) {
-		
-		if (vertexX < 0 || vertexY < 0 || vertexX >= vertexAltitudes.length
-				|| vertexY >= vertexAltitudes[vertexY].length)
-			throw new ArrayIndexOutOfBoundsException(
-			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
-		
-		flavors.each { flavor -> addInternal vertexX, vertexY, flavor }
-	}
-	
-	/**
-	 * Adds the given flavor to the list associated with the given vertex.
-	 * @param vertexX
-	 * @param vertexY
-	 * @param flavor
-	 * @throws ArrayIndexOutOfBoundsException
-	 *             if ({@code vertexX}) or ({@code vertexY}) fall outside the map
-	 */
-	public void addVertexFlavor(int vertexX, int vertexY, String flavor) {
-		
-		if (vertexX < 0 || vertexY < 0 || vertexX >= vertexAltitudes.length
-				|| vertexY >= vertexAltitudes[vertexY].length)
-			throw new ArrayIndexOutOfBoundsException(
-			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
-		
-		addInternal vertexX, vertexY, flavor
-	}
-	
-	private void addInternal(int vertexX, int vertexY, String flavor) {
-		if(vertices[vertexX][vertexY] == null)
-			vertices[vertexX][vertexY] = new LinkedList<>()
-		
-		if(!vertices[vertexX][vertexY].contains(flavor))
-			vertices[vertexX][vertexY] << flavor
-	}
-	
-	/**
-	 * Removes the given flavors from the list associated with the given vertex.
-	 * @param vertexX
-	 * @param vertexY
-	 * @param flavors
-	 * @throws ArrayIndexOutOfBoundsException
-	 *             if ({@code vertexX}) or ({@code vertexY}) fall outside the map
-	 */
-	public void removeVertexFlavors(int vertexX, int vertexY, List<String> flavors) {
-		
-		if (vertexX < 0 || vertexY < 0 || vertexX >= vertexAltitudes.length
-				|| vertexY >= vertexAltitudes[vertexY].length)
-			throw new ArrayIndexOutOfBoundsException(
-			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
-		
-		flavors.each { flavor -> removeInternal vertexX, vertexY, flavor }
-	}
-	
-	/**
-	 * Removes the given flavor from the list associated with the given vertex.
-	 * @param vertexX
-	 * @param vertexY
-	 * @param flavor
-	 * @throws ArrayIndexOutOfBoundsException
-	 *             if ({@code vertexX}) or ({@code vertexY}) fall outside the map
-	 */
-	public void removeVertexFlavor(int vertexX, int vertexY, String flavor) {
-		
-		if (vertexX < 0 || vertexY < 0 || vertexX >= vertexAltitudes.length
-				|| vertexY >= vertexAltitudes[vertexY].length)
-			throw new ArrayIndexOutOfBoundsException(
-			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
-		
-		removeInternal vertexX, vertexY, flavor
-	}
-	
-	private void removeInternal(int vertexX, int vertexY, String flavor) {
-		if(vertices[vertexX][vertexY] == null)
-			return
-		
-		vertices[vertexX][vertexY].remove flavor
 	}
 	
 	/**

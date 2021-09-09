@@ -3,7 +3,6 @@
  */
 package org.snowjak.city.map.tiles
 
-import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.tiles.support.TileSupport
 import org.snowjak.city.util.validation.Validator
 import org.snowjak.city.util.validation.Validator.ValidationException
@@ -98,20 +97,22 @@ class Tile implements Disposable {
 	}
 	
 	/**
-	 * Does this tile fit in the given map at the given cell-coordinates? (i.e., are
-	 * all its configured rules satisfied?)
+	 * Does this tile fit, given the specified local attributes:
+	 * <ul>
+	 * <li>{@code localHeight} -- an {@code int[2][2]} holding this tile's heights (addressed via {@link TileCorner#offsetX},{@link TileCorner#offsetY})</li>
+	 * <li>{@code localFlavors} -- gives the flavors associated with each of this tile's corners</li>
+	 * </ul>
 	 *
-	 * @param map
-	 * @param cellX
-	 * @param cellY
+	 * @param localHeight
+	 * @param localFlavors
 	 * @return
 	 */
-	public boolean isAcceptable(CityMap map, int cellX, int cellY) {
+	public boolean isAcceptable(int[][] localHeight) {
 		
 		//
 		// A tile doesn't fit if any of its rules fail.
 		//
-		return !rules.any { !it.isAcceptable(map,cellX, cellY) }
+		return !rules.any { !it.isAcceptable(localHeight) }
 	}
 	
 	

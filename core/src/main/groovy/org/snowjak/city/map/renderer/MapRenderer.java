@@ -296,7 +296,7 @@ public class MapRenderer implements RenderingSupport {
 	}
 	
 	@Override
-	public void renderTile(int col, int row, Tile tile, Color tint) {
+	public void renderTile(int col, int row, Tile tile, Color tint, int altitudeOverride) {
 		
 		if (state == null || state.getMap() == null)
 			return;
@@ -315,7 +315,7 @@ public class MapRenderer implements RenderingSupport {
 		
 		final float tileScale = 1f / (float) tile.getGridWidth();
 		final TileCorner base = tile.getBase();
-		getCellVertices(col, row, cellVertices, base);
+		getCellVertices(col, row, cellVertices, base, altitudeOverride);
 		
 		float x = cellVertices[0].x, y = cellVertices[0].y;
 		for (int i = 1; i < 4; i++) {
@@ -435,7 +435,7 @@ public class MapRenderer implements RenderingSupport {
 	@Override
 	public Vector2[] getCellVertices(int col, int row, TileCorner base) {
 		
-		getCellVertices(col, row, cellVertices, base);
+		getCellVertices(col, row, cellVertices, base, -1);
 		return cellVertices;
 	}
 	
@@ -459,11 +459,14 @@ public class MapRenderer implements RenderingSupport {
 	 * @param base
 	 *            use TileCorner as the basis for altitude calculations, or
 	 *            {@code null} to use altitude at each vertex
+	 * @param altitudeOverride
+	 *            ignore the stored altitude and use this value instead; if
+	 *            {@code <0}, then do not override
 	 * @return
 	 * @throw {@link IndexOutOfBoundsException} if {@code col} or {@code row} fall
 	 *        outside of the map
 	 */
-	private void getCellVertices(int col, int row, Vector2[] vertices, TileCorner base) {
+	private void getCellVertices(int col, int row, Vector2[] vertices, TileCorner base, int altitudeOverride) {
 		
 		if (state == null || state.getMap() == null)
 			return;
@@ -472,10 +475,17 @@ public class MapRenderer implements RenderingSupport {
 		
 		int index = 0;
 		for (TileCorner corner : Arrays.asList(TileCorner.LEFT, TileCorner.TOP, TileCorner.RIGHT, TileCorner.BOTTOM)) {
+			
+			final int altitude;
+			if (altitudeOverride >= 0)
+				altitude = altitudeOverride;
+			else if (base == null || base == corner)
+				altitude = map.getCellAltitude(col, row, corner);
+			else
+				altitude = map.getCellAltitude(col, row, base);
+			
 			vertices[index++].set(computeCellVertexX(col + corner.getOffsetX(), row + corner.getOffsetY()),
-					computeCellVertexY(col + corner.getOffsetX(), row + corner.getOffsetY(),
-							(base == null || base == corner) ? map.getCellAltitude(col, row, corner)
-									: map.getCellAltitude(col, row, base)));
+					computeCellVertexY(col + corner.getOffsetX(), row + corner.getOffsetY(), altitude));
 		}
 	}
 	
@@ -594,7 +604,7 @@ public class MapRenderer implements RenderingSupport {
 			// OK -- so long as we're still on the map, search.
 			while (map.isValidCell(cellX, cellY)) {
 				
-				getCellVertices(cellX, cellY, viewportToMapVertices, null);
+				getCellVertices(cellX, cellY, viewportToMapVertices, null, -1);
 				
 				if (isWithinQuadrilaterial.test(viewportCoordinates))
 					return new Vector2(cellX, cellY);

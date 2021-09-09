@@ -17,7 +17,6 @@ import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.AsynchronousAssetLoader;
-import com.badlogic.gdx.assets.loaders.FileHandleResolver;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;
 import com.github.czyzby.kiwi.log.Logger;
@@ -91,12 +90,6 @@ public class MapGeneratorLoader extends AsynchronousAssetLoader<MapGenerator, Ma
 			LOG.error("Cannot load map-generation script \"{0}\" -- does not set [altitude].", file.path());
 			throw new RuntimeException(
 					"Map-generation script \"" + file.path() + "\" is incomplete: does not set \"altitude\".");
-		}
-		
-		if (dsl.getFlavors() == null) {
-			LOG.error("Cannot load map-generation script \"{0}\" -- does not set [material].", file.path());
-			throw new RuntimeException(
-					"Map-generation script \"" + file.path() + "\" is incomplete: does not set \"material\".");
 		}
 		
 	}

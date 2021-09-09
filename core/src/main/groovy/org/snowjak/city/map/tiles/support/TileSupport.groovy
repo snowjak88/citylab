@@ -3,19 +3,15 @@
  */
 package org.snowjak.city.map.tiles.support
 
-import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.tiles.TileCorner
 
-/**
- * Allows you to query the map.
- * 
- * @author snowjak88
- *
- */
 class TileSupport {
 	
-	CityMap map
-	int cellX, cellY
+	/**
+	 * Holds the height-values for each of the tile's corners.
+	 * Can be addressed using {@link TileCorner#offsetX}, {@link TileCorner#offsetY}
+	 */
+	int[][] localHeight = new int[2][2]
 	
 	/**
 	 * @return {@code true} if all this tile's corners need to be at the same altitude
@@ -76,45 +72,7 @@ class TileSupport {
 	 * @return
 	 */
 	public int alt(TileCorner corner) {
-		alt(0, 0, corner)
-	}
-	
-	/**
-	 * Get the altitude on the given corner for the cell located {@code dx,dy} away from the currently-considered cell.
-	 * @param dx
-	 * @param dy
-	 * @param corner
-	 * @return
-	 */
-	public int alt(int dx, int dy, TileCorner corner) {
-		if(!map.isValidCell(cellX + dx, cellY + dy))
-			return map.getCellAltitude(cellX, cellY, corner)
 		
-		map.getCellAltitude(cellX + dx, cellY + dy, corner)
-	}
-	
-	/**
-	 * Returns {@code true} if the given corner for the currently-considered cell includes the given flavor.
-	 * @param corner
-	 * @param flavor
-	 * @return
-	 */
-	public boolean hasFlavor(TileCorner corner, String flavor) {
-		hasFlavor(0, 0, corner, flavor)
-	}
-	
-	/**
-	 * Returns {@code true} if the given corner for the cell located {@code dx,dy} away from the currently-considered cell includes the given flavor.
-	 * @param dx
-	 * @param dy
-	 * @param corner
-	 * @param flavor
-	 * @return
-	 */
-	public boolean hasFlavor(int dx, int dy, TileCorner corner, String flavor) {
-		if(!map.isValidCell(cellX + dx, cellY + dy))
-			return map.getTileCornerFlavors(cellX, cellY, corner).contains(flavor)
-		
-		map.getTileCornerFlavors(cellX + dx, cellY + dy, corner).contains(flavor)
+		localHeight[corner.offsetX][corner.offsetY]
 	}
 }

@@ -45,7 +45,19 @@ public interface RenderingSupport {
 	 * @param tint
 	 *            {@code null} if no tint
 	 */
-	public void renderTile(int cellX, int cellY, Tile tile, Color tint);
+	public default void renderTile(int cellX, int cellY, Tile tile, Color tint) {
+		renderTile(cellX, cellY, tile, tint, -1);
+	}
+	
+	/**
+	 * Schedule the given {@link Tile} to be rendered at the given cell location.
+	 * @param cellX
+	 * @param cellY
+	 * @param tile
+	 * @param tint {@code null} if no tint
+	 * @param altitudeOverride ignore the cell's height and use this instead. {@code <0} if no override
+	 */
+	public void renderTile(int cellX, int cellY, Tile tile, Color tint, int altitudeOverride);
 	
 	/**
 	 * 

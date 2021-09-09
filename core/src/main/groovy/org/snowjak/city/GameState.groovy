@@ -2,7 +2,7 @@
  * 
  */
 package org.snowjak.city
-
+import org.snowjak.city.module.Module
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 
@@ -50,6 +50,11 @@ public class GameState {
 	 * Registry/Dispatcher for all active {@link Hotkey}s
 	 */
 	final HotkeyRegistry hotkeys = new HotkeyRegistry()
+	
+	/**
+	 * All loaded {@link Module}s, by id
+	 */
+	final Map<String,Module> modules = new LinkedHashMap<>()
 	
 	/**
 	 * {@link Tool}s declared by (initialized) {@link Module}s

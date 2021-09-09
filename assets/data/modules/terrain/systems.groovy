@@ -5,22 +5,26 @@ pendingTerrainTileMapper = ComponentMapper.getFor(PendingTerrainTile)
 
 //
 // Any map-cell that doesn't already have a terrain-tile should get one!
-// Any map-cell that needs a replement
 //
 iteratingSystem 'newTerrainFittingSystem', Family.all(IsMapCell).exclude(IsTerrainTile, PendingTerrainTile).get(), { entity, deltaTime ->
 	final mapCell = isCellMapper.get(entity)
 	final int cellX = mapCell.cellX
 	final int cellY = mapCell.cellY
 	
+	final terrainHeights = new int[2][2]
+	final terrainFlavors = new EnumMap(TileCorner)
+	for(def corner : TileCorner.values()) {
+		terrainHeights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
+		terrainFlavors.put corner, ['grass']
+	}
+	
 	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
-	pendingTerrain.future = submitResultTask { ->
-		tileset.getMinimalTilesFor state.map, cellX, cellY
+	pendingTerrain.future = submitResultTask {
+		->
+		tileset.getMinimalTilesFor terrainHeights, terrainFlavors
 	}
 	entity.add pendingTerrain
 	
-//	final terrainTile = state.engine.createComponent(IsTerrainTile)
-//	terrainTile.tiles = tileset.getMinimalTilesFor state.map, cellX, cellY
-//	entity.add terrainTile
 }
 
 iteratingSystem 'existingTerrainUpdatingSystem', Family.all(IsMapCell, NeedsReplacementTerrainTile).exclude(PendingTerrainTile).get(), { entity, deltaTime ->
@@ -30,8 +34,17 @@ iteratingSystem 'existingTerrainUpdatingSystem', Family.all(IsMapCell, NeedsRepl
 	final int cellY = mapCell.cellY
 	
 	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
-	pendingTerrain.future = submitResultTask { ->
-		tileset.getMinimalTilesFor state.map, cellX, cellY
+	
+	final terrainHeights = new int[2][2]
+	final terrainFlavors = new EnumMap(TileCorner)
+	for(def corner : TileCorner.values()) {
+		terrainHeights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
+		terrainFlavors.put corner, ['grass']
+	}
+	
+	pendingTerrain.future = submitResultTask {
+		->
+		tileset.getMinimalTilesFor terrainHeights, terrainFlavors
 	}
 	entity.add pendingTerrain
 	
@@ -57,7 +70,7 @@ iteratingSystem 'pendingTerrainUpdatingSystem', Family.all(PendingTerrainTile).g
 			terrainTile = terrainTileMapper.get(entity)
 		else
 			terrainTile = entity.addAndReturn(state.engine.createComponent(IsTerrainTile))
-			
+		
 		terrainTile.tiles = pendingTerrain.future.get() ?: []
 	}
 	

@@ -1,5 +1,3 @@
-import javax.management.remote.rmi.RMIConnector.Util
-
 id = 'water'
 description = 'Manages dispersion of water throughout the map'
 
@@ -27,8 +25,12 @@ dependsOn 'terrain'
 // HasWater
 //   This vertex has at least some water in it.
 //   The amount of water is given as a fraction in [0,1]
-//   Additionally, the vertex may be an "infinite" source, in which
-//   case outflow does not diminish it, nor does inflow increase it.
+//   The vertex may be an "infinite" source, in which case outflow
+//   does not diminish it, nor does inflow increase it.
+//
+// IsConnectedToInfiniteWater
+//   This vertex is connected (at whatever remove) to an infinite-
+//   water vertex.
 //
 // HasPendingWaterOutflow
 //   This vertex has some water scheduled to flow out of it
@@ -56,16 +58,46 @@ dependsOn 'terrain'
 //   corresponding vertices should have their NoPossibleOutflow component removed.
 //
 
-seaLevel = preferences.getInteger('seaLevel', 0)
+seaLevel = preferences.getInteger('seaLevel', 1)
 normalFlowRate = 0.5
 downhillFlowRate = normalFlowRate * 2
 
+tilesetName = preferences.getString('tileset-name', 'default')
+dependsOn tilesetName, TileSet
+tileset = assets.getByID tilesetName, TileSet
+
 class HasWater implements Component, Poolable {
 	float level
-	boolean infinite
 	void reset() {
 		level = 0
-		infinite = false
+	}
+}
+class IsInfiniteWater implements Component, Poolable {
+	void reset() { }
+}
+class IsConnectedToInfiniteWater implements Component, Poolable {
+	int toX, toY
+	void reset() {
+		toX = -1
+		toY = -1
+	}
+}
+class NeedsReplacementWaterTiles implements Component, Poolable {
+	final EnumSet<TileCorner> corners = EnumSet.noneOf(TileCorner)
+	void reset() {
+		corners.clear()
+	}
+}
+class HasPendingWaterTiles implements Component, Poolable {
+	final EnumMap<TileCorner,ListenableFuture<List<Tile>>> futures = new EnumMap(TileCorner)
+	void reset() {
+		futures.clear()
+	}
+}
+class HasWaterTiles implements Component, Poolable {
+	final EnumMap<TileCorner,List<Tile>> tiles = new EnumMap(TileCorner)
+	void reset() {
+		tiles.clear()
 	}
 }
 class HasPendingWaterOutflow implements Component, Poolable {
@@ -84,6 +116,9 @@ class NoPossibleWaterOutflow implements Component, Poolable {
 isCellMapper = ComponentMapper.getFor(IsMapCell)
 isVertexMapper = ComponentMapper.getFor(IsMapVertex)
 hasWaterMapper = ComponentMapper.getFor(HasWater)
+needsReplacementMapper = ComponentMapper.getFor(NeedsReplacementWaterTiles)
+hasPendingTilesMapper = ComponentMapper.getFor(HasPendingWaterTiles)
+hasWaterTilesMapper = ComponentMapper.getFor(HasWaterTiles)
 hasPendingOutflowMapper = ComponentMapper.getFor(HasPendingWaterOutflow)
 
 createWaterSource = { int vx, int vy, boolean infinite = false, float level = 1 ->
@@ -94,20 +129,44 @@ createWaterSource = { int vx, int vy, boolean infinite = false, float level = 1 
 	if(hasWaterMapper.has( entity ))
 		hasWater = hasWaterMapper.get( entity )
 	else {
-		hasWater = state.engine.createComponent(HasWater)
-		entity.add hasWater
+		hasWater = entity.addAndReturn( state.engine.createComponent(HasWater) )
 	}
 	
 	hasWater.level = level
-	hasWater.infinite = infinite
+	
+	if(infinite)
+		entity.add state.engine.createComponent( IsInfiniteWater )
+	
+	markVertexCellsForWaterTileFitting vx, vy
+}
+
+markVertexCellsForWaterTileFitting = { int vx, int vy ->
+	final vertexEntity = state.map.getVertexEntity(vx, vy)
+	final isWatery = hasWaterMapper.has(vertexEntity)
+	
+	for(def corner : TileCorner.values()) {
+		final int cx = vx - corner.offsetX
+		final int cy = vy - corner.offsetY
+		if(!state.map.isValidCell(cx, cy))
+			continue
+		
+		final cellEntity = state.map.getEntity(cx, cy)
+		def replacementTiles
+		if(needsReplacementMapper.has(cellEntity))
+			replacementTiles = needsReplacementMapper.get(cellEntity)
+		else
+			replacementTiles = cellEntity.addAndReturn( state.engine.createComponent(NeedsReplacementWaterTiles) )
+		
+		replacementTiles.corners << corner
+	}
 }
 
 onActivate {
 	->
 	
 	//
-	// ensure that all edge-vertices at or below sea-level are marked as infinite water-sources
-	
+	// ensure that all vertices at or below sea-level are marked as water-sources
+	// *edge* vertices should be *infinite*
 	final maxX = state.map.width
 	final maxY = state.map.height
 	
@@ -118,185 +177,112 @@ onActivate {
 		}
 }
 
-windowIteratingSystem 'waterOutflowSchedulingSystem', Family.all(IsMapVertex, HasWater).exclude(HasPendingWaterOutflow, NoPossibleWaterOutflow).get(), 32, { entity, deltaTime ->
-	
-	final mapVertex = isVertexMapper.get(entity)
-	final int vx = mapVertex.vertexX
-	final int vy = mapVertex.vertexY
-	
-	if(!state.map.isValidVertex(vx,vy))
-		return
-	
-	final thisWater = hasWaterMapper.get(entity)
-	final thisAlt = state.map.getVertexAltitude(vx,vy)
-	
-	//
-	// Scan neighboring vertices for eligible outflows
-	final validOutflows = []
-	for(def neighbor : [
-				[-1, 0],
-				[+1, 0],
-				[0, -1],
-				[0, +1]
-			]) {
-		// "neighbor" coordinates
-		def (int dx, int dy) = neighbor
-		final nx = vx + dx
-		final ny = vy + dy
-		
-		if(!state.map.isValidVertex(nx, ny))
-			continue
-		
-		//
-		// Is the neighbor vertex above this vertex?
-		final neighborAlt = state.map.getVertexAltitude(nx,ny)
-		if(neighborAlt > thisAlt)
-			continue
-		
-		//
-		// Is the neighbor level with us and have at least as much water?
-		boolean canFlowIntoNeighbor = false
-		final neighborEntity = state.map.getVertexEntity(nx, ny)
-		if(!hasWaterMapper.has(neighborEntity))
-			canFlowIntoNeighbor = true
-		else {
-			final neighborWater = hasWaterMapper.get(neighborEntity)
-			canFlowIntoNeighbor = (neighborAlt < thisAlt) || (neighborAlt == thisAlt && neighborWater.level < thisWater.level)
-		}
-		
-		if(!canFlowIntoNeighbor)
-			continue
-		
-		//
-		// OK. We can outflow into this vertex.
-		validOutflows << [nx, ny]
-		//
-		// If this is a downhill outflow, we get two chances to select it
-		if(neighborAlt < thisAlt)
-			validOutflows << [nx, ny]
-	}
-	
-	if(validOutflows.isEmpty()) {
-		entity.add state.engine.createComponent(NoPossibleWaterOutflow)
-		return
-	}
-	
-	//
-	// Pick one of the neighbors to outflow into.
-	final randomIndex = state.rnd.nextInt(validOutflows.size())
-	def (int outflowX, int outflowY) = validOutflows[randomIndex]
-	
-	//
-	// Is this a level- or downhill-flow?
-	final outflowAlt = state.map.getVertexAltitude(outflowX, outflowY)
-	final isLevelFlow = (thisAlt == outflowAlt)
-	
-	//
-	// Create the "pending-outflow" component for this vertex.
-	final pendingOutflow = state.engine.createComponent(HasPendingWaterOutflow)
-	pendingOutflow.amount = Util.clamp( (isLevelFlow) ? normalFlowRate : downhillFlowRate, 0, thisWater.level )
-	pendingOutflow.toX = outflowX
-	pendingOutflow.toY = outflowY
-	entity.add pendingOutflow
-}
+include 'flow.groovy'
 
-iteratingSystem 'waterOutflowProcessingSystem', Family.all(IsMapVertex, HasWater, HasPendingWaterOutflow).get(), { entity, deltaTime ->
-	thisWater = hasWaterMapper.get(entity)
-	outflow = hasPendingOutflowMapper.get(entity)
-	
-	if( state.map.isValidVertex(outflow.toX, outflow.toY) ) {
-		final outflowEntity = state.map.getVertexEntity( outflow.toX, outflow.toY )
-		HasWater outflowWater
-		if(hasWaterMapper.has(outflowEntity))
-			outflowWater = hasWaterMapper.get(outflowEntity)
-		else
-			outflowWater = outflowEntity.addAndReturn( state.engine.createComponent(HasWater) )
-		
-		def toAdd = outflow.amount
-		def toSubtract = outflow.amount
-		if(thisWater.infinite)
-			toSubtract = 0
-		if(outflowWater.infinite)
-			toAdd = 0
-		
-		thisWater.level -= toSubtract
-		outflowWater.level += toAdd
-		
-		if(outflowWater.level > 1)
-			outflowWater.infinite = true
-		
-		outflowEntity.remove NoPossibleWaterOutflow
-	}
-	
-	entity.remove HasPendingWaterOutflow
-	if(thisWater.level < normalFlowRate)
-		entity.remove HasWater
-}
+//intervalIteratingSystem 'waterEvaporationSystem', Family.all(IsMapVertex, HasWater).exclude(HasPendingWaterOutflow).get(), 5.0, { entity, deltaTime ->
+//	final thisVertex = isVertexMapper.get(entity)
+//	final int vx = thisVertex.vertexX
+//	final int vy = thisVertex.vertexY
+//	final thisWater = hasWaterMapper.get(entity)
+//	
+//	if(thisWater.infinite)
+//		return
+//	
+//	if(thisWater.level < 0.9)
+//		thisWater.level -= normalFlowRate / 4f
+//	
+//	if(thisWater.level <= normalFlowRate)
+//		entity.remove HasWater
+//		
+//	markVertexCellsForWaterTileFitting vx, vy
+//}
 
-intervalIteratingSystem 'waterEvaporationSystem', Family.all(HasWater).exclude(HasPendingWaterOutflow).get(), 5.0, { entity, deltaTime ->
-	thisWater = hasWaterMapper.get(entity)
-	
-	if(thisWater.level < 0.9)
-		thisWater.level -= normalFlowRate / 4f
-	
-	if(thisWater.level <= normalFlowRate)
-		entity.remove HasWater
-}
 
-listeningSystem 'waterFlavoringSystem', Family.all(HasWater).get(), { entity, deltaTime ->
-	
-	if(!isVertexMapper.has(entity))
-		return
-	
-	final mapVertex = isVertexMapper.get(entity)
-	final int vx = mapVertex.vertexX
-	final int vy = mapVertex.vertexY
-	
-	if( state.map.isValidVertex(vx,vy) ) {
-		state.map.addVertexFlavor vx, vy, 'water'
-		
-		for(def corner : TileCorner.values())
-			if(state.map.isValidCell(vx - corner.offsetX, vy - corner.offsetY))
-				state.map.getEntity(vx - corner.offsetX, vy - corner.offsetY).add state.engine.createComponent(IsMapCellRearranged)
-	}
-	
-}, { entity, deltaTime ->
-	
-	if( isVertexMapper.has(entity) ) {
-		
-		final mapVertex = isVertexMapper.get(entity)
-		final int vx = mapVertex.vertexX
-		final int vy = mapVertex.vertexY
-		
-		if( state.map.isValidVertex(vx,vy) ) {
-			state.map.removeVertexFlavor vx, vy, 'water'
-			for(def corner : TileCorner.values())
-				if(state.map.isValidCell(vx - corner.offsetX, vy - corner.offsetY))
-					state.map.getEntity(vx - corner.offsetX, vy - corner.offsetY).add state.engine.createComponent(IsMapCellRearranged)
-		}
-		
-	}
-}
-
-listeningSystem 'waterOutflowReenablingSystem', Family.all(IsMapCell, IsMapCellRearranged).get(), { entity, deltaTime ->
-	//
-	// Ensure all neighboring watery vertices can be re-checked for outflow.
+iteratingSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, NeedsReplacementWaterTiles).exclude(HasPendingWaterTiles).get(), { entity, deltaTime ->
 	final mapCell = isCellMapper.get(entity)
-	final int cellX = mapCell.cellX
-	final int cellY = mapCell.cellY
+	final int cx = mapCell.cellX
+	final int cy = mapCell.cellY
 	
-	for(def corner : TileCorner.values()) {
+	final replacements = needsReplacementMapper.get(entity)
+	
+	final pendingWaterTiles = entity.addAndReturn( state.engine.createComponent( HasPendingWaterTiles ) )
+	
+	final cornerHeights = new int[2][2]
+	for(TileCorner corner : TileCorner.values())
+		cornerHeights[corner.offsetX][corner.offsetY] = Util.max( seaLevel, state.map.getCellAltitude(cx, cy, corner) )
+	
+	//
+	// This cell is tagged as needing a replacement water-tile for one or more corners.
+	// Go through this list and see if any given corner should have water, or should lose water.
+	// Then start the search for water-tiles to find tile(s) for that corner.
+	replacements.corners.each { corner ->
 		
-		final int vx = cellX + corner.offsetX
-		final int vy = cellY + corner.offsetY
-		if(!state.map.isValidVertex(vx, vy))
-			continue
-		final vertexEntity = state.map.getVertexEntity(vx, vy)
-		if(hasWaterMapper.has(vertexEntity))
-			vertexEntity.remove NoPossibleWaterOutflow
+		final int vx = cx + corner.offsetX
+		final int vy = cy + corner.offsetY
+		
+		final cornerFlavors = new EnumMap(TileCorner)
+		cornerFlavors.put corner, []
+		if(state.map.isValidVertex(vx,vy)) {
+			final vertexEntity = state.map.getVertexEntity(vx,vy)
+			if(hasWaterMapper.has(vertexEntity))
+				cornerFlavors.get(corner) << 'water'
+		}
+		
+		pendingWaterTiles.futures.put corner, submitResultTask( { ->
+			tileset.getMinimalTilesFor cornerHeights, cornerFlavors
+		} )
 	}
 	
-}, { entity, deltaTime ->
-	//
-	// Nothing to do when an entity drops off this family
+	entity.remove NeedsReplacementWaterTiles
 }
+
+iteratingSystem 'waterTileProcessingSystem', Family.all(IsMapCell, HasPendingWaterTiles).get(), { entity, deltaTime ->
+	final mapCell = isCellMapper.get(entity)
+	final int cx = mapCell.cellX
+	final int cy = mapCell.cellY
+	
+	final pendingTiles = hasPendingTilesMapper.get(entity)
+	
+	def anyFinished = false
+	final finishedCorners = new EnumMap(TileCorner)
+	pendingTiles.futures.forEach { c, f ->
+		if(f.isDone()) {
+			anyFinished = true
+			finishedCorners.put c, f.get()
+			println "Got tile-fitting result for $cx,$cy ($c) - ${finishedCorners.get(c)}"
+		}
+	}
+	
+	if(!anyFinished)
+		return
+	
+	finishedCorners.forEach { c, _ -> pendingTiles.futures.remove c }
+	if(pendingTiles.futures.isEmpty())
+		entity.remove HasPendingWaterTiles
+	
+//	final mapCell = isCellMapper.get(entity)
+//	final int cx = mapCell.cellX
+//	final int cy = mapCell.cellY
+	
+	def waterTiles
+	if(hasWaterTilesMapper.has(entity))
+		waterTiles = hasWaterTilesMapper.get(entity)
+	else
+		waterTiles = entity.addAndReturn( state.engine.createComponent(HasWaterTiles) )
+	
+	finishedCorners.forEach {c, t ->
+		waterTiles.tiles.put c, t
+	}
+	
+	//
+	// Did we just remove all water-tiles from this HasWaterTiles component?
+	def allEmpty = true
+	waterTiles.tiles.forEach { c, t ->
+		if(t != null && !t.isEmpty())
+			allEmpty = false
+	}
+	if(allEmpty)
+		entity.remove HasWaterTiles
+}
+
+include 'renderer.groovy'

@@ -191,6 +191,7 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		final r = newInstance()
 		r.dependencyCheckingMode = dependencyMode
 		r.setScriptDirectory file.parent()
+		r.setScriptFile file
 		r.setShell shell
 		r.binding.variables.putAll providedObjects
 		

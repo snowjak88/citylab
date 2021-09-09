@@ -41,7 +41,7 @@ public abstract class ScriptedResource {
 	
 	String id
 	boolean dependencyCheckingMode = false
-	FileHandle scriptDirectory
+	FileHandle scriptDirectory, scriptFile
 	GroovyShell shell
 	
 	ScriptedResourceAssetProvider assets
@@ -226,6 +226,7 @@ public abstract class ScriptedResource {
 			r.dependencyCheckingMode = dependencyCheckingMode
 			r.providedObjects.putAll providedObjects
 			r.scriptDirectory = handle.parent()
+			r.scriptFile = handle
 			r.shell = shell
 			r.assets = new ScriptedResourceAssetProvider(r, assets.assetService)
 			

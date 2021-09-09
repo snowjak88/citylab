@@ -180,28 +180,23 @@ class TileSet extends ScriptedResource implements Disposable {
 	}
 	
 	/**
-	 * Get the minimum set of Tiles that can fit the given map at the given
-	 * location.
-	 * <p>
-	 * Note that this should only look at vertex-altitudes and -flavors (barring any
-	 * special Tile rules, which would be executed normally).
-	 * </p>
+	 * Get the minimum set of Tiles that can fit the given constraints:
+	 * <ul>
+	 * <li>{@code heights} -- a 2x2 {@code int} array (addressed using {@link TileCorner#offsetX},{@link TileCorner#offsetY})</li>
+	 * <li>{@code flavors} -- a list of flavor-constraints that the found Tiles must meet and not exceed</li>
+	 * </ul>
 	 */
-	public List<Tile> getMinimalTilesFor(CityMap map, int cellX, int cellY) {
+	public List<Tile> getMinimalTilesFor(int[][] heights, EnumMap<TileCorner, List<String>> flavors, onlyDecorative = false) {
 		
-		final EnumMap<TileCorner, List<String>> remainingFlavors = new EnumMap<>(TileCorner)
-		for (TileCorner corner : TileCorner.values())
-			remainingFlavors[corner] = new LinkedList<String>(map.getTileCornerFlavors(cellX, cellY, corner))
-		
-		return searchMinimalTilesFor(map, cellX, cellY, remainingFlavors, new HashSet<Tile>(), true)
+		return searchMinimalTilesFor(heights, flavors, new HashSet<Tile>(), onlyDecorative)
 	}
 	
-	private List<Tile> searchMinimalTilesFor(CityMap map, int cellX, int cellY,
-			EnumMap<TileCorner, List<String>> remainingFlavors, Set<Tile> currentTiles, boolean nonDecorative) {
+	private List<Tile> searchMinimalTilesFor(int[][] heights,
+			EnumMap<TileCorner, List<String>> remainingFlavors, Set<Tile> currentTiles, boolean onlyDecorative) {
 		
 		boolean allDone = true
 		for (TileCorner corner : remainingFlavors.keySet()) {
-			if (!remainingFlavors.get(corner).isEmpty()) {
+			if (remainingFlavors.get(corner) != null && !remainingFlavors.get(corner).isEmpty()) {
 				allDone = false
 				break
 			}
@@ -220,7 +215,7 @@ class TileSet extends ScriptedResource implements Disposable {
 			
 			//
 			// If the tile is non-transparent and we're not allowing that -- skip it.
-			if (nonDecorative == tile.isDecoration())
+			if (onlyDecorative && !tile.isDecoration())
 				continue
 			
 			//
@@ -235,7 +230,7 @@ class TileSet extends ScriptedResource implements Disposable {
 				if (addsExtra)
 					break
 				for (String flavor : tile.getProvision().get(corner))
-					if (!remainingFlavors.get(corner).contains(flavor)) {
+					if (remainingFlavors.get(corner) != null && !remainingFlavors.get(corner).contains(flavor)) {
 						addsExtra = true
 						break
 					}
@@ -250,8 +245,9 @@ class TileSet extends ScriptedResource implements Disposable {
 			final EnumMap<TileCorner, List<String>> newRemaining = new EnumMap<>(TileCorner)
 			for (TileCorner corner : remainingFlavors.keySet()) {
 				final List<String> remaining = new LinkedList<String>(remainingFlavors.get(corner))
-				if(tile.getProvision().containsKey(corner))
-					fulfillsAnyFlavors = fulfillsAnyFlavors || remaining.removeAll(tile.getProvision().get(corner))
+				if(remaining != null)
+					if(tile.getProvision().containsKey(corner))
+						fulfillsAnyFlavors = fulfillsAnyFlavors || remaining.removeAll(tile.getProvision().get(corner))
 				newRemaining[corner] = remaining
 			}
 			if (!fulfillsAnyFlavors)
@@ -259,7 +255,7 @@ class TileSet extends ScriptedResource implements Disposable {
 			
 			//
 			// If the tile's rules don't allow it to fit here -- skip it.
-			if (!tile.isAcceptable(map, cellX, cellY))
+			if (!tile.isAcceptable(heights))
 				continue
 			
 			//
@@ -279,7 +275,7 @@ class TileSet extends ScriptedResource implements Disposable {
 			
 			//
 			// Do the search and capture the results in the list.
-			final List<Tile> searchResult = searchMinimalTilesFor(map, cellX, cellY, newRemaining, currentTiles, false)
+			final List<Tile> searchResult = searchMinimalTilesFor(heights, newRemaining, currentTiles, true)
 			if (searchResult != null)
 				currentTileList.addAll searchResult
 			
