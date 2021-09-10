@@ -12,6 +12,7 @@ import org.snowjak.city.screens.LoadingScreen;
 import org.snowjak.city.screens.MainMenuScreen;
 import org.snowjak.city.screens.loadingtasks.AssetServiceLoadingTask;
 import org.snowjak.city.service.GameService;
+import org.snowjak.city.util.Util;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
@@ -63,8 +64,11 @@ public class CityGame extends Game {
 	/**
 	 * Shared {@link ListeningExecutorService}.
 	 */
-	public static final ListeningExecutorService EXECUTOR = MoreExecutors.listeningDecorator(MoreExecutors
-			.getExitingExecutorService((ThreadPoolExecutor) Executors.newCachedThreadPool(), Duration.ofSeconds(5)));
+	public static final ListeningExecutorService EXECUTOR = MoreExecutors
+			.listeningDecorator(MoreExecutors.getExitingExecutorService(
+					(ThreadPoolExecutor) Executors
+							.newFixedThreadPool(Util.min(4, Runtime.getRuntime().availableProcessors() - 1)),
+					Duration.ofSeconds(5)));
 	
 	//
 	//

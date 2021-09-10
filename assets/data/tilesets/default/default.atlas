@@ -1,0 +1,370 @@
+
+default.png
+size: 2048, 512
+format: RGBA8888
+filter: Linear, Linear
+repeat: none
+grass-flat
+  rotate: false
+  xy: 522, 2
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
+grass-slope-concave00
+  rotate: false
+  xy: 652, 2
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
+grass-slope-concave01
+  rotate: false
+  xy: 912, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+grass-slope-concave02
+  rotate: false
+  xy: 132, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+grass-slope-concave03
+  rotate: false
+  xy: 1302, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+grass-slope-convex00
+  rotate: false
+  xy: 2, 2
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
+grass-slope-convex01
+  rotate: false
+  xy: 392, 2
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
+grass-slope-convex02
+  rotate: false
+  xy: 132, 2
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
+grass-slope-convex03
+  rotate: false
+  xy: 1822, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+grass-slope-saddle00
+  rotate: false
+  xy: 262, 2
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
+grass-slope-saddle01
+  rotate: false
+  xy: 262, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+grass-slope00
+  rotate: false
+  xy: 1822, 132
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
+grass-slope01
+  rotate: false
+  xy: 782, 2
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
+grass-slope02
+  rotate: false
+  xy: 912, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+grass-slope03
+  rotate: false
+  xy: 132, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-flat-00
+  rotate: false
+  xy: 652, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-flat-01
+  rotate: false
+  xy: 2, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-flat-02
+  rotate: false
+  xy: 1042, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-flat-03
+  rotate: false
+  xy: 392, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-flat-04
+  rotate: false
+  xy: 1432, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-saddle-flat-00
+  rotate: false
+  xy: 1822, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-saddle-flat-01
+  rotate: false
+  xy: 1172, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-saddle-flat-02
+  rotate: false
+  xy: 522, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-saddle-flat-03
+  rotate: false
+  xy: 1432, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-concave-flat-00
+  rotate: false
+  xy: 652, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-concave-flat-01
+  rotate: false
+  xy: 1692, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-concave-flat-02
+  rotate: false
+  xy: 1042, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-concave-flat-03
+  rotate: false
+  xy: 392, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-00
+  rotate: false
+  xy: 262, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-01
+  rotate: false
+  xy: 1302, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-02
+  rotate: false
+  xy: 522, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-03
+  rotate: false
+  xy: 1562, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-left-00
+  rotate: false
+  xy: 2, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-left-01
+  rotate: false
+  xy: 1172, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-left-02
+  rotate: false
+  xy: 652, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-left-03
+  rotate: false
+  xy: 1692, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-right-00
+  rotate: false
+  xy: 132, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-right-01
+  rotate: false
+  xy: 1432, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-right-02
+  rotate: false
+  xy: 782, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-convex-flat-right-03
+  rotate: false
+  xy: 1692, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-00
+  rotate: false
+  xy: 912, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-01
+  rotate: false
+  xy: 262, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-02
+  rotate: false
+  xy: 1302, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-03
+  rotate: false
+  xy: 782, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-left-00
+  rotate: false
+  xy: 1042, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-left-01
+  rotate: false
+  xy: 392, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-left-02
+  rotate: false
+  xy: 1562, 361
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-left-03
+  rotate: false
+  xy: 782, 101
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-right-00
+  rotate: false
+  xy: 2, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-right-01
+  rotate: false
+  xy: 1172, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-right-02
+  rotate: false
+  xy: 522, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+water-slope-flat-right-03
+  rotate: false
+  xy: 1562, 231
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1

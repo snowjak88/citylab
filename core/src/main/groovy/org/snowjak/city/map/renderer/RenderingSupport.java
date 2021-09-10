@@ -25,7 +25,7 @@ public interface RenderingSupport {
 	public Rectangle getViewportWorldBounds();
 	
 	/**
-	 * Schedule the given {@link Tile} to be rendered at the given cell location.
+	 * Draw the given {@link Tile} at the given cell location.
 	 * 
 	 * @param cellX
 	 * @param cellY
@@ -37,7 +37,7 @@ public interface RenderingSupport {
 	}
 	
 	/**
-	 * Schedule the given {@link Tile} to be rendered at the given cell location.
+	 * Draw the given {@link Tile} at the given cell location.
 	 * 
 	 * @param cellX
 	 * @param cellY
@@ -51,7 +51,7 @@ public interface RenderingSupport {
 	}
 	
 	/**
-	 * Schedule the given {@link Tile} to be rendered at the given cell location.
+	 * Draw the given {@link Tile} at the given cell location.
 	 * 
 	 * @param cellX
 	 * @param cellY
@@ -66,7 +66,7 @@ public interface RenderingSupport {
 	}
 	
 	/**
-	 * Schedule the given {@link Tile} to be rendered at the given cell location.
+	 * Draw the given {@link Tile} at the given cell location.
 	 * 
 	 * @param cellX
 	 * @param cellY

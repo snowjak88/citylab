@@ -69,10 +69,10 @@ public class MapRenderer implements RenderingSupport {
 	private static final float HALF_TILE_WIDTH = TILE_WIDTH * 0.5f;
 	private static final float HALF_TILE_HEIGHT = TILE_HEIGHT * 0.5f;
 	
-	private static final float DISPLAYED_GRID = 32f;
-	private static final float DISPLAYED_GRID_WIDTH = DISPLAYED_GRID * TILE_WIDTH;
-	private static final float DISPLAYED_GRID_HEIGHT = DISPLAYED_GRID * TILE_HEIGHT;
-	private static final float DISPLAYED_ALTITUDE_MULTIPLIER = DISPLAYED_GRID * TILE_ALTITUDE_MUTIPLIER;
+	public static final float DISPLAYED_GRID_UNIT_SIZE = 64f;
+	private static final float DISPLAYED_GRID_WIDTH = DISPLAYED_GRID_UNIT_SIZE * TILE_WIDTH;
+	private static final float DISPLAYED_GRID_HEIGHT = DISPLAYED_GRID_UNIT_SIZE * TILE_HEIGHT;
+	private static final float DISPLAYED_ALTITUDE_MULTIPLIER = DISPLAYED_GRID_UNIT_SIZE * TILE_ALTITUDE_MUTIPLIER;
 	
 	private Matrix4 isoTransform;
 	private Matrix4 invIsotransform;

@@ -84,6 +84,15 @@ padding = 0
 // autoAdvance 640, 1024
 
 //
+// Texture-atlas to use
+//
+// If you supply an atlas here, then all filenames are assumed to refer to regions within
+// that atlas.
+// If atlas is <null>, then "filename" is assumed to be a discrete image-file.
+//
+atlas = 'default/default.atlas'
+
+//
 // Default file-name for all tiles
 //
 // (Default: no default)

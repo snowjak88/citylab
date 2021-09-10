@@ -38,6 +38,15 @@ tile {
 		altDelta(TOP, [RIGHT, LEFT], 0) && alt(TOP) <= alt(BOTTOM)
 	}
 }
+tile {
+	id = 'water-flat-all'
+	filename = 'water-flat-04.png'
+	provides 'water'
+	base = TOP
+	rule {
+		isFlat()
+	}
+}
 
 //
 //
@@ -126,6 +135,43 @@ tile {
 //
 
 tile {
+	id = 'water-slope-convex-flat-east'
+	filename = 'water-slope-convex-flat-00.png'
+	provides [TOP, RIGHT, BOTTOM], ['water']
+	base = RIGHT
+	rule {
+		altDelta(BOTTOM, [RIGHT, TOP], 0) && altDelta(BOTTOM, [LEFT], +1)
+	}
+}
+tile {
+	id = 'water-slope-convex-flat-north'
+	filename = 'water-slope-convex-flat-01.png'
+	provides [TOP, RIGHT, LEFT], ['water']
+	base = TOP
+	rule {
+		altDelta(TOP, [RIGHT, LEFT], 0) && altDelta(TOP, [BOTTOM], +1)
+	}
+}
+tile {
+	id = 'water-slope-convex-flat-west'
+	filename = 'water-slope-convex-flat-02.png'
+	provides [TOP, LEFT, BOTTOM], ['water']
+	base = LEFT
+	rule {
+		altDelta(LEFT, [TOP, BOTTOM], 0) && altDelta(LEFT, [RIGHT], +1)
+	}
+}
+tile {
+	id = 'water-slope-convex-flat-south'
+	filename = 'water-slope-convex-flat-03.png'
+	provides [RIGHT, LEFT, BOTTOM], ['water']
+	base = BOTTOM
+	rule {
+		altDelta(BOTTOM, [RIGHT, LEFT], 0) && altDelta(BOTTOM, [TOP], +1)
+	}
+}
+
+tile {
 	id = 'water-slope-convex-flat-east-left'
 	filename = 'water-slope-convex-flat-left-00.png'
 	provides [BOTTOM], ['water']
@@ -202,6 +248,43 @@ tile {
 //
 //
 //
+
+tile {
+	id = 'water-slope-flat-northeast'
+	filename = 'water-slope-flat-00.png'
+	provides [TOP, RIGHT], ['water']
+	base = RIGHT
+	rule {
+		altDelta(RIGHT, [TOP], 0) && altDelta(RIGHT, [BOTTOM, LEFT], +1)
+	}
+}
+tile {
+	id = 'water-slope-flat-northwest'
+	filename = 'water-slope-flat-01.png'
+	provides [TOP, LEFT], ['water']
+	base = TOP
+	rule {
+		altDelta(LEFT, [TOP], 0) && altDelta(LEFT, [BOTTOM, RIGHT], +1)
+	}
+}
+tile {
+	id = 'water-slope-flat-southwest'
+	filename = 'water-slope-flat-02.png'
+	provides [BOTTOM, LEFT], ['water']
+	base = LEFT
+	rule {
+		altDelta(LEFT, [BOTTOM], 0) && altDelta(LEFT, [TOP, RIGHT], +1)
+	}
+}
+tile {
+	id = 'water-slope-flat-southeast'
+	filename = 'water-slope-flat-03.png'
+	provides [BOTTOM, RIGHT], ['water']
+	base = BOTTOM
+	rule {
+		altDelta(RIGHT, [BOTTOM], 0) && altDelta(RIGHT, [TOP, LEFT], +1)
+	}
+}
 
 tile {
 	id = 'water-slope-flat-northeast-left'

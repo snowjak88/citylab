@@ -32,8 +32,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.FillViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
 import com.github.czyzby.kiwi.log.Logger;
@@ -64,7 +63,10 @@ public class GameScreen extends AbstractGameScreen {
 	}
 	
 	private GameInputProcessor inputProcessor;
-	private final Viewport viewport = new FillViewport(6, 6);
+	private final ScreenViewport viewport = new ScreenViewport();
+	{
+		viewport.setUnitsPerPixel(1f / MapRenderer.DISPLAYED_GRID_UNIT_SIZE);
+	}
 	
 	private float cameraOffsetX, cameraOffsetY;
 	private boolean cameraUpdated = true;
@@ -188,7 +190,6 @@ public class GameScreen extends AbstractGameScreen {
 		GdxUtilities.clearScreen();
 		
 		if (renderer != null) {
-			viewport.apply();
 			
 			if (cameraUpdated) {
 				viewport.getCamera().position.set(cameraOffsetX, cameraOffsetY, 0);
@@ -197,6 +198,8 @@ public class GameScreen extends AbstractGameScreen {
 				
 				cameraUpdated = false;
 			}
+			
+			viewport.apply();
 			
 			renderer.render(delta);
 			
@@ -219,6 +222,7 @@ public class GameScreen extends AbstractGameScreen {
 		
 		super.resize(width, height);
 		viewport.update(width, height);
+		cameraUpdated = true;
 	}
 	
 	/**

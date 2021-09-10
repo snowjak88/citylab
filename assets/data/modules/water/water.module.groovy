@@ -95,13 +95,17 @@ onActivate {
 	for(def x=0; x<=maxX; x++)
 		for(def y=0; y<=maxY; y++) {
 			if(state.map.getVertexAltitude(x,y) <= seaLevel) {
-				final entity = state.map.getVertexEntity(x,y)
+				final isEdge = (x == 0 || y == 0 || x == maxX || y == maxY)
 				
-				entity.add state.engine.createComponent(IsFloodable)
-				entity.add state.engine.createComponent(IsFlooded)
-				
-				final water = entity.addAndReturn( state.engine.createComponent(HasWater) )
-				water.level = 1
+				if(isEdge) {
+					final entity = state.map.getVertexEntity(x,y)
+					
+					entity.add state.engine.createComponent(IsFloodable)
+					entity.add state.engine.createComponent(IsFlooded)
+					
+					final water = entity.addAndReturn( state.engine.createComponent(HasWater) )
+					water.level = 1
+				}
 			}
 		}
 }
@@ -126,7 +130,7 @@ listeningSystem 'waterFloodedVertexListeningSystem', Family.all(IsFlooded).get()
 
 //
 // Check every Floodable entity to see if it can flood into neighboring vertices
-intervalIteratingSystem 'waterFloodablePropagationSystem', Family.all(IsMapVertex, IsFloodable, HasWater).get(), 0.5f, { entity, deltaTime ->
+intervalIteratingSystem 'waterFloodablePropagationSystem', Family.all(IsMapVertex, IsFloodable, HasWater).get(), 0.25, { entity, deltaTime ->
 	
 	final thisVertex = isVertexMapper.get(entity)
 	final int vx = thisVertex.vertexX
@@ -241,7 +245,7 @@ listeningSystem 'waterNewHasWaterListeningSystem', Family.all(IsMapVertex, HasWa
 
 
 
-windowIteratingSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, NeedsReplacementWaterTiles).exclude(HasPendingWaterTiles).get(), 16, { entity, deltaTime ->
+windowIteratingSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, NeedsReplacementWaterTiles).exclude(HasPendingWaterTiles).get(), 8, { entity, deltaTime ->
 	final mapCell = isCellMapper.get(entity)
 	final int cx = mapCell.cellX
 	final int cy = mapCell.cellY
@@ -279,7 +283,7 @@ windowIteratingSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, 
 	entity.remove NeedsReplacementWaterTiles
 }
 
-windowIteratingSystem 'waterTileProcessingSystem', Family.all(IsMapCell, HasPendingWaterTiles).get(), 16, { entity, deltaTime ->
+windowIteratingSystem 'waterTileProcessingSystem', Family.all(IsMapCell, HasPendingWaterTiles).get(), 8, { entity, deltaTime ->
 	final mapCell = isCellMapper.get(entity)
 	final int cx = mapCell.cellX
 	final int cy = mapCell.cellY

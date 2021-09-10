@@ -17,6 +17,7 @@ import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.utils.Disposable
 
@@ -36,6 +37,7 @@ class TileSet extends ScriptedResource implements Disposable {
 	int width = 32, height = 32
 	int padding = 0, surfaceOffset = 0, altitudeOffset = 0
 	FileHandle folder
+	FileHandle atlas
 	String filename = ""
 	boolean decoration = false
 	TileCorner base = TileCorner.TOP
@@ -76,13 +78,21 @@ class TileSet extends ScriptedResource implements Disposable {
 		this.folder = file(folder)
 	}
 	
+	public void setAtlas(FileHandle atlas) {
+		this.atlas = atlas
+	}
+	
+	public void setAtlas(String atlas) {
+		this.atlas = file(atlas)
+	}
+	
 	/**
 	 * Add a new tile definition. Implicitly calls {@link #next()} after the tile is defined.
 	 * @param script
 	 */
 	public void tile(@DelegatesTo(Tile) Closure script) {
 		def tile = [
-			folder: folder, filename: filename,
+			folder: folder, filename: filename, atlas: atlas,
 			x: x, y: y,
 			width: width, height: height, padding: padding,
 			gridWidth: gridWidth, gridHeight: gridHeight,
@@ -100,8 +110,12 @@ class TileSet extends ScriptedResource implements Disposable {
 		
 		tiles << tile
 		
-		def tileFile = tile.folder.child(tile.filename)
-		addAssetDependency Texture, tileFile
+		if(tile.atlas) {
+			addAssetDependency TextureAtlas, tile.atlas
+		} else {
+			def tileFile = tile.folder.child(tile.filename)
+			addAssetDependency Texture, tileFile
+		}
 		
 		next()
 	}
@@ -168,6 +182,7 @@ class TileSet extends ScriptedResource implements Disposable {
 			DelegatingScript script) {
 		
 		final tileset = [
+			atlas: atlas,
 			width: width, height: height, padding: padding,
 			gridWidth: gridWidth, gridHeight: gridHeight,
 			surfaceOffset: surfaceOffset, altitudeOffset: altitudeOffset,
@@ -176,6 +191,8 @@ class TileSet extends ScriptedResource implements Disposable {
 			ruleHelpers: ruleHelpers
 		] as TileSet
 		configurer.accept tileset
+		
+		tileset.folder = tileset.scriptDirectory
 		
 		script.run()
 		
@@ -205,9 +222,8 @@ class TileSet extends ScriptedResource implements Disposable {
 	 * @param heights
 	 * @return
 	 */
+	@Deprecated
 	public Tile getCombinedTileFor(List<Tile> tiles, int[][] heights, EnumMap<TileCorner,Color> tints = new EnumMap(TileCorner)) {
-		
-		
 		
 		//
 		// "Normalize" the height-values so we can draw these tiles with their lowest corner(s)
@@ -356,7 +372,7 @@ class TileSet extends ScriptedResource implements Disposable {
 	}
 	
 	private List<Tile> searchMinimalTilesFor(int[][] heights,
-			EnumMap<TileCorner, List<String>> remainingFlavors, Set<Tile> currentTiles, boolean onlyDecorative) {
+			EnumMap<TileCorner, List<String>> remainingFlavors, Set<Tile> currentTiles, boolean onlyDecorative, int depth = 0) {
 		
 		boolean allDone = true
 		for (TileCorner corner : remainingFlavors.keySet()) {
@@ -411,7 +427,7 @@ class TileSet extends ScriptedResource implements Disposable {
 				final List<String> remaining = new LinkedList<String>(remainingFlavors[corner])
 				if(remaining != null)
 					if(tile.getProvision().containsKey(corner))
-						fulfillsAnyFlavors = fulfillsAnyFlavors || remaining.removeAll(tile.getProvision()[corner])
+						fulfillsAnyFlavors |= remaining.removeAll(tile.getProvision()[corner])
 				newRemaining[corner] = remaining
 			}
 			if (!fulfillsAnyFlavors)
@@ -439,7 +455,7 @@ class TileSet extends ScriptedResource implements Disposable {
 			
 			//
 			// Do the search and capture the results in the list.
-			final List<Tile> searchResult = searchMinimalTilesFor(heights, newRemaining, currentTiles, true)
+			final List<Tile> searchResult = searchMinimalTilesFor(heights, newRemaining, currentTiles, true, depth + 1)
 			if (searchResult != null)
 				currentTileList.addAll searchResult
 			

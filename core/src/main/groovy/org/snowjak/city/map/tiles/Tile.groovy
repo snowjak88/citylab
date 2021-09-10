@@ -19,6 +19,7 @@ class Tile implements Disposable {
 	
 	String id
 	
+	FileHandle atlas
 	FileHandle folder
 	String filename
 	
@@ -126,6 +127,7 @@ class Tile implements Disposable {
 		result = prime * result + ((base == null) ? 0 : base.hashCode())
 		result = prime * result + (decoration ? 1231 : 1237)
 		result = prime * result + ((filename == null) ? 0 : filename.hashCode())
+		result = prime * result + ((atlas == null) ? 0 : atlas.hashCode())
 		result = prime * result + ((folder == null) ? 0 : folder.path().hashCode())
 		result = prime * result + gridHeight
 		result = prime * result + gridWidth

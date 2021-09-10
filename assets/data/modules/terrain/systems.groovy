@@ -77,13 +77,8 @@ iteratingSystem 'pendingTerrainUpdatingSystem', Family.all(PendingTerrainTile).g
 		terrainTile.tiles.clear()
 		
 		final newTiles = pendingTerrain.future.get()
-		if(newTiles) {
-			final combinedTile = tileset.getCombinedTileFor(newTiles, pendingTerrain.heights)
-			if(combinedTile) {
-				terrainTile.tiles << combinedTile
-				state.disposables << combinedTile
-			}
-		}
+		if(newTiles)
+			terrainTile.tiles.addAll newTiles
 		
 		if(terrainTile.tiles.isEmpty())
 			entity.remove IsTerrainTile
