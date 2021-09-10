@@ -2,7 +2,6 @@
  * 
  */
 package org.snowjak.city
-import org.snowjak.city.module.Module
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 
@@ -10,6 +9,7 @@ import org.snowjak.city.input.GameInputProcessor
 import org.snowjak.city.input.hotkeys.HotkeyRegistry
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.renderer.RenderingHookRegistry
+import org.snowjak.city.module.Module
 import org.snowjak.city.module.ModuleExceptionRegistry
 import org.snowjak.city.screens.GameScreen.GameCameraControl
 import org.snowjak.city.service.GameAssetService
@@ -18,6 +18,7 @@ import org.snowjak.city.tools.ui.Toolbar
 
 import com.badlogic.ashley.core.Engine
 import com.badlogic.ashley.core.PooledEngine
+import com.badlogic.gdx.utils.Disposable
 
 import groovy.beans.Bindable
 
@@ -85,6 +86,13 @@ public class GameState {
 	 * Registry for Module-execution failures
 	 */
 	final ModuleExceptionRegistry moduleExceptionRegistry
+	
+	/**
+	 * If you need to create a Disposable resource manually and can't determine when
+	 * it should be disposed-of, add it to this set. It will be disposed automatically
+	 * when the application exits.
+	 */
+	final Set<Disposable> disposables = new LinkedHashSet<>()
 	
 	public GameState(GameAssetService assetService) {
 		this.moduleExceptionRegistry = new ModuleExceptionRegistry(assetService)

@@ -11,17 +11,19 @@ iteratingSystem 'newTerrainFittingSystem', Family.all(IsMapCell).exclude(IsTerra
 	final int cellX = mapCell.cellX
 	final int cellY = mapCell.cellY
 	
-	final terrainHeights = new int[2][2]
-	final terrainFlavors = new EnumMap(TileCorner)
+	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
+	
+	//	final heights = new int[2][2]
+	//	final flavors = new EnumMap(TileCorner)
+	
 	for(def corner : TileCorner.values()) {
-		terrainHeights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
-		terrainFlavors.put corner, ['grass']
+		pendingTerrain.heights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
+		pendingTerrain.flavors.put corner, ['grass']
 	}
 	
-	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
 	pendingTerrain.future = submitResultTask {
 		->
-		tileset.getMinimalTilesFor terrainHeights, terrainFlavors
+		tileset.getMinimalTilesFor pendingTerrain.heights, pendingTerrain.flavors
 	}
 	entity.add pendingTerrain
 	
@@ -35,16 +37,17 @@ iteratingSystem 'existingTerrainUpdatingSystem', Family.all(IsMapCell, NeedsRepl
 	
 	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
 	
-	final terrainHeights = new int[2][2]
-	final terrainFlavors = new EnumMap(TileCorner)
+	//	final heights = new int[2][2]
+	//	final flavors = new EnumMap(TileCorner)
+	
 	for(def corner : TileCorner.values()) {
-		terrainHeights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
-		terrainFlavors.put corner, ['grass']
+		pendingTerrain.heights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
+		pendingTerrain.flavors.put corner, ['grass']
 	}
 	
 	pendingTerrain.future = submitResultTask {
 		->
-		tileset.getMinimalTilesFor terrainHeights, terrainFlavors
+		tileset.getMinimalTilesFor pendingTerrain.heights, pendingTerrain.flavors
 	}
 	entity.add pendingTerrain
 	
@@ -71,10 +74,23 @@ iteratingSystem 'pendingTerrainUpdatingSystem', Family.all(PendingTerrainTile).g
 		else
 			terrainTile = entity.addAndReturn(state.engine.createComponent(IsTerrainTile))
 		
-		terrainTile.tiles = pendingTerrain.future.get() ?: []
+		terrainTile.tiles.clear()
+		
+		final newTiles = pendingTerrain.future.get()
+		if(newTiles) {
+			final combinedTile = tileset.getCombinedTileFor(newTiles, pendingTerrain.heights)
+			if(combinedTile) {
+				terrainTile.tiles << combinedTile
+				state.disposables << combinedTile
+			}
+		}
+		
+		if(terrainTile.tiles.isEmpty())
+			entity.remove IsTerrainTile
 	}
 	
 	entity.remove PendingTerrainTile
+	
 }
 
 //

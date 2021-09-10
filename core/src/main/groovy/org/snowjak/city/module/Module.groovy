@@ -332,6 +332,44 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.WindowIteratingSy
 	}
 	
 	/**
+	 * Create a new {@link BulkSystem}.
+	 * <p>
+	 * {@code implementation} is expected to be of the form:
+	 * <pre>
+	 * { Set<Entity> entities, float deltaTime -> ... }
+	 * </pre>
+	 * </p>
+	 * @param id
+	 * @param family
+	 * @param implementation
+	 */
+	public void bulkSystem(String id, Family family, Closure implementation) {
+		
+		if(isDependencyCheckingMode())
+			return
+		
+		final legalID = legalizeID(id)
+		final systemClassDefinition = '''
+class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.BulkSystem {
+	final Closure implementation
+	public ''' + legalID + '''(Family family, Closure implementation) {
+			super(family);
+			this.implementation = implementation
+		}
+		
+		protected void update(Set<Entity> entities, float deltaTime) { implementation(entities, deltaTime) }
+	}'''
+		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
+		final system = systemClass.newInstance(family, implementation)
+		
+		implementation.owner = system
+		implementation.delegate = this
+		implementation.resolveStrategy = Closure.DELEGATE_FIRST
+		
+		systems << ["$id" : system]
+	}
+	
+	/**
 	 * Create a new {@link ListeningSystem}.
 	 * <p>
 	 * Both {@code added} and {@code dropped} are expected to be of the form:

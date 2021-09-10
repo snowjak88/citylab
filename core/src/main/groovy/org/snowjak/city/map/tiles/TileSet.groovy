@@ -2,17 +2,22 @@
  * 
  */
 package org.snowjak.city.map.tiles
+import static com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888
+import static org.snowjak.city.util.Util.*
 
 import java.util.function.Consumer
 
-import org.snowjak.city.map.CityMap
+import org.codehaus.groovy.util.HashCodeHelper
 import org.snowjak.city.map.tiles.support.TileSupport
 import org.snowjak.city.resources.ScriptedResource
 import org.snowjak.city.util.validation.Validator
 import org.snowjak.city.util.validation.Validator.ValidationException
 
 import com.badlogic.gdx.files.FileHandle
+import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.utils.Disposable
 
 /**
@@ -179,6 +184,165 @@ class TileSet extends ScriptedResource implements Disposable {
 		tileset
 	}
 	
+	private static final CACHE_SIZE = 1024
+	private final transient LinkedHashMap<Integer,Tile> __combinedTiles = new LinkedHashMap<>(CACHE_SIZE, 0.75, true)
+	
+	/**
+	 * Construct a new Tile using the {@link #getMinimalTilesFor(int[][], EnumMap, List, boolean) minimal tile-set}
+	 * needed to meet the given constraints.
+	 * <p>
+	 * Because this method needs to create a new {@link Texture}, you must ensure this is called from the main (OpenGL) thread!
+	 * </p>
+	 * <p>
+	 * <strong>Note</strong> that, because this Tile's associated Texture is not managed by the application's AssetManager,
+	 * you the caller should ensure that this Tile is {@link Disposable#dispose() disposed of} when no longer needed --
+	 * probably by adding it to {@link GameState#disposables}.
+	 * </p>
+	 * <p>
+	 * If desired, you can supply a mapping from TileCorners to Colors. Each tile will use the Color (if any) corresponding to its {@link Tile#base}.
+	 * </p>
+	 * 
+	 * @param heights
+	 * @return
+	 */
+	public Tile getCombinedTileFor(List<Tile> tiles, int[][] heights, EnumMap<TileCorner,Color> tints = new EnumMap(TileCorner)) {
+		
+		
+		
+		//
+		// "Normalize" the height-values so we can draw these tiles with their lowest corner(s)
+		// at altitude = 0.
+		def altitudeNormalization = Integer.MAX_VALUE
+		def altitudeNormalizationCorner = null
+		for(def x in 0..1)
+			for(def y in 0..1)
+				if(heights[x][y] < altitudeNormalization) {
+					altitudeNormalization = heights[x][y]
+					altitudeNormalizationCorner = TileCorner.fromOffset(x, y)
+				}
+		
+		final int[][] normalizedHeights = new int[2][2]
+		for(def x in 0..1)
+			for(def y in 0..1)
+				normalizedHeights[x][y] = heights[x][y] - altitudeNormalization
+		
+		def hash = HashCodeHelper.initHash()
+		hash = HashCodeHelper.updateHash(hash, tiles.hashCode())
+		hash = HashCodeHelper.updateHash(hash, normalizedHeights)
+		hash = HashCodeHelper.updateHash(hash, tints)
+		
+		synchronized(__combinedTiles) {
+			if(__combinedTiles.containsKey(hash))
+				return __combinedTiles[hash]
+		}
+		
+		//
+		// Compute the maximum extents required by the found Tiles
+		def maxGridWidth = 0f
+		def maxGridHeight = 0f
+		def maxWidth = 0f
+		def maxHeight = 0f
+		def maxSurfaceOffset = 0f
+		def maxAltitudeOffset = 0f
+		def isDecoration = true
+		
+		final provision = new EnumMap<TileCorner,Set<String>>(TileCorner)
+		final rules = new LinkedHashSet<TileRule<TileSupport>>()
+		tiles.each { t ->
+			
+			if(maxGridWidth == 0 && maxGridHeight == 0) {
+				maxGridWidth = t.gridWidth
+				maxGridHeight = t.gridHeight
+				maxWidth = t.width
+				maxHeight = t.height
+				maxSurfaceOffset = t.surfaceOffset
+				maxAltitudeOffset = t.altitudeOffset
+				
+			} else {
+				
+				if(t.gridWidth > maxGridWidth)
+					maxWidth *= t.gridWidth / maxGridWidth
+				
+				if(t.gridHeight > maxGridHeight) {
+					final heightScale = t.gridHeight / maxGridHeight
+					maxHeight *= heightScale
+					maxSurfaceOffset *= heightScale
+					maxAltitudeOffset *= heightScale
+				}
+				
+				maxGridWidth = max( maxGridWidth, t.gridWidth)
+				maxGridHeight = max( maxGridHeight, t.gridHeight )
+				maxWidth = max( maxWidth, t.width )
+				maxHeight = max( maxHeight, t.height )
+				maxSurfaceOffset = max( maxSurfaceOffset, t.surfaceOffset )
+				maxAltitudeOffset = max( maxAltitudeOffset, t.altitudeOffset )
+				
+				isDecoration = isDecoration && t.decoration
+			}
+			
+			t.provision.each { c, p ->
+				provision.computeIfAbsent(c, { _ -> new LinkedHashSet<>() }).addAll p
+			}
+			
+			rules.addAll t.rules
+		}
+		
+		//
+		// Allocate a buffer onto which we can successively draw these tiles
+		final buffer = new Pixmap((int) maxWidth, (int) maxHeight, RGBA8888)
+		
+		//
+		// Draw these tiles onto the buffer.
+		tiles.each { t ->
+			final heightScale = t.gridHeight / maxGridHeight
+			
+			final int drawWidth = maxWidth
+			final int drawHeight = t.height * heightScale
+			
+			final altitude = heights[t.base.offsetX][t.base.offsetY] - altitudeNormalization
+			final altitudeOffset = t.altitudeOffset * heightScale * altitude
+			
+			final surfaceOffset = t.surfaceOffset * heightScale
+			
+			final int drawX = 0
+			final int drawY = height - altitudeOffset - maxSurfaceOffset + surfaceOffset
+			
+			final textureData = t.sprite.texture.textureData
+			if(!textureData.isPrepared())
+				textureData.prepare()
+			
+			buffer.color = Color.WHITE
+			if(tints)
+				if(tints[t.base])
+					buffer.color = tints[t.base]
+			
+			buffer.drawPixmap textureData.consumePixmap(), t.sprite.regionX, t.sprite.regionY, t.sprite.regionWidth, t.sprite.regionHeight, drawX, drawY, drawWidth, drawHeight
+		}
+		
+		final combinedTile = new Tile(
+				gridWidth: maxGridWidth, gridHeight: maxGridHeight,
+				width: maxWidth, height: maxHeight,
+				decoration: decoration,
+				base: altitudeNormalizationCorner,
+				altitudeOffset: maxAltitudeOffset,
+				surfaceOffset: maxSurfaceOffset,
+				sprite: new TextureRegion(new Texture(buffer)))
+		provision.each { corner, flavors -> combinedTile.provision[corner] = flavors }
+		combinedTile.rules.addAll rules
+		
+		synchronized(__combinedTiles) {
+			final int toRemove = max( 0, __combinedTiles.size() - CACHE_SIZE )
+			final combinedIterator = __combinedTiles.iterator()
+			for(def i=0; i<toRemove && combinedIterator.hasNext(); i++) {
+				combinedIterator.next()
+				combinedIterator.remove()
+			}
+			
+			__combinedTiles[hash] = combinedTile
+		}
+		combinedTile
+	}
+	
 	/**
 	 * Get the minimum set of Tiles that can fit the given constraints:
 	 * <ul>
@@ -196,7 +360,7 @@ class TileSet extends ScriptedResource implements Disposable {
 		
 		boolean allDone = true
 		for (TileCorner corner : remainingFlavors.keySet()) {
-			if (remainingFlavors.get(corner) != null && !remainingFlavors.get(corner).isEmpty()) {
+			if (remainingFlavors[corner] != null && !remainingFlavors[corner].isEmpty()) {
 				allDone = false
 				break
 			}
@@ -230,7 +394,7 @@ class TileSet extends ScriptedResource implements Disposable {
 				if (addsExtra)
 					break
 				for (String flavor : tile.getProvision().get(corner))
-					if (remainingFlavors.get(corner) != null && !remainingFlavors.get(corner).contains(flavor)) {
+					if (remainingFlavors[corner] != null && !remainingFlavors[corner].contains(flavor)) {
 						addsExtra = true
 						break
 					}
@@ -244,10 +408,10 @@ class TileSet extends ScriptedResource implements Disposable {
 			boolean fulfillsAnyFlavors = false
 			final EnumMap<TileCorner, List<String>> newRemaining = new EnumMap<>(TileCorner)
 			for (TileCorner corner : remainingFlavors.keySet()) {
-				final List<String> remaining = new LinkedList<String>(remainingFlavors.get(corner))
+				final List<String> remaining = new LinkedList<String>(remainingFlavors[corner])
 				if(remaining != null)
 					if(tile.getProvision().containsKey(corner))
-						fulfillsAnyFlavors = fulfillsAnyFlavors || remaining.removeAll(tile.getProvision().get(corner))
+						fulfillsAnyFlavors = fulfillsAnyFlavors || remaining.removeAll(tile.getProvision()[corner])
 				newRemaining[corner] = remaining
 			}
 			if (!fulfillsAnyFlavors)

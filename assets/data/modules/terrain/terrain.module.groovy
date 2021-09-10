@@ -55,7 +55,16 @@ class NeedsReplacementTerrainTile implements Component, Poolable {
 //
 class PendingTerrainTile implements Component, Poolable {
 	ListenableFuture<?> future
-	void reset() { future = null }
+	final int[][] heights = new int[2][2]
+	final EnumMap<TileCorner,List<String>> flavors = new EnumMap(TileCorner)
+	void reset() {
+		future = null
+		heights[0][0] = 0
+		heights[1][0] = 0
+		heights[0][1] = 0
+		heights[1][1] = 0
+		flavors.clear()
+	}
 }
 
 //

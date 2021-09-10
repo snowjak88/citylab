@@ -63,4 +63,20 @@ public enum TileCorner {
 		
 		return TileCorner.values()[oppositeIndex];
 	}
+	
+	public static TileCorner fromOffset(int offsetX, int offsetY) {
+		
+		for (TileCorner c : TileCorner.values())
+			if (offsetX == c.offsetX && offsetY == c.offsetY)
+				return c;
+		return null;
+	}
+	
+public static TileCorner fromDelta(int dx, int dy) {
+		
+		for (TileCorner c : TileCorner.values())
+			if (dx == c.dx && dy == c.dy)
+				return c;
+		return null;
+	}
 }

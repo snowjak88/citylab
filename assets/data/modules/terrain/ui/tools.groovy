@@ -54,6 +54,9 @@ invalidateNeighbors = { int vertexX, int vertexY ->
 		if(state.map.isValidCell(cx, cy))
 			state.map.getEntity(cx,cy)?.add( state.engine.createComponent( IsMapCellRearranged ) )
 	}
+	
+	if(state.map.isValidVertex(vertexX, vertexY))
+		state.map.getVertexEntity(vertexX, vertexY)?.add state.engine.createComponent( IsMapVertexRearranged )
 }
 
 modifyVertexAltitude = { int vertexX, int vertexY, desiredAltitude ->

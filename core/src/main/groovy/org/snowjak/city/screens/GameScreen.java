@@ -32,7 +32,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.FillViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
@@ -64,7 +64,7 @@ public class GameScreen extends AbstractGameScreen {
 	}
 	
 	private GameInputProcessor inputProcessor;
-	private final Viewport viewport = new FitViewport(8, 8);
+	private final Viewport viewport = new FillViewport(6, 6);
 	
 	private float cameraOffsetX, cameraOffsetY;
 	private boolean cameraUpdated = true;
@@ -145,6 +145,11 @@ public class GameScreen extends AbstractGameScreen {
 		inputProcessor.register(ScreenDragUpdateEvent.class, e -> inputHandler.dragUpdate(e.getX(), e.getY()));
 		inputProcessor.register(ScreenDragEndEvent.class, e -> inputHandler.dragEnd(e.getX(), e.getY()));
 		inputProcessor.register(ScrollEvent.class, e -> inputHandler.scroll(e.getAmountX(), e.getAmountY()));
+		
+		state.getModules().forEach((id, module) -> {
+			if (!module.getActivated())
+				module.getOnActivationActions().forEach(Runnable::run);
+		});
 	}
 	
 	@Override

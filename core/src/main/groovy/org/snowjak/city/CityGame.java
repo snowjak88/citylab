@@ -11,9 +11,11 @@ import org.snowjak.city.screens.AbstractGameScreen;
 import org.snowjak.city.screens.LoadingScreen;
 import org.snowjak.city.screens.MainMenuScreen;
 import org.snowjak.city.screens.loadingtasks.AssetServiceLoadingTask;
+import org.snowjak.city.service.GameService;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.utils.Disposable;
 import com.github.czyzby.autumn.context.ContextDestroyer;
 import com.github.czyzby.autumn.context.ContextInitializer;
 import com.github.czyzby.autumn.scanner.ClassScanner;
@@ -68,6 +70,7 @@ public class CityGame extends Game {
 	//
 	//
 	
+	private GameService gameService;
 	private LoadingScreen loadingScreen;
 	private MainMenuScreen mainMenuScreen;
 	private AssetServiceLoadingTask assetServiceLoadingTask;
@@ -103,6 +106,7 @@ public class CityGame extends Game {
 		initializer.scan(CityGame.class, scanner);
 		
 		initializer.doAfterInitiation((ctx) -> {
+			this.gameService = (GameService) ctx.getComponent(GameService.class);
 			this.loadingScreen = (LoadingScreen) ctx.getComponent(LoadingScreen.class);
 			this.mainMenuScreen = (MainMenuScreen) ctx.getComponent(MainMenuScreen.class);
 			this.assetServiceLoadingTask = (AssetServiceLoadingTask) ctx.getComponent(AssetServiceLoadingTask.class);
@@ -111,6 +115,10 @@ public class CityGame extends Game {
 		//
 		// Creating context:
 		destroyer = initializer.initiate();
+		
+		//
+		// Register the disposer
+		destroyer.addAction(() -> gameService.getState().getDisposables().forEach(Disposable::dispose));
 		
 		//
 		// Set the very first Screen instance -- the loading screen, currently

@@ -9,15 +9,11 @@ dependsOn 'terrain'
 // * Map-vertices can have a certain amount of water in them.
 //   A map-vertex can be fractionally-full of water.
 //
-// * Water can flow from map-vertices with water into those without or with less.
-//   This flow is also fractional, at some fixed rate.
-//   Flow occurs faster downhill than on the level.
+// * Some vertices are "flooded" -- that is, they don't participate in
+//   flow-checks. Probably, the only vertices in this category are
+//   those at or below sea-level and connected to the map-edge "infinite" vertices.
 //
-// * Watery vertices may find that they have no possible outflow-destinations,
-//  e.g., because all their destinations are too full. In such cases, we
-// should mark that vertex so we don't consider it for outflow unnecessarily.
-//
-// * Map-vertices that have enough water will get rendered as such.
+// * Map-vertices that have water will get rendered as such.
 //
 //
 // These mechanics are implemented by:
@@ -28,39 +24,9 @@ dependsOn 'terrain'
 //   The vertex may be an "infinite" source, in which case outflow
 //   does not diminish it, nor does inflow increase it.
 //
-// IsConnectedToInfiniteWater
-//   This vertex is connected (at whatever remove) to an infinite-
-//   water vertex.
-//
-// HasPendingWaterOutflow
-//   This vertex has some water scheduled to flow out of it
-//   into a specified adjoining vertex.
-//
-// NoPossibleWaterOutflow
-//   This vertex was examined already and we found no possible
-//   outflow vertices from it, given its water level.
-//   Don't consider this vertex for outflow.
-//
-//
-// WaterOutflowSchedulingSystem
-//   Every N seconds, examines those entities that HasWater.
-//   If possible, picks an adjoining entity that either has a
-//   lower water-level or no water at all. Adds PendingWaterFlow
-//   components to schedule the actual water-flow.
-//
-// WaterOutflowProcessingSystem
-//   All entities tagged with HasPendingWaterOutflow get that
-//   outflow executed and the Outflow component removed.
-//   NOTE that a vertex can be filled to overflowing (i.e., level > 1) with water.
-//
-// WaterOutflowReenableSystem
-//   When a map-cell is marked as IsMapCellRearranged, then all its
-//   corresponding vertices should have their NoPossibleOutflow component removed.
 //
 
-seaLevel = preferences.getInteger('seaLevel', 1)
-normalFlowRate = 0.5
-downhillFlowRate = normalFlowRate * 2
+seaLevel = preferences.getInteger('seaLevel', 0)
 
 tilesetName = preferences.getString('tileset-name', 'default')
 dependsOn tilesetName, TileSet
@@ -72,133 +38,210 @@ class HasWater implements Component, Poolable {
 		level = 0
 	}
 }
-class IsInfiniteWater implements Component, Poolable {
+
+class IsFlooded implements Component, Poolable {
 	void reset() { }
 }
-class IsConnectedToInfiniteWater implements Component, Poolable {
-	int toX, toY
-	void reset() {
-		toX = -1
-		toY = -1
-	}
+class IsFloodable implements Component, Poolable {
+	void reset() { }
 }
+
 class NeedsReplacementWaterTiles implements Component, Poolable {
-	final EnumSet<TileCorner> corners = EnumSet.noneOf(TileCorner)
-	void reset() {
-		corners.clear()
-	}
+	void reset() { }
 }
 class HasPendingWaterTiles implements Component, Poolable {
-	final EnumMap<TileCorner,ListenableFuture<List<Tile>>> futures = new EnumMap(TileCorner)
+	ListenableFuture<List<Tile>> future = null
+	final EnumMap<TileCorner,Color> tints = new EnumMap(TileCorner)
 	void reset() {
-		futures.clear()
+		future = null
+		tints.clear()
 	}
 }
 class HasWaterTiles implements Component, Poolable {
-	final EnumMap<TileCorner,List<Tile>> tiles = new EnumMap(TileCorner)
+	final List<Tile> tiles = []
+	final EnumMap<TileCorner,Color> tints = new EnumMap(TileCorner)
 	void reset() {
 		tiles.clear()
+		tints.clear()
 	}
-}
-class HasPendingWaterOutflow implements Component, Poolable {
-	float amount
-	int toX = -1, toY = -1
-	void reset() {
-		amount = 0
-		toX = -1
-		toY = -1
-	}
-}
-class NoPossibleWaterOutflow implements Component, Poolable {
-	void reset() { }
 }
 
 isCellMapper = ComponentMapper.getFor(IsMapCell)
 isVertexMapper = ComponentMapper.getFor(IsMapVertex)
+
 hasWaterMapper = ComponentMapper.getFor(HasWater)
+isFloodedMapper = ComponentMapper.getFor(IsFlooded)
+isFloodableMapper = ComponentMapper.getFor(IsFloodable)
+
 needsReplacementMapper = ComponentMapper.getFor(NeedsReplacementWaterTiles)
 hasPendingTilesMapper = ComponentMapper.getFor(HasPendingWaterTiles)
 hasWaterTilesMapper = ComponentMapper.getFor(HasWaterTiles)
-hasPendingOutflowMapper = ComponentMapper.getFor(HasPendingWaterOutflow)
 
-createWaterSource = { int vx, int vy, boolean infinite = false, float level = 1 ->
-	
-	Entity entity = state.map.getVertexEntity(vx, vy)
-	
-	HasWater hasWater
-	if(hasWaterMapper.has( entity ))
-		hasWater = hasWaterMapper.get( entity )
-	else {
-		hasWater = entity.addAndReturn( state.engine.createComponent(HasWater) )
-	}
-	
-	hasWater.level = level
-	
-	if(infinite)
-		entity.add state.engine.createComponent( IsInfiniteWater )
-	
-	markVertexCellsForWaterTileFitting vx, vy
-}
-
-markVertexCellsForWaterTileFitting = { int vx, int vy ->
-	final vertexEntity = state.map.getVertexEntity(vx, vy)
-	final isWatery = hasWaterMapper.has(vertexEntity)
-	
-	for(def corner : TileCorner.values()) {
-		final int cx = vx - corner.offsetX
-		final int cy = vy - corner.offsetY
-		if(!state.map.isValidCell(cx, cy))
-			continue
-		
-		final cellEntity = state.map.getEntity(cx, cy)
-		def replacementTiles
-		if(needsReplacementMapper.has(cellEntity))
-			replacementTiles = needsReplacementMapper.get(cellEntity)
-		else
-			replacementTiles = cellEntity.addAndReturn( state.engine.createComponent(NeedsReplacementWaterTiles) )
-		
-		replacementTiles.corners << corner
-	}
-}
+//
+//
+// This holds the set of all vertices that are flooded
+allFloodedVertices = new LinkedHashSet<>()
 
 onActivate {
 	->
 	
+	allFloodedVertices.clear()
+	
 	//
-	// ensure that all vertices at or below sea-level are marked as water-sources
-	// *edge* vertices should be *infinite*
+	// ensure that all edge-vertices at or below sea-level are marked as water-sources
 	final maxX = state.map.width
 	final maxY = state.map.height
 	
 	for(def x=0; x<=maxX; x++)
 		for(def y=0; y<=maxY; y++) {
-			if(state.map.getVertexAltitude(x,y) <= seaLevel)
-				createWaterSource x, y, (x == 0 || y == 0 || x == maxX || y == maxY), 1
+			if(state.map.getVertexAltitude(x,y) <= seaLevel) {
+				final entity = state.map.getVertexEntity(x,y)
+				
+				entity.add state.engine.createComponent(IsFloodable)
+				entity.add state.engine.createComponent(IsFlooded)
+				
+				final water = entity.addAndReturn( state.engine.createComponent(HasWater) )
+				water.level = 1
+			}
 		}
 }
 
-include 'flow.groovy'
+//
+// Deltas for neighboring vertices (because we don't
+// allow diagonal connections between vertices).
+final neighbors = [
+	[-1, 0],
+	[+1, 0],
+	[0, -1],
+	[0, +1]
+]
 
-//intervalIteratingSystem 'waterEvaporationSystem', Family.all(IsMapVertex, HasWater).exclude(HasPendingWaterOutflow).get(), 5.0, { entity, deltaTime ->
-//	final thisVertex = isVertexMapper.get(entity)
-//	final int vx = thisVertex.vertexX
-//	final int vy = thisVertex.vertexY
-//	final thisWater = hasWaterMapper.get(entity)
-//	
-//	if(thisWater.infinite)
-//		return
-//	
-//	if(thisWater.level < 0.9)
-//		thisWater.level -= normalFlowRate / 4f
-//	
-//	if(thisWater.level <= normalFlowRate)
-//		entity.remove HasWater
-//		
-//	markVertexCellsForWaterTileFitting vx, vy
-//}
+//
+// Keep the "allFloodedVertices" set up-to-date.
+listeningSystem 'waterFloodedVertexListeningSystem', Family.all(IsFlooded).get(), { entity, deltaTime ->
+	allFloodedVertices << entity
+}, { entity, deltaTime ->
+	allFloodedVertices.remove entity
+}
+
+//
+// Check every Floodable entity to see if it can flood into neighboring vertices
+intervalIteratingSystem 'waterFloodablePropagationSystem', Family.all(IsMapVertex, IsFloodable, HasWater).get(), 0.5f, { entity, deltaTime ->
+	
+	final thisVertex = isVertexMapper.get(entity)
+	final int vx = thisVertex.vertexX
+	final int vy = thisVertex.vertexY
+	
+	final thisAltitude = state.map.getVertexAltitude(vx,vy)
+	
+	final thisWater = hasWaterMapper.get(entity)
+	
+	final validFloodTargets = []
+	for(def neighbor : neighbors) {
+		def (int dx, int dy) = neighbor
+		final int nx = vx + dx, ny = vy + dy
+		if(!state.map.isValidVertex(nx,ny))
+			continue
+		
+		final neighborEntity = state.map.getVertexEntity(nx,ny)
+		
+		if(isFloodedMapper.has(neighborEntity))
+			continue
+		if(isFloodableMapper.has(neighborEntity))
+			continue
+		
+		final neighborAltitude = state.map.getVertexAltitude(nx,ny)
+		
+		def isValidFloodTarget = false
+		if(neighborAltitude <= thisAltitude)
+			isValidFloodTarget = true
+		else if(neighborAltitude <= seaLevel)
+			isValidFloodTarget = true
+		
+		if(isValidFloodTarget)
+			validFloodTargets << neighborEntity
+	}
+	
+	//
+	// If we've flooded everywhere we can, then this vertex should not be checked
+	// anymore for flooding-from.
+	if(validFloodTargets.isEmpty()) {
+		entity.remove IsFloodable
+		return
+	}
+	
+	//
+	// Pick a flood-target at random. Mark it as both Flooded and Floodable.
+	
+	final floodTargetIndex = state.rnd.nextInt( validFloodTargets.size() )
+	final floodEntity = validFloodTargets[ floodTargetIndex ]
+	floodEntity.add state.engine.createComponent(IsFlooded)
+	floodEntity.add state.engine.createComponent(IsFloodable)
+	final floodWater = floodEntity.addAndReturn( state.engine.createComponent( HasWater ) )
+	floodWater.level = thisWater.level
+}
+
+//
+// Whenever a map-vertex is marked as "rearranged", we need to ensure our water responds appropriately.
+listeningSystem 'waterMapCellRearrangementSystem', Family.all(IsMapVertex, IsMapVertexRearranged).one(IsFlooded).get(), { entity, deltaTime ->
+	
+	final thisVertex = isVertexMapper.get(entity)
+	final int vx = thisVertex.vertexX
+	final int vy = thisVertex.vertexY
+	
+	//
+	// If a Flooded vertex is rearranged, then:
+	//
+	//   1) that vertex loses its Flooded status and its HasWater
+	//   2) its surrounding Flooded vertices become Floodable
+	//
+	if(isFloodedMapper.has(entity)) {
+		
+		entity.remove IsFlooded
+		entity.remove HasWater
+		
+		for(def neighbor : neighbors) {
+			def (int dx, int dy) = neighbor
+			final int nx = vx + dx, ny = vy + dy
+			if(!state.map.isValidVertex(nx,ny))
+				continue
+			
+			final neighborEntity = state.map.getVertexEntity(nx,ny)
+			
+			if(isFloodedMapper.has(neighborEntity))
+				neighborEntity.add state.engine.createComponent(IsFloodable)
+		}
+		
+	}
+	
+}, {entity, deltaTime ->
+	
+}
+
+//
+// Whenever a vertex is tagged as HasWater, ensure its surrounding cells are marked as NeedsReplacementWaterTiles
+setSurroundingTilesForReplacement = { entity, deltaTime ->
+	final thisVertex = isVertexMapper.get(entity)
+	final int vx = thisVertex.vertexX
+	final int vy = thisVertex.vertexY
+	
+	for(def corner : TileCorner.values()) {
+		final int cx = vx - corner.offsetX
+		final int cy = vy - corner.offsetY
+		if(!state.map.isValidCell(cx,cy))
+			continue
+		
+		final cellEntity = state.map.getEntity(cx,cy)
+		
+		if(!needsReplacementMapper.has(cellEntity))
+			cellEntity.add state.engine.createComponent( NeedsReplacementWaterTiles )
+	}
+}
+listeningSystem 'waterNewHasWaterListeningSystem', Family.all(IsMapVertex, HasWater, IsFlooded).get(), setSurroundingTilesForReplacement, setSurroundingTilesForReplacement
 
 
-iteratingSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, NeedsReplacementWaterTiles).exclude(HasPendingWaterTiles).get(), { entity, deltaTime ->
+
+windowIteratingSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, NeedsReplacementWaterTiles).exclude(HasPendingWaterTiles).get(), 16, { entity, deltaTime ->
 	final mapCell = isCellMapper.get(entity)
 	final int cx = mapCell.cellX
 	final int cy = mapCell.cellY
@@ -207,62 +250,44 @@ iteratingSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, NeedsR
 	
 	final pendingWaterTiles = entity.addAndReturn( state.engine.createComponent( HasPendingWaterTiles ) )
 	
-	final cornerHeights = new int[2][2]
-	for(TileCorner corner : TileCorner.values())
-		cornerHeights[corner.offsetX][corner.offsetY] = Util.max( seaLevel, state.map.getCellAltitude(cx, cy, corner) )
-	
-	//
-	// This cell is tagged as needing a replacement water-tile for one or more corners.
-	// Go through this list and see if any given corner should have water, or should lose water.
-	// Then start the search for water-tiles to find tile(s) for that corner.
-	replacements.corners.each { corner ->
+	final int[][] heights = new int[2][2]
+	final flavors = new EnumMap(TileCorner)
+	for(TileCorner corner : TileCorner.values()) {
+		heights[corner.offsetX][corner.offsetY] = Util.max( seaLevel, state.map.getCellAltitude(cx, cy, corner) )
 		
 		final int vx = cx + corner.offsetX
 		final int vy = cy + corner.offsetY
 		
-		final cornerFlavors = new EnumMap(TileCorner)
-		cornerFlavors.put corner, []
+		flavors[corner] = []
 		if(state.map.isValidVertex(vx,vy)) {
 			final vertexEntity = state.map.getVertexEntity(vx,vy)
-			if(hasWaterMapper.has(vertexEntity))
-				cornerFlavors.get(corner) << 'water'
+			if(hasWaterMapper.has(vertexEntity)) {
+				flavors[corner] << 'water'
+				
+				final hasWater = hasWaterMapper.get(vertexEntity)
+				pendingWaterTiles.tints[corner] = new Color(1, 1, 1, Util.clamp(hasWater.level, 0, 0.8))
+			}
 		}
 		
-		pendingWaterTiles.futures.put corner, submitResultTask( { ->
-			tileset.getMinimalTilesFor cornerHeights, cornerFlavors
-		} )
+	}
+	
+	pendingWaterTiles.future = submitResultTask {
+		->
+		tileset.getMinimalTilesFor heights, flavors
 	}
 	
 	entity.remove NeedsReplacementWaterTiles
 }
 
-iteratingSystem 'waterTileProcessingSystem', Family.all(IsMapCell, HasPendingWaterTiles).get(), { entity, deltaTime ->
+windowIteratingSystem 'waterTileProcessingSystem', Family.all(IsMapCell, HasPendingWaterTiles).get(), 16, { entity, deltaTime ->
 	final mapCell = isCellMapper.get(entity)
 	final int cx = mapCell.cellX
 	final int cy = mapCell.cellY
 	
 	final pendingTiles = hasPendingTilesMapper.get(entity)
 	
-	def anyFinished = false
-	final finishedCorners = new EnumMap(TileCorner)
-	pendingTiles.futures.forEach { c, f ->
-		if(f.isDone()) {
-			anyFinished = true
-			finishedCorners.put c, f.get()
-			println "Got tile-fitting result for $cx,$cy ($c) - ${finishedCorners.get(c)}"
-		}
-	}
-	
-	if(!anyFinished)
+	if(!pendingTiles.future.isDone())
 		return
-	
-	finishedCorners.forEach { c, _ -> pendingTiles.futures.remove c }
-	if(pendingTiles.futures.isEmpty())
-		entity.remove HasPendingWaterTiles
-	
-//	final mapCell = isCellMapper.get(entity)
-//	final int cx = mapCell.cellX
-//	final int cy = mapCell.cellY
 	
 	def waterTiles
 	if(hasWaterTilesMapper.has(entity))
@@ -270,19 +295,19 @@ iteratingSystem 'waterTileProcessingSystem', Family.all(IsMapCell, HasPendingWat
 	else
 		waterTiles = entity.addAndReturn( state.engine.createComponent(HasWaterTiles) )
 	
-	finishedCorners.forEach {c, t ->
-		waterTiles.tiles.put c, t
+	waterTiles.tiles.clear()
+	waterTiles.tints.clear()
+	
+	final newTiles = pendingTiles.future.get()
+	if(newTiles) {
+		waterTiles.tiles.addAll newTiles
+		waterTiles.tints.putAll pendingTiles.tints
 	}
 	
-	//
-	// Did we just remove all water-tiles from this HasWaterTiles component?
-	def allEmpty = true
-	waterTiles.tiles.forEach { c, t ->
-		if(t != null && !t.isEmpty())
-			allEmpty = false
-	}
-	if(allEmpty)
+	if(waterTiles.tiles.isEmpty())
 		entity.remove HasWaterTiles
+	
+	entity.remove HasPendingWaterTiles
 }
 
 include 'renderer.groovy'
