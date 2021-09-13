@@ -1,11 +1,13 @@
 id = 'terrain'
-description = 'Handles fitting terrain-tiles to the map.'
-
-dependsOn 'cursor-highlighters'
 
 //
 // Ensure our I18N bundle is properly registered.
 i18n.addBundle 'i18n/terrain'
+
+title = i18n.get('title')
+description = i18n.get('description')
+
+dependsOn 'cursor-highlighters'
 
 //
 // Get the configured tile-set name to use for the landscape,
@@ -19,6 +21,23 @@ tilesetName = preferences.getString('tileset-name', 'default')
 //
 dependsOn tilesetName, TileSet
 tileset = assets.getByID tilesetName, TileSet
+
+//
+// Define a "visual parameter" -- i.e., a GUI element that can be
+// displayed by the game-setup screen.
+//
+visualParameter {
+	title = i18n.get('terrain-tileset')
+	type = select {
+		values = { assets.getAllByType(TileSet) }
+		toString = { ts -> ts.title }
+	}
+	value = tileset
+	onSet = { v ->
+		tileset = v
+		preferences.putString 'tileset-name', v.id
+	}
+}
 
 //
 // We need to declare a couple of components for this Module to work.

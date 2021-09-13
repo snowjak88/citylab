@@ -85,6 +85,7 @@ class ModuleExceptionRegistry {
 		TOOL_ACTIVATE('module-failure-tool-activate'),
 		TOOL_UPDATE('module-failure-tool-update'),
 		TOOL_DEACTIVATE('module-failure-tool-deactivate'),
+		VISUAL_PARAMETER('module-failure-visualparameter'),
 		OTHER('module-failure-other');
 		
 		final String bundleKey

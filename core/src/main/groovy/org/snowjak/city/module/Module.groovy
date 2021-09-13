@@ -13,6 +13,7 @@ import org.snowjak.city.map.renderer.hooks.CellRenderingHook
 import org.snowjak.city.map.renderer.hooks.CustomRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
+import org.snowjak.city.module.ui.VisualParameter
 import org.snowjak.city.resources.ScriptedResource
 import org.snowjak.city.service.GameService
 import org.snowjak.city.service.I18NService
@@ -47,7 +48,7 @@ import com.google.common.util.concurrent.ListenableFuture
  */
 public class Module extends ScriptedResource {
 	
-	String description
+	String title = "(?)", description = "(?)"
 	boolean enabled = true
 	
 	private final PreferencesService preferencesService
@@ -97,6 +98,8 @@ public class Module extends ScriptedResource {
 	
 	final Map<String,ToolGroup> toolGroups = [:]
 	final Map<String,Tool> tools = [:]
+	
+	final List<VisualParameter> visualParameters = []
 	
 	Module(GameService gameService, PreferencesService preferencesService, I18NService i18nService) {
 		super()
@@ -161,6 +164,21 @@ public class Module extends ScriptedResource {
 		hook.owner = newHook
 		customRenderingHooks << newHook
 		newHook.relativePriority
+	}
+	
+	/**
+	 * Define a new VisualParameter.
+	 */
+	public void visualParameter(@DelegatesTo(VisualParameter) Closure parameterSpec) {
+		if(isDependencyCheckingMode())
+			return
+		
+		final parameter = new VisualParameter(this)
+		parameterSpec.delegate = parameter
+		parameterSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		parameterSpec()
+		
+		visualParameters << parameter
 	}
 	
 	private String legalizeID(String id) {

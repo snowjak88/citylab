@@ -106,4 +106,17 @@ public class ScriptedResourceAssetProvider {
 		
 		assetService.getByID id, type
 	}
+	
+	/**
+	 * Get all successfully-loaded {@link ScriptedResource}s of the given {@code type}.
+	 * @param <T>
+	 * @param type
+	 * @return
+	 */
+	public <T extends ScriptedResource> Collection<T> getAllByType(Class<T> type) {
+		if(resource.dependencyCheckingMode)
+			return Collections.emptyList()
+		
+		assetService.getAllByType type
+	}
 }
