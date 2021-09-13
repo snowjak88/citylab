@@ -101,8 +101,8 @@ public class Module extends ScriptedResource {
 	
 	final List<VisualParameter> visualParameters = []
 	
-	Module(GameService gameService, PreferencesService preferencesService, I18NService i18nService) {
-		super()
+	Module(GameService gameService, PreferencesService preferencesService, I18NService i18nService, Binding binding = new Binding()) {
+		super(binding)
 		this.preferencesService = preferencesService
 		this.gameService = gameService
 		this.i18nService = i18nService
@@ -517,7 +517,7 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 	@Override
 	protected ScriptedResource executeInclude(FileHandle includeHandle, Consumer<ScriptedResource> configurer, DelegatingScript script) {
 		
-		final module = new Module(gameService, preferencesService, i18nService)
+		final module = new Module(gameService, preferencesService, i18nService, binding)
 		configurer.accept module
 		
 		module.id = this.id
@@ -533,7 +533,6 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 		this.customRenderingHooks.addAll module.customRenderingHooks
 		this.toolGroups.putAll module.toolGroups
 		this.tools.putAll module.tools
-		module.binding.variables.each { n,v -> this.binding[n] = v }
 		this.providedObjects.putAll module.providedObjects
 		
 		module

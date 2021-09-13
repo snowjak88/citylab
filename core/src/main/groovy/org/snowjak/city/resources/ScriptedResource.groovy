@@ -46,13 +46,16 @@ public abstract class ScriptedResource {
 	
 	ScriptedResourceAssetProvider assets
 	
-	final Binding binding = new Binding()
+	final Binding binding
 	final Map<String,Set<String>> imports = [:]
 	final Map<String,Object> providedObjects = [:]
 	private final Map<Class<?>, Set<String>> scriptedDependencies = [:]
 	private final Map<FileHandle, Class<?>> assetDependencies = [:]
 	
-	public ScriptedResource() {
+	public ScriptedResource(Binding binding = new Binding()) {
+		
+		this.binding = binding
+		
 		ScriptedResource.metaClass.methodMissing = { name, args ->
 			getProperty(name).call(*args)
 		}

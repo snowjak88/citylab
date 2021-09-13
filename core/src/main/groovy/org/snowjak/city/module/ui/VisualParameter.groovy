@@ -1,8 +1,8 @@
 package org.snowjak.city.module.ui
-
 import java.util.function.Consumer
 
 import org.snowjak.city.module.Module
+import org.snowjak.city.module.ui.parametertypes.IntSpinnerParameter
 import org.snowjak.city.module.ui.parametertypes.SelectParameter
 import org.snowjak.city.module.ui.parametertypes.VisualParameterType
 
@@ -61,10 +61,26 @@ class VisualParameter {
 	public VisualParameterType select(@DelegatesTo(SelectParameter) Closure selectSpec) {
 		final select = new SelectParameter(this)
 		
+		selectSpec.owner = this
 		selectSpec.delegate = select
 		selectSpec.resolveStrategy = Closure.DELEGATE_FIRST
 		selectSpec()
 		
 		select
+	}
+	
+	/**
+	 * Configure an {@link org.snowjak.city.util.ui.IntSpinnerField IntSpinnerField}.
+	 * @param spinnerSpec
+	 * @return
+	 */
+	public VisualParameterType intSpinner(@DelegatesTo(IntSpinnerParameter) Closure spinnerSpec) {
+		final spinner = new IntSpinnerParameter(this)
+		spinnerSpec.owner = this
+		spinnerSpec.delegate = spinner
+		spinnerSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		spinnerSpec()
+		
+		spinner
 	}
 }

@@ -9,7 +9,7 @@ cellRenderHook 'waterRender', { delta, cellX, cellY, support ->
 				// Do we need to override this tile's rendered altitude?
 				// If it'd be less than sea-level, then YES
 				//
-				final renderedAltitude = Util.max( seaLevel, state.map.getCellAltitude(cellX, cellY, tile.base) )
+				final renderedAltitude = seaLevel // Util.max( seaLevel, state.map.getCellAltitude(cellX, cellY, tile.base) )
 				support.renderTile cellX, cellY, tile, waterTiles.tints[tile.base], renderedAltitude
 				
 			}

@@ -14,7 +14,7 @@ dependsOn tilesetName, TileSet
 tileset = assets.getByID tilesetName, TileSet
 
 visualParameter {
-	title = i18n.get('water-tileset')
+	title = i18n.get('parameter-tileset')
 	type = select {
 		values = { assets.getAllByType(TileSet) }
 		toString = { ts -> ts.title }
@@ -26,7 +26,23 @@ visualParameter {
 	}
 }
 
+//
+
 seaLevel = preferences.getInteger('seaLevel', 0)
+
+visualParameter {
+	title = i18n.get('parameter-sealevel')
+	type = intSpinner {
+		min = 0
+		max = 3
+		step = 1
+	}
+	value = seaLevel
+	onSet = { v ->
+		seaLevel = v
+		preferences.putInteger 'sealevel', v
+	}
+}
 
 //
 // Water-propagation is governed by a few basic mechanics:
