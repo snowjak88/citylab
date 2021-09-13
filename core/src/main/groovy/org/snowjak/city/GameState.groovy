@@ -11,6 +11,7 @@ import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.renderer.RenderingHookRegistry
 import org.snowjak.city.module.Module
 import org.snowjak.city.module.ModuleExceptionRegistry
+import org.snowjak.city.screens.GameScreen
 import org.snowjak.city.screens.GameScreen.GameCameraControl
 import org.snowjak.city.service.GameAssetService
 import org.snowjak.city.tools.Tool
@@ -53,7 +54,7 @@ public class GameState {
 	final HotkeyRegistry hotkeys = new HotkeyRegistry()
 	
 	/**
-	 * All loaded {@link Module}s, by id
+	 * All loaded, enabled, and initialized {@link Module}s, by id
 	 */
 	final Map<String,Module> modules = new LinkedHashMap<>()
 	

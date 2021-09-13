@@ -49,6 +49,9 @@ public class GameSetupMenuPage implements MainMenuPage {
 	private Button mapWidthIncrease, mapWidthDecrease, mapHeightIncrease, mapHeightDecrease;
 	
 	private SelectBox<MapGenerator> mapGeneratorSelection;
+	
+	private TextField seedField;
+	
 	private TextButton startGameButton;
 	
 	private Runnable onGameStart;
@@ -58,11 +61,11 @@ public class GameSetupMenuPage implements MainMenuPage {
 	@Initiate(priority = InitPriority.LOW_PRIORITY)
 	public void init() {
 		
-		final Skin defaultSkin = skinService.getCurrent();
+		final Skin skin = skinService.getCurrent();
 		
-		mapWidthField = new TextField(Integer.toString(param.getMapWidth()), defaultSkin);
-		mapWidthIncrease = new Button(defaultSkin, "plus");
-		mapWidthDecrease = new Button(defaultSkin, "minus");
+		mapWidthField = new TextField(Integer.toString(param.getMapWidth()), skin);
+		mapWidthIncrease = new Button(skin, "plus");
+		mapWidthDecrease = new Button(skin, "minus");
 		
 		mapWidthField.setProgrammaticChangeEvents(true);
 		mapWidthField.addListener(new ChangeListener() {
@@ -121,9 +124,9 @@ public class GameSetupMenuPage implements MainMenuPage {
 			}
 		});
 		
-		mapHeightField = new TextField(Integer.toString(param.getMapHeight()), defaultSkin);
-		mapHeightIncrease = new Button(defaultSkin, "plus");
-		mapHeightDecrease = new Button(defaultSkin, "minus");
+		mapHeightField = new TextField(Integer.toString(param.getMapHeight()), skin);
+		mapHeightIncrease = new Button(skin, "plus");
+		mapHeightDecrease = new Button(skin, "minus");
 		
 		mapHeightField.setProgrammaticChangeEvents(true);
 		mapHeightField.addListener(new ChangeListener() {
@@ -182,7 +185,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 			}
 		});
 		
-		mapGeneratorSelection = new SelectBox<MapGenerator>(defaultSkin) {
+		mapGeneratorSelection = new SelectBox<MapGenerator>(skin) {
 			
 			@Override
 			protected String toString(MapGenerator item) {
@@ -203,7 +206,20 @@ public class GameSetupMenuPage implements MainMenuPage {
 			}
 		});
 		
-		startGameButton = new TextButton(i18nService.get("menu-gamesetup-start"), defaultSkin);
+		seedField = new TextField("", skin);
+		seedField.setText(param.getSeed());
+		seedField.setMessageText(i18nService.get("menu-gamesetup-seed-blank"));
+		seedField.addListener(new ChangeListener() {
+			
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				
+				final TextField tf = (TextField) actor;
+				param.setSeed(tf.getText());
+			}
+		});
+		
+		startGameButton = new TextButton(i18nService.get("menu-gamesetup-start"), skin);
 		startGameButton.addListener(new ChangeListener() {
 			
 			@Override
@@ -222,17 +238,24 @@ public class GameSetupMenuPage implements MainMenuPage {
 		mapHeightButtons.addActor(mapHeightDecrease);
 		mapHeightButtons.addActor(mapHeightIncrease);
 		
-		root = new Table(defaultSkin);
+		root = new Table(skin);
 		root.row().spaceBottom(15).spaceRight(5);
 		root.add(i18nService.get("menu-gamesetup-map-width")).right().expandX();
 		root.add(mapWidthField);
 		root.add(mapWidthButtons).left();
+		
 		root.row().spaceBottom(15).spaceRight(5);
 		root.add(i18nService.get("menu-gamesetup-map-height")).right().expandX();
 		root.add(mapHeightField, mapHeightButtons);
+		
 		root.row().spaceBottom(15).spaceRight(5);
 		root.add(i18nService.get("menu-gamesetup-map-generator"));
 		root.add(mapGeneratorSelection).colspan(2).fillX();
+		
+		root.row().spaceBottom(15).spaceRight(5);
+		root.add(i18nService.get("menu-gamesetup-seed"));
+		root.add(seedField).colspan(2).fillX();
+		
 		root.row().spaceBottom(15).spaceRight(5);
 		root.add(startGameButton).colspan(3).right();
 		

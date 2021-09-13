@@ -295,9 +295,10 @@ class GameService {
 		progressReporter?.accept 0
 		
 		for(Module m : modules) {
-			initializeModule m, { p ->
-				progressReporter?.accept p / progressStep + progress
-			}
+			if(m.enabled)
+				initializeModule m, { p ->
+					progressReporter?.accept p / progressStep + progress
+				}
 			
 			progress += progressStep
 		}
@@ -320,9 +321,10 @@ class GameService {
 		progressReporter?.accept 0
 		
 		for(Module m : assetService.getAllByType(Module)) {
-			uninitializeModule m, { p ->
-				progressReporter p / progressStep + progress
-			}
+			if(m.enabled)
+				uninitializeModule m, { p ->
+					progressReporter p / progressStep + progress
+				}
 			
 			progress += progressStep
 		}
@@ -343,7 +345,7 @@ class GameService {
 		
 		final overriddenModule = state.modules.put(module.id, module)
 		if(overriddenModule)
-			LOG.info "Module overrides a previously-loaded module (${overriddenModule.scriptFile.path()}"
+			throw new RuntimeException("Looks like we've already initialized a module with the same ID -- ${overriddenModule.scriptFile.path()}. The GameAssetService should never have let this happen.")
 		
 		//
 		// Register rendering hooks with the main GameData instance
@@ -375,6 +377,12 @@ class GameService {
 				final overriddenTool = state.tools[toolEntry.key]
 				if(overriddenTool)
 					LOG.info "Overrode Tool from \"${overriddenTool.module.id}\" [${overriddenTool.module.scriptFile.path()}]"
+				
+				for(def hotkey : toolEntry.value.hotkeys) {
+					LOG.info "Registering tool hotkey \"${hotkey.key}\" = \"${hotkey.value.toString()}\" ..."
+					final tool = toolEntry.value
+					state.hotkeys.register hotkey.value, { -> tool.toggle() }
+				}
 				
 				state.tools << ["$toolEntry.key" : toolEntry.value]
 			}
@@ -426,8 +434,13 @@ class GameService {
 		
 		if(!module.tools.isEmpty()) {
 			LOG.info "Removing tools ..."
-			for(def tool : module.tools)
+			for(def tool : module.tools) {
+				
+				for(def hotkey : tool.value.hotkeys)
+					state.hotkeys.unregister hotkey.value
+				
 				state.tools.remove tool.key
+			}
 			
 			initializeToolbar()
 		}

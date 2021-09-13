@@ -72,6 +72,11 @@ public class GameAssetService extends AssetManager {
 	 */
 	private final Map<Class<?>, Map<String, FileHandle>> scriptedResourceIDs = new LinkedHashMap<>()
 	
+	/**
+	 * List of <em>overridden</em> {@link FileHandle}s, by resource-type
+	 */
+	private final Map<Class<?>, Map<String,List<FileHandle>>> scriptedResourceOverrides = new LinkedHashMap<>()
+	
 	private final Map<Class<?>, Map<Class<? extends Throwable>, Set<BiConsumer<AssetDescriptor<?>, Throwable>>>> exceptionHandlers = new LinkedHashMap<>()
 	private final LinkedList<Runnable> onLoadActions = new LinkedList<>()
 	
@@ -228,15 +233,10 @@ public class GameAssetService extends AssetManager {
 	@Override
 	public synchronized void unload(String name) {
 		
-		final resourceEntries = scriptedResourceIDs.findAll { type, resources -> resources.containsKey(name) }
+		final resourceEntry = scriptedResourceIDs.find { type, resources -> resources.containsKey(name) }
 		
-		if(resourceEntries.size() > 1)
-			throw new IllegalArgumentException("Cannot unload resource by name -- multiple resources match the given name \"{0}\". You must use unload(name, type) instead!", name)
-		
-		if(!resourceEntries.isEmpty()) {
-			
-			for(def resourceEntry : resourceEntries)
-				unload name, resourceEntry.key
+		if(resourceEntry.value) {
+			unload resourceEntry.value.value.path(), resourceEntry.key
 			
 		} else
 			super.unload name
@@ -248,18 +248,19 @@ public class GameAssetService extends AssetManager {
 	 * @param name
 	 * @param type
 	 */
-	public synchronized void unload(String name, Class<?> type) {
+	public synchronized void unload(String filename, Class<?> type) {
 		
 		if(ScriptedResource.isAssignableFrom(type)) {
 			
-			final file = scriptedResourceIDs.computeIfAbsent(type, {_ -> new LinkedHashSet<>()}).remove name
-			if(file) {
-				((ScriptedResourceLoader) getLoader(type)).finishUnloading file
-				super.unload file.path()
+			final resourceEntry = scriptedResourceIDs[type].find { r -> r.value.path() == filename }
+			if(resourceEntry) {
+				scriptedResourceIDs[type].removeAll { it.value.path() == filename }
+				((ScriptedResourceLoader) getLoader(type)).finishUnloading resourceEntry.value
+				super.unload resourceEntry.value.path()
 			}
 			
 		} else
-			super.unload name
+			super.unload filename
 	}
 	
 	/**
@@ -297,6 +298,16 @@ public class GameAssetService extends AssetManager {
 	public FileHandle getFileByID(String id, Class<? extends ScriptedResource> type) {
 		
 		scriptedResourceIDs.get(type).get(id)
+	}
+	
+	/**
+	 * Get the list of overridden resource-files, from first- to last-loaded, for the given resource-ID.
+	 * @param id
+	 * @param type
+	 * @return
+	 */
+	public List<FileHandle> getOverridesByID(String id, Class<? extends ScriptedResource> type) {
+		scriptedResourceOverrides.computeIfAbsent(type, { _ -> new LinkedHashMap<>() })[id] ?: []
 	}
 	
 	@Override
@@ -414,7 +425,20 @@ public class GameAssetService extends AssetManager {
 						//
 						// Make sure we can reference this resource by its ID.
 						final String resourceID = loader.getResourceID(fileHandle)
-						scriptedResourceIDs.computeIfAbsent(pendingType, {t -> new LinkedHashMap<>()}).put(resourceID,
+						
+						//
+						// Does this resource override another, already-loaded resource?
+						// If so -- unload the overridden resource.
+						final overriddenResource = scriptedResourceIDs.computeIfAbsent(pendingType, { _ -> new LinkedHashMap<>()})[resourceID]
+						if(overriddenResource) {
+							LOG.info "Resource [${pendingType.simpleName}] \"$resourceID\" [${fileHandle.path()}] overrides [${overriddenResource.path()}]."
+							
+							scriptedResourceOverrides.computeIfAbsent(pendingType, { _ -> new LinkedHashMap<>()}).computeIfAbsent(resourceID, { _ -> new LinkedList<>() }) << overriddenResource
+							
+							LOG.info "Unloading overridden resource [${overriddenResource.path()}]."
+							unload overriddenResource.path(), pendingType
+						}
+						scriptedResourceIDs.computeIfAbsent(pendingType, { _ -> new LinkedHashMap<>()}).put(resourceID,
 						fileHandle)
 						
 						//

@@ -79,13 +79,13 @@ tool 'terrainRaise', {
 	
 	title = i18n.get 'terrain-tools-raise'
 	
-	button 'terrain.raise', {
+	button {
 		buttonUp = 'terrain_raise_button.png'
 		buttonDown = 'terrain_raise_button.png'
 		group = 'terrain-tools'
 	}
 	
-	key 'terrain.raise', {
+	key {
 		keys = 'Shift+R'
 	}
 	
@@ -150,7 +150,7 @@ tool 'terrainRaise', {
 
 tool 'terrainLevel', {
 	
-	button 'terrain.level', {
+	button {
 		title = i18n.get 'terrain-tools-level'
 		buttonUp = 'terrain_level_button.png'
 		buttonDown = 'terrain_level_button.png'
@@ -208,11 +208,15 @@ tool 'terrainLevel', {
 
 tool 'terrainLower', {
 	
-	button 'terrain.lower', {
+	button {
 		title = i18n.get 'terrain-tools-lower'
 		buttonUp = 'terrain_lower_button.png'
 		buttonDown = 'terrain_lower_button.png'
 		group = 'terrain-tools'
+	}
+	
+	key {
+		keys = 'Shift+F'
 	}
 	
 	mapHover { cellX, cellY ->

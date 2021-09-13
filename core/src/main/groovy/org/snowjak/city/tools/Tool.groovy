@@ -95,6 +95,10 @@ class Tool {
 		binding[name] = value
 	}
 	
+	public void button(@DelegatesTo(value=ToolButton, strategy=Closure.DELEGATE_FIRST) Closure buttonSpec) {
+		button this.id, buttonSpec
+	}
+	
 	public void button(String id, @DelegatesTo(value=ToolButton, strategy=Closure.DELEGATE_FIRST) Closure buttonSpec) {
 		final button = new ToolButton(this, id, baseDirectory)
 		buttonSpec = buttonSpec.rehydrate(button, this, this)
@@ -102,6 +106,10 @@ class Tool {
 		buttonSpec()
 		
 		buttons << [ "$id" : button ]
+	}
+	
+	public void key(@DelegatesTo(value=Hotkey, strategy=Closure.DELEGATE_FIRST) Closure hotkeySpec) {
+		key this.id, hotkeySpec
 	}
 	
 	public void key(String id, @DelegatesTo(value=Hotkey, strategy=Closure.DELEGATE_FIRST) Closure hotkeySpec) {
@@ -252,6 +260,13 @@ class Tool {
 		
 		this.enabled = enabled;
 		enabledListeners.forEach { it.accept thisObject }
+	}
+	
+	public void toggle() {
+		if(gameService.state.activeTool === this)
+			deactivate()
+		else
+			activate()
 	}
 	
 	public void activate() {

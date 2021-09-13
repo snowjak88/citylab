@@ -343,6 +343,7 @@ class Toolbar extends Window {
 			removeToolButton buttonDef
 		
 		final button = createToolButton(buttonDef)
+		button.programmaticChangeEvents = false
 		button.addListener( [ changed: { ChangeEvent e, Actor a ->
 				final b = a as Button
 				if(b.disabled) {

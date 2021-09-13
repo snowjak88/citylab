@@ -1,3 +1,7 @@
+import java.awt.Color
+
+import javax.management.remote.rmi.RMIConnector.Util
+
 id = 'clouds'
 description = 'Adds some fluffy white clouds floating by.'
 
@@ -18,8 +22,9 @@ dependsOn 'cloud.png', Texture
 cloudTexture = assets.get( 'cloud.png', Texture )
 
 clouds = null
-onActivate { ->
-	clouds = new boolean[state.map.width / 8][state.map.height / 8]
+onActivate {
+	->
+	clouds = new boolean[state.map.width / 12][state.map.height / 12]
 	for(def x=0; x<clouds.length; x++)
 		for(def y=0; y<clouds[x].length; y++)
 			clouds[x][y] = state.rnd.nextInt(10) <= 3
@@ -68,8 +73,7 @@ customRenderHook 'clouds', { delta, batch, shapeDrawer, support ->
 			
 			if( clouds[Util.wrap( i+cloudsIndexStartX, 0, clouds.length-1 )][Util.wrap( j+cloudsIndexStartY, 0, clouds[i].length-1 )] ) {
 				
-				batch.setColor Color.WHITE
-				
+				float alpha = 1
 				if(x < 0 || y < 0 || x > state.map.width || y > state.map.width) {
 					def xd = -1
 					def yd = -1
@@ -83,10 +87,18 @@ customRenderHook 'clouds', { delta, batch, shapeDrawer, support ->
 						xd = yd
 					if(yd < 0)
 						yd = xd
-					float alpha = ( xd + yd ) / 2
-					
-					batch.setColor new Color(1f,1f,1f,alpha)
+					alpha = ( xd + yd ) / 2
 				}
+				
+				if(state.camera) {
+					final newAlpha = alpha * ( state.camera.zoom / 4f )
+					alpha = newAlpha
+				}
+				
+				if(alpha < 1)
+					batch.setColor new Color(1f,1f,1f,alpha)
+				else
+					batch.setColor Color.WHITE
 				
 				
 				cloudPosition.set( (float)x, (float)y )

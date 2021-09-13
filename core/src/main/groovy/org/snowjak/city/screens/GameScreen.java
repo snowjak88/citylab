@@ -6,10 +6,14 @@ package org.snowjak.city.screens;
 import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import org.snowjak.city.GameState;
 import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.input.GameInputProcessor;
+import org.snowjak.city.input.KeyTypedEvent;
 import org.snowjak.city.input.ScreenDragEndEvent;
 import org.snowjak.city.input.ScreenDragStartEvent;
 import org.snowjak.city.input.ScreenDragUpdateEvent;
@@ -23,6 +27,7 @@ import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.SkinService;
 import org.snowjak.city.tools.Tool;
 import org.snowjak.city.tools.ui.Toolbar;
+import org.snowjak.city.util.UnregistrationHandle;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Input;
@@ -77,6 +82,8 @@ public class GameScreen extends AbstractGameScreen {
 	private Toolbar buttonList;
 	private GameScreenInputHandler inputHandler;
 	
+	private Set<UnregistrationHandle> inputUnregistrations = new LinkedHashSet<>();
+	
 	@Initiate(priority = InitPriority.LOWEST_PRIORITY)
 	public void init() {
 		
@@ -115,11 +122,15 @@ public class GameScreen extends AbstractGameScreen {
 		//
 		//
 		
+		inputHandler = new GameScreenInputHandler();
+		
 		final GameState state = getGameService().getState();
 		
 		state.setToolbar(buttonList);
 		state.setCamera(getCameraControl());
 		state.setInputProcessor(inputProcessor);
+		
+		inputUnregistrations.add(inputProcessor.register(KeyTypedEvent.class, state.getHotkeys()));
 		
 		final CityMap map = state.getMap();
 		
@@ -141,12 +152,14 @@ public class GameScreen extends AbstractGameScreen {
 		maxWorldX = max(worldBound1.x, worldBound2.x, worldBound3.x, worldBound4.x);
 		maxWorldY = max(worldBound1.y, worldBound2.y, worldBound3.y, worldBound4.y);
 		
-		inputHandler = new GameScreenInputHandler();
-		inputProcessor.register(ScreenDragStartEvent.class,
-				e -> inputHandler.dragStart(e.getX(), e.getY(), e.getButton()));
-		inputProcessor.register(ScreenDragUpdateEvent.class, e -> inputHandler.dragUpdate(e.getX(), e.getY()));
-		inputProcessor.register(ScreenDragEndEvent.class, e -> inputHandler.dragEnd(e.getX(), e.getY()));
-		inputProcessor.register(ScrollEvent.class, e -> inputHandler.scroll(e.getAmountX(), e.getAmountY()));
+		inputUnregistrations.add(inputProcessor.register(ScreenDragStartEvent.class,
+				e -> inputHandler.dragStart(e.getX(), e.getY(), e.getButton())));
+		inputUnregistrations.add(
+				inputProcessor.register(ScreenDragUpdateEvent.class, e -> inputHandler.dragUpdate(e.getX(), e.getY())));
+		inputUnregistrations
+				.add(inputProcessor.register(ScreenDragEndEvent.class, e -> inputHandler.dragEnd(e.getX(), e.getY())));
+		inputUnregistrations.add(
+				inputProcessor.register(ScrollEvent.class, e -> inputHandler.scroll(e.getAmountX(), e.getAmountY())));
 		
 		state.getModules().forEach((id, module) -> {
 			if (!module.getActivated())
@@ -159,9 +172,14 @@ public class GameScreen extends AbstractGameScreen {
 		
 		super.hide();
 		
-		getGameService().getState().setCamera(null);
-		getGameService().getState().setInputProcessor(null);
-		getGameService().getState().setToolbar(null);
+		final GameState state = getGameService().getState();
+		
+		state.setCamera(null);
+		state.setInputProcessor(null);
+		state.setToolbar(null);
+		
+		inputUnregistrations.forEach(UnregistrationHandle::unregisterMe);
+		inputUnregistrations.clear();
 	}
 	
 	@Override
@@ -247,6 +265,22 @@ public class GameScreen extends AbstractGameScreen {
 		 * @return
 		 */
 		public Vector2 getCamera();
+		
+		/**
+		 * Set the camera's zoom-factor. 1.0 = normal, 2.0 = double-size, 0.5 =
+		 * half-size, etc.
+		 * 
+		 * @param zoomLevel
+		 */
+		public void setZoom(float zoomLevel);
+		
+		/**
+		 * Get the camera's current zoom-factor. 1.0 = normal, 2.0 = double-size, 0.5 =
+		 * half-size, etc.
+		 * 
+		 * @return
+		 */
+		public float getZoom();
 	}
 	
 	/**
@@ -325,16 +359,12 @@ public class GameScreen extends AbstractGameScreen {
 		
 		private void zoomOut() {
 			
-			final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom / 2f, 8f), 1f);
-			((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
-			cameraUpdated = true;
+			setZoom(getZoom() / 2f);
 		}
 		
 		private void zoomIn() {
 			
-			final float newZoom = max(min(((OrthographicCamera) viewport.getCamera()).zoom * 2f, 8f), 1f);
-			((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
-			cameraUpdated = true;
+			setZoom(getZoom() * 2f);
 		}
 		
 		@Override
@@ -352,5 +382,20 @@ public class GameScreen extends AbstractGameScreen {
 			renderer.viewportToMap(scratch);
 			return scratch.cpy();
 		}
+		
+		@Override
+		public void setZoom(float zoomLevel) {
+			
+			final float newZoom = max(min(zoomLevel, 8f), 1f);
+			((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
+			cameraUpdated = true;
+		}
+		
+		@Override
+		public float getZoom() {
+			
+			return ((OrthographicCamera) viewport.getCamera()).zoom;
+		}
+		
 	}
 }

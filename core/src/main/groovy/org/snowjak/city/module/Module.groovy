@@ -48,6 +48,7 @@ import com.google.common.util.concurrent.ListenableFuture
 public class Module extends ScriptedResource {
 	
 	String description
+	boolean enabled = true
 	
 	private final PreferencesService preferencesService
 	private final GameService gameService

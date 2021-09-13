@@ -86,7 +86,7 @@ class HotkeyRegistry implements InputEventReceiver<KeyTypedEvent> {
 		
 		for(def checkThis : checkThese) {
 			
-			final collidingWith = hotkeysByKeycode[checkThis.keycode].findAll { it.matches checkThis }
+			final collidingWith = hotkeysByKeycode[checkThis.keycode].findAll { it !== checkThis && it.matches(checkThis) }
 			
 			checkThis.isColliding = !(collidingWith.isEmpty())
 			collidingWith.each { it.isColliding = true }
