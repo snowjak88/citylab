@@ -313,8 +313,8 @@ public class GameSetupMenuPage implements MainMenuPage {
 			if (m.getVisualParameters().isEmpty())
 				continue;
 			
-			formTable.row().spaceBottom(15).spaceRight(5);
-			formTable.add(m.getTitle()).colspan(3).center();
+			formTable.row().spaceBottom(5).spaceRight(5);
+			formTable.add(m.getTitle(), "title").colspan(3).center();
 			
 			for (VisualParameter p : m.getVisualParameters()) {
 				formTable.row().spaceBottom(15).spaceRight(5);

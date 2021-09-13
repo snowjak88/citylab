@@ -1,7 +1,32 @@
 id = 'water'
-description = 'Manages dispersion of water throughout the map'
 
 dependsOn 'terrain'
+
+i18n.addBundle 'i18n'
+
+title = i18n.get('title')
+description = i18n.get('description')
+
+
+tilesetName = preferences.getString('tileset-name', 'default')
+dependsOn tilesetName, TileSet
+
+tileset = assets.getByID tilesetName, TileSet
+
+visualParameter {
+	title = i18n.get('water-tileset')
+	type = select {
+		values = { assets.getAllByType(TileSet) }
+		toString = { ts -> ts.title }
+	}
+	value = tileset
+	onSet = { v ->
+		tileset = v
+		preferences.putString 'tileset-name', v.id
+	}
+}
+
+seaLevel = preferences.getInteger('seaLevel', 0)
 
 //
 // Water-propagation is governed by a few basic mechanics:
@@ -25,12 +50,6 @@ dependsOn 'terrain'
 //   does not diminish it, nor does inflow increase it.
 //
 //
-
-seaLevel = preferences.getInteger('seaLevel', 0)
-
-tilesetName = preferences.getString('tileset-name', 'default')
-dependsOn tilesetName, TileSet
-tileset = assets.getByID tilesetName, TileSet
 
 class HasWater implements Component, Poolable {
 	float level
