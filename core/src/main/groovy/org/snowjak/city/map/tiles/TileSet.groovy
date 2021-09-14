@@ -69,14 +69,6 @@ class TileSet extends ScriptedResource implements Disposable {
 		tiles.each { it.validate() }
 	}
 	
-	def propertyMissing(name) {
-		ext.getProperty(name)
-	}
-	
-	def propertyMissing(name, value) {
-		ext.setProperty name, value
-	}
-	
 	//
 	// You can set the [folder] property either with a FileHandle, or with a String
 	//

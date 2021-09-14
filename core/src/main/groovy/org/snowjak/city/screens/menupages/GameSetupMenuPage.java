@@ -14,10 +14,9 @@ import org.snowjak.city.service.GameService.NewGameParameters;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.MapGeneratorService;
 import org.snowjak.city.service.SkinService;
+import org.snowjak.city.util.ui.IntSpinnerField;
 
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.ui.Button;
-import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -51,8 +50,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 	private ScrollPane screenScroll;
 	private Table formTable;
 	
-	private TextField mapWidthField, mapHeightField;
-	private Button mapWidthIncrease, mapWidthDecrease, mapHeightIncrease, mapHeightDecrease;
+	private IntSpinnerField mapWidth, mapHeight;
 	
 	private SelectBox<MapGenerator> mapGeneratorSelection;
 	
@@ -101,125 +99,35 @@ public class GameSetupMenuPage implements MainMenuPage {
 		
 		final Skin skin = skinService.getCurrent();
 		
-		mapWidthField = new TextField(Integer.toString(param.getMapWidth()), skin);
-		mapWidthIncrease = new Button(skin, "plus");
-		mapWidthDecrease = new Button(skin, "minus");
-		
-		mapWidthField.setProgrammaticChangeEvents(true);
-		mapWidthField.addListener(new ChangeListener() {
+		mapWidth = new IntSpinnerField(skin);
+		mapWidth.setMin(32);
+		mapWidth.setMax(512);
+		mapWidth.setStep(32);
+		mapWidth.setValue(param.getMapWidth());
+		mapWidth.addListener(new ChangeListener() {
 			
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				
-				final String newText = ((TextField) event.getTarget()).getText();
-				if (newText.isEmpty())
-					return;
-				try {
-					final int newValue = Integer.parseInt(newText);
-					
-					param.setMapWidth(newValue);
-				} catch (NumberFormatException e) {
-					event.cancel();
-				}
+				final IntSpinnerField s = (IntSpinnerField) actor;
+				param.setMapWidth(s.getValue());
+				checkStartGameButton();
 			}
 		});
 		
-		mapWidthIncrease.addListener(new ChangeListener() {
+		mapHeight = new IntSpinnerField(skin);
+		mapHeight.setMin(32);
+		mapHeight.setMax(512);
+		mapHeight.setStep(32);
+		mapHeight.setValue(param.getMapHeight());
+		mapHeight.addListener(new ChangeListener() {
 			
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				
-				final String width = mapWidthField.getText();
-				if (width.isEmpty()) {
-					mapWidthField.setText("64");
-					param.setMapWidth(64);
-					return;
-				}
-				int widthValue = Integer.parseInt(width);
-				if (widthValue >= 960)
-					widthValue = 960;
-				
-				mapWidthField.setText(Integer.toString(widthValue + 64));
-			}
-		});
-		
-		mapWidthDecrease.addListener(new ChangeListener() {
-			
-			@Override
-			public void changed(ChangeEvent event, Actor actor) {
-				
-				final String width = mapWidthField.getText();
-				if (width.isEmpty()) {
-					mapWidthField.setText("64");
-					param.setMapWidth(64);
-					return;
-				}
-				int widthValue = Integer.parseInt(width);
-				if (widthValue <= 128)
-					widthValue = 128;
-				
-				mapWidthField.setText(Integer.toString(widthValue - 64));
-			}
-		});
-		
-		mapHeightField = new TextField(Integer.toString(param.getMapHeight()), skin);
-		mapHeightIncrease = new Button(skin, "plus");
-		mapHeightDecrease = new Button(skin, "minus");
-		
-		mapHeightField.setProgrammaticChangeEvents(true);
-		mapHeightField.addListener(new ChangeListener() {
-			
-			@Override
-			public void changed(ChangeEvent event, Actor actor) {
-				
-				final String newText = ((TextField) event.getTarget()).getText();
-				if (newText.isEmpty())
-					return;
-				try {
-					final int newValue = Integer.parseInt(newText);
-					
-					param.setMapHeight(newValue);
-				} catch (NumberFormatException e) {
-					event.cancel();
-				}
-			}
-		});
-		
-		mapHeightIncrease.addListener(new ChangeListener() {
-			
-			@Override
-			public void changed(ChangeEvent event, Actor actor) {
-				
-				final String width = mapHeightField.getText();
-				if (width.isEmpty()) {
-					mapHeightField.setText("64");
-					param.setMapHeight(64);
-					return;
-				}
-				int widthValue = Integer.parseInt(width);
-				if (widthValue >= 960)
-					widthValue = 960;
-				
-				mapHeightField.setText(Integer.toString(widthValue + 64));
-			}
-		});
-		
-		mapHeightDecrease.addListener(new ChangeListener() {
-			
-			@Override
-			public void changed(ChangeEvent event, Actor actor) {
-				
-				final String width = mapHeightField.getText();
-				if (width.isEmpty()) {
-					mapHeightField.setText("64");
-					param.setMapHeight(64);
-					return;
-				}
-				int widthValue = Integer.parseInt(width);
-				if (widthValue <= 128)
-					widthValue = 128;
-				
-				mapHeightField.setText(Integer.toString(widthValue - 64));
+				final IntSpinnerField s = (IntSpinnerField) actor;
+				param.setMapHeight(s.getValue());
+				checkStartGameButton();
 			}
 		});
 		
@@ -254,6 +162,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 				
 				final TextField tf = (TextField) actor;
 				param.setSeed(tf.getText());
+				checkStartGameButton();
 			}
 		});
 		
@@ -268,23 +177,14 @@ public class GameSetupMenuPage implements MainMenuPage {
 			}
 		});
 		
-		final HorizontalGroup mapWidthButtons = new HorizontalGroup();
-		mapWidthButtons.addActor(mapWidthDecrease);
-		mapWidthButtons.addActor(mapWidthIncrease);
-		
-		final HorizontalGroup mapHeightButtons = new HorizontalGroup();
-		mapHeightButtons.addActor(mapHeightDecrease);
-		mapHeightButtons.addActor(mapHeightIncrease);
-		
 		formTable = new Table(skin);
 		formTable.row().spaceBottom(15).spaceRight(5);
 		formTable.add(i18nService.get("menu-gamesetup-map-width")).right().expandX();
-		formTable.add(mapWidthField);
-		formTable.add(mapWidthButtons).left();
+		formTable.add(mapWidth);
 		
 		formTable.row().spaceBottom(15).spaceRight(5);
 		formTable.add(i18nService.get("menu-gamesetup-map-height")).right().expandX();
-		formTable.add(mapHeightField, mapHeightButtons);
+		formTable.add(mapHeight);
 		
 		formTable.row().spaceBottom(15).spaceRight(5);
 		formTable.add(i18nService.get("menu-gamesetup-map-generator"));
@@ -328,15 +228,7 @@ public class GameSetupMenuPage implements MainMenuPage {
 		
 		boolean isValid = true;
 		
-		int mapWidth = 0, mapHeight = 0;
-		try {
-			mapWidth = Integer.parseInt(mapWidthField.getText());
-			mapHeight = Integer.parseInt(mapHeightField.getText());
-		} catch (NumberFormatException e) {
-			isValid = false;
-		}
-		
-		if ((mapWidth <= 0) || (mapHeight <= 0))
+		if ((mapWidth.getValue() <= 0) || (mapHeight.getValue() <= 0))
 			isValid = false;
 		if (mapGeneratorSelection.getSelected() == null)
 			isValid = false;

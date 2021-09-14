@@ -56,14 +56,6 @@ class Tile implements Disposable {
 		VALIDATOR.validate this
 	}
 	
-	def propertyMissing(name) {
-		ext.getProperty(name)
-	}
-	
-	def propertyMissing(name, value) {
-		ext.setProperty name, value
-	}
-	
 	/**
 	 * Define a rule for this tile. For a tile to be considered for placement on the map, every one of its defined rules must be met.
 	 * @param rule

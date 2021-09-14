@@ -25,14 +25,14 @@ class ModuleExceptionRegistry {
 	@Inject
 	private GameAssetService assetService
 	
-	public final BlockingQueue<Failure> failures = new LinkedBlockingQueue<>(), reportedFailures = new LinkedBlockingQueue<>()
+	public final LinkedHashSet<Failure> failures = new LinkedHashSet<>(), reportedFailures = new LinkedHashSet<>()
 	
 	public ModuleExceptionRegistry(GameAssetService assetService) {
 		this.assetService = assetService
 	}
 	
 	public void reportFailure(Module module, FailureDomain domain, Throwable exception) {
-		failures.offer new Failure(
+		failures << new Failure(
 				moduleID: module.id,
 				moduleFile: assetService.getFileByID(module.id, Module).name(),
 				moduleFullFile: assetService.getFileByID(module.id, Module).path(),
@@ -43,7 +43,7 @@ class ModuleExceptionRegistry {
 	}
 	
 	public void reportFailure(String moduleID, String moduleFilename, String moduleFullFilename, FailureDomain domain, Throwable exception) {
-		failures.offer new Failure(
+		failures << new Failure(
 				moduleID: moduleID,
 				moduleFile: moduleFilename,
 				moduleFullFile: moduleFullFilename,
@@ -64,24 +64,45 @@ class ModuleExceptionRegistry {
 	 * @return the next unreported {@link Failure}, or {@code null} if no un-reported Failures
 	 */
 	public Failure nextFailure() {
-		final f = failures.poll()
-		if(f)
-			reportedFailures.offer f
+		final f = failures.first()
+		if(f) {
+			failures.remove f
+			reportedFailures << f
+		}
 		f
 	}
 	
-	@EqualsAndHashCode
 	@Immutable
 	public static class Failure {
 		String moduleID, moduleFile, moduleFullFile
 		FailureDomain domain
 		String exceptionType, exceptionMessage, stacktrace
+		@Override
+		public int hashCode() {
+			
+			return Objects.hash(domain, exceptionMessage, exceptionType, moduleFile, moduleFullFile, moduleID);
+		}
+		@Override
+		public boolean equals(Object obj) {
+			
+			if (this === obj)
+				return true
+			if (obj === null)
+				return false
+			if (getClass() != obj.getClass())
+				return false
+			Failure other = (Failure) obj
+			domain == other.domain && Objects.equals(exceptionMessage, other.exceptionMessage) &&
+					Objects.equals(exceptionType, other.exceptionType) && Objects.equals(moduleFile, other.moduleFile) &&
+					Objects.equals(moduleFullFile, other.moduleFullFile) && Objects.equals(moduleID, other.moduleID)
+		}
 	}
 	
 	public enum FailureDomain {
 		LOAD('module-failure-load'),
 		CELL_RENDERER('module-failure-cellrenderer'),
 		CUSTOM_RENDERER('module-failure-customrenderer'),
+		ENTITY_SYSTEM('module-failure-entitysystem'),
 		TOOL_ACTIVATE('module-failure-tool-activate'),
 		TOOL_UPDATE('module-failure-tool-update'),
 		TOOL_DEACTIVATE('module-failure-tool-deactivate'),

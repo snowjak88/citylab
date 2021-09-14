@@ -132,15 +132,16 @@ onActivate {
 			if(state.map.getVertexAltitude(x,y) <= seaLevel) {
 				final isEdge = (x == 0 || y == 0 || x == maxX || y == maxY)
 				
-				if(isEdge) {
+//				if(isEdge) {
 					final entity = state.map.getVertexEntity(x,y)
 					
 					entity.add state.engine.createComponent(IsFloodable)
 					entity.add state.engine.createComponent(IsFlooded)
+					entity.add state.engine.createComponent(NeedsReplacementWaterTiles)
 					
 					final water = entity.addAndReturn( state.engine.createComponent(HasWater) )
 					water.level = 1
-				}
+//				}
 			}
 		}
 }
@@ -165,7 +166,7 @@ listeningSystem 'waterFloodedVertexListeningSystem', Family.all(IsFlooded).get()
 
 //
 // Check every Floodable entity to see if it can flood into neighboring vertices
-intervalIteratingSystem 'waterFloodablePropagationSystem', Family.all(IsMapVertex, IsFloodable, HasWater).get(), 0.25, { entity, deltaTime ->
+iteratingSystem 'waterFloodablePropagationSystem', Family.all(IsMapVertex, IsFloodable, HasWater).get(), { entity, deltaTime ->
 	
 	final thisVertex = isVertexMapper.get(entity)
 	final int vx = thisVertex.vertexX
@@ -280,7 +281,7 @@ listeningSystem 'waterNewHasWaterListeningSystem', Family.all(IsMapVertex, HasWa
 
 
 
-windowIteratingSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, NeedsReplacementWaterTiles).exclude(HasPendingWaterTiles).get(), 8, { entity, deltaTime ->
+timeSliceSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, NeedsReplacementWaterTiles).exclude(HasPendingWaterTiles).get(), 1/30, { entity, deltaTime ->
 	final mapCell = isCellMapper.get(entity)
 	final int cx = mapCell.cellX
 	final int cy = mapCell.cellY
@@ -318,7 +319,7 @@ windowIteratingSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, 
 	entity.remove NeedsReplacementWaterTiles
 }
 
-windowIteratingSystem 'waterTileProcessingSystem', Family.all(IsMapCell, HasPendingWaterTiles).get(), 8, { entity, deltaTime ->
+iteratingSystem 'waterTileProcessingSystem', Family.all(IsMapCell, HasPendingWaterTiles).get(), { entity, deltaTime ->
 	final mapCell = isCellMapper.get(entity)
 	final int cx = mapCell.cellX
 	final int cy = mapCell.cellY

@@ -143,7 +143,7 @@ public class CityMap {
 	public void setVertexAltitude(int vertexX, int vertexY, int altitude) {
 		
 		if (vertexX < 0 || vertexY < 0 || vertexX >= vertexAltitudes.length
-				|| vertexY >= vertexAltitudes[vertexY].length)
+				|| vertexY >= vertexAltitudes[vertexX].length)
 			throw new ArrayIndexOutOfBoundsException(
 			String.format("Given vertex index [%d,%d] is out of bounds.", vertexX, vertexY))
 		

@@ -67,7 +67,7 @@ public class CityGame extends Game {
 	public static final ListeningExecutorService EXECUTOR = MoreExecutors
 			.listeningDecorator(MoreExecutors.getExitingExecutorService(
 					(ThreadPoolExecutor) Executors
-							.newFixedThreadPool(Util.min(4, Runtime.getRuntime().availableProcessors() - 1)),
+							.newCachedThreadPool(),
 					Duration.ofSeconds(5)));
 	
 	//

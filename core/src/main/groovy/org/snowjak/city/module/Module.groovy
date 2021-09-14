@@ -13,6 +13,7 @@ import org.snowjak.city.map.renderer.hooks.CellRenderingHook
 import org.snowjak.city.map.renderer.hooks.CustomRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
+import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain
 import org.snowjak.city.module.ui.VisualParameter
 import org.snowjak.city.resources.ScriptedResource
 import org.snowjak.city.service.GameService
@@ -213,16 +214,24 @@ public class Module extends ScriptedResource {
 		final legalID = legalizeID(id)
 		final systemClassDefinition = '''
 class ''' + legalID + ''' extends com.badlogic.ashley.systems.IteratingSystem {
-	final Closure implementation
-	public ''' + legalID + '''(Family family, Closure implementation) {
+	final Closure implementation, exceptionReporter
+	public ''' + legalID + '''(Family family, Closure implementation, Closure exceptionReporter) {
 		super(family);
 		this.implementation = implementation
+		this.exceptionReporter = exceptionReporter
 	}
 	
-	protected void processEntity(Entity entity, float deltaTime) { implementation(entity, deltaTime) }
+	protected void processEntity(Entity entity, float deltaTime) {
+		try {
+			implementation(entity, deltaTime)
+		} catch(Throwable t) {
+			exceptionReporter(t)
+			processing = false
+		}
+	}
 }'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
-		final system = systemClass.newInstance(family, implementation)
+		final system = systemClass.newInstance(family, implementation, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
 		implementation.owner = system
 		implementation.delegate = this
@@ -252,16 +261,24 @@ class ''' + legalID + ''' extends com.badlogic.ashley.systems.IteratingSystem {
 		final legalID = legalizeID(id)
 		final systemClassDefinition = '''
 class ''' + legalID + ''' extends com.badlogic.ashley.systems.IntervalSystem {
-	final Closure implementation
-	public ''' + legalID + '''(float interval, Closure implementation) {
+	final Closure implementation, exceptionReporter
+	public ''' + legalID + '''(float interval, Closure implementation, Closure exceptionReporter) {
 			super(interval);
 			this.implementation = implementation
+			this.exceptionReporter = exceptionReporter
 		}
 		
-		protected void updateInterval() { implementation(interval) }
+		protected void updateInterval() {
+			try {
+				implementation(interval)
+			} catch(Throwable t) {
+				exceptionReporter(t)
+				processing = false
+			}
+		}
 	}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
-		final system = systemClass.newInstance(interval, implementation)
+		final system = systemClass.newInstance(interval, implementation, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
 		implementation.owner = system
 		implementation.delegate = this
@@ -292,16 +309,24 @@ class ''' + legalID + ''' extends com.badlogic.ashley.systems.IntervalSystem {
 		final legalID = legalizeID(id)
 		final systemClassDefinition = '''
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.IntervalIteratingSystem {
-	final Closure implementation
-	public ''' + legalID + '''(Family family, float interval, Closure implementation) {
+	final Closure implementation, exceptionReporter
+	public ''' + legalID + '''(Family family, float interval, Closure implementation, Closure exceptionReporter) {
 			super(family, interval);
 			this.implementation = implementation
+			this.exceptionReporter = exceptionReporter
 		}
 		
-		protected void processEntity(Entity entity, float deltaTime) { implementation(entity, deltaTime) }
+		protected void processEntity(Entity entity, float deltaTime) {
+			try {
+				implementation(entity, deltaTime)
+			} catch(Throwable t) {
+				exceptionReporter(t)
+				processing = false
+			}
+		}
 	}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
-		final system = systemClass.newInstance(family, interval, implementation)
+		final system = systemClass.newInstance(family, interval, implementation, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
 		implementation.owner = system
 		implementation.delegate = this
@@ -332,16 +357,72 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.IntervalIterating
 		final legalID = legalizeID(id)
 		final systemClassDefinition = '''
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.WindowIteratingSystem {
-	final Closure implementation
-	public ''' + legalID + '''(Family family, int window, Closure implementation) {
+	final Closure implementation, exceptionReporter
+	public ''' + legalID + '''(Family family, int window, Closure implementation, Closure exceptionReporter) {
 			super(window, family);
 			this.implementation = implementation
+			this.exceptionReporter = exceptionReporter
 		}
 		
-		protected void processEntity(Entity entity, float deltaTime) { implementation(entity, deltaTime) }
+		protected void processEntity(Entity entity, float deltaTime) {
+			try {
+				implementation(entity, deltaTime)
+			} catch(Throwable t) {
+				exceptionReporter(t)
+				processing = false
+			}
+		}
 	}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
-		final system = systemClass.newInstance(family, window, implementation)
+		final system = systemClass.newInstance(family, window, implementation, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
+		
+		implementation.owner = system
+		implementation.delegate = this
+		implementation.resolveStrategy = Closure.DELEGATE_FIRST
+		
+		systems << ["$id" : system]
+	}
+	
+	/**
+	 * Create a new {@link TimeSliceIteratingSystem}.
+	 * <p>
+	 * {@code implementation} is expected to be of the form:
+	 * <pre>
+	 * { Entity entity, float deltaTime -> ... }
+	 * </pre>
+	 * </p>
+	 *
+	 * @param id
+	 * @param family
+	 * @param timeSlice maximum time to take each cycle, in seconds
+	 * @param implementation
+	 */
+	public void timeSliceSystem(String id, Family family, float timeSlice, Closure implementation) {
+		
+		if(isDependencyCheckingMode())
+			return
+		
+		final legalID = legalizeID(id)
+		final systemClassDefinition = '''
+class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.TimeSliceIteratingSystem {
+	final Closure implementation, exceptionReporter
+	public ''' + legalID + '''(Family family, float timeSlice, Closure implementation, Closure exceptionReporter) {
+			super(family, timeSlice);
+			this.implementation = implementation
+			this.exceptionReporter = exceptionReporter
+		}
+		
+		protected void processEntity(Entity entity, float deltaTime) {
+			try {
+				implementation(entity, deltaTime)
+			} catch(Throwable t) {
+				exceptionReporter(t)
+				processing = false
+			}
+		}
+	}'''
+		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
+		final system = systemClass.newInstance(family, timeSlice, implementation, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
 		implementation.owner = system
 		implementation.delegate = this
@@ -370,16 +451,24 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.WindowIteratingSy
 		final legalID = legalizeID(id)
 		final systemClassDefinition = '''
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.BulkSystem {
-	final Closure implementation
-	public ''' + legalID + '''(Family family, Closure implementation) {
+	final Closure implementation, exceptionReporter
+	public ''' + legalID + '''(Family family, Closure implementation, Closure exceptionReporter) {
 			super(family);
 			this.implementation = implementation
+			this.exceptionReporter = exceptionReporter
 		}
 		
-		protected void update(Set<Entity> entities, float deltaTime) { implementation(entities, deltaTime) }
+		protected void update(Set<Entity> entities, float deltaTime) {
+			try {
+				implementation(entities, deltaTime)
+			} catch(Throwable t) {
+				exceptionReporter(t)
+				processing = false
+			}
+		}
 	}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
-		final system = systemClass.newInstance(family, implementation)
+		final system = systemClass.newInstance(family, implementation, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
 		implementation.owner = system
 		implementation.delegate = this
@@ -409,18 +498,33 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.BulkSystem {
 		final legalID = legalizeID(id)
 		final systemClassDefinition = '''
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
-	final Closure onAdd, onDrop
-	public ''' + legalID + '''(Family family, Closure onAdd, Closure onDrop) {
+	final Closure onAdd, onDrop, exceptionReporter
+	public ''' + legalID + '''(Family family, Closure onAdd, Closure onDrop, Closure exceptionReporter) {
 			super(family);
 			this.onAdd = onAdd
 			this.onDrop = onDrop
+			this.exceptionReporter = exceptionReporter
 		}
 		
-		public void added(Entity entity, float deltaTime) { onAdd(entity, deltaTime) }
-		public void dropped(Entity entity, float deltaTime) { onDrop(entity, deltaTime) }
+		public void added(Entity entity, float deltaTime) {
+			try {
+				onAdd(entity, deltaTime)
+			} catch(Throwable t) {
+				exceptionReporter(t)
+				processing = false
+			}
+		}
+		public void dropped(Entity entity, float deltaTime) {
+			try {
+				onDrop(entity, deltaTime)
+			} catch(Throwable t) {
+				exceptionReporter(t)
+				processing = false
+			}
+		}
 	}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
-		final system = systemClass.newInstance(family, added, dropped)
+		final system = systemClass.newInstance(family, added, dropped, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
 		added.owner = system
 		added.delegate = this
@@ -452,6 +556,7 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 		
 		final tool = new Tool(id, this, scriptDirectory, toolGroups, gameService)
 		toolSpec.delegate = tool
+		toolSpec.owner = this
 		toolSpec.resolveStrategy = Closure.DELEGATE_FIRST
 		toolSpec()
 		
