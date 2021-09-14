@@ -31,10 +31,10 @@ class Tile implements Disposable {
 	boolean decoration = false
 	
 	Map<String,Closure> ruleHelpers = new LinkedHashMap<>()
+	final Expando ext = new Expando()
 	
 	TextureRegion sprite
 	
-	final Map<TileCorner,Set<String>> provision = new EnumMap<>(TileCorner)
 	final Set<TileRule<TileSupport>> rules = new HashSet<>()
 	
 	/**
@@ -46,12 +46,6 @@ class Tile implements Disposable {
 	.greaterThan({ it.gridHeight }, 0, "Tile's grid-height must be a positive number")
 	.notBlank({it.filename}, "Tile must reference an image-file")
 	.notNull({it.base},"Tile's base must not be null")
-	.andAny()
-	.notEmpty({it.provision[TileCorner.TOP]})
-	.notEmpty({it.provision[TileCorner.RIGHT]})
-	.notEmpty({it.provision[TileCorner.LEFT]})
-	.notEmpty({it.provision[TileCorner.BOTTOM]})
-	.endAny("Tile must define at least one 'provides'.")
 	.build()
 	
 	/**
@@ -62,31 +56,12 @@ class Tile implements Disposable {
 		VALIDATOR.validate this
 	}
 	
-	/**
-	 * Denotes that this tile provides the given flavors to all corners.
-	 * <p>
-	 * Note that successive {@code provides()} calls are additive upon one another.
-	 * </p>
-	 * @param provision
-	 */
-	public void provides(String... provision) {
-		provides(Arrays.asList(TileCorner.values()), provision.toList())
+	def propertyMissing(name) {
+		ext.getProperty(name)
 	}
 	
-	/**
-	 * Denotes that this tile provides the given flavors to the following corners.
-	 * <p>
-	 * Note that successive {@code provides()} calls are additive upon one another.
-	 * </p>
-	 * @param corners
-	 * @param provision
-	 */
-	public void provides(List<TileCorner> corners, List<String> provision) {
-		corners.each { corner ->
-			this.provision.computeIfAbsent(corner, { c ->
-				new LinkedHashSet<>(provision)
-			})
-		}
+	def propertyMissing(name, value) {
+		ext.setProperty name, value
 	}
 	
 	/**
@@ -101,7 +76,6 @@ class Tile implements Disposable {
 	 * Does this tile fit, given the specified local attributes:
 	 * <ul>
 	 * <li>{@code localHeight} -- an {@code int[2][2]} holding this tile's heights (addressed via {@link TileCorner#offsetX},{@link TileCorner#offsetY})</li>
-	 * <li>{@code localFlavors} -- gives the flavors associated with each of this tile's corners</li>
 	 * </ul>
 	 *
 	 * @param localHeight

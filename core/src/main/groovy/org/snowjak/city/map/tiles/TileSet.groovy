@@ -6,6 +6,7 @@ import static com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888
 import static org.snowjak.city.util.Util.*
 
 import java.util.function.Consumer
+import java.util.function.Predicate
 
 import org.codehaus.groovy.util.HashCodeHelper
 import org.snowjak.city.map.tiles.support.TileSupport
@@ -44,6 +45,7 @@ class TileSet extends ScriptedResource implements Disposable {
 	
 	Map<String,Closure> ruleHelpers = [:]
 	
+	Expando ext = new Expando()
 	private int autoAdvanceLimitX = 0, autoAdvanceLimitY = 0
 	private boolean autoAdvance = false
 	
@@ -65,6 +67,14 @@ class TileSet extends ScriptedResource implements Disposable {
 	public void validate() throws ValidationException {
 		VALIDATOR.validate this
 		tiles.each { it.validate() }
+	}
+	
+	def propertyMissing(name) {
+		ext.getProperty(name)
+	}
+	
+	def propertyMissing(name, value) {
+		ext.setProperty name, value
 	}
 	
 	//
@@ -101,6 +111,8 @@ class TileSet extends ScriptedResource implements Disposable {
 			decoration: decoration,
 			ruleHelpers: new HashMap(ruleHelpers)
 		] as Tile
+		
+		tile.ext.properties.putAll this.ext.properties
 		
 		script.resolveStrategy = Closure.DELEGATE_FIRST
 		script = script.rehydrate(tile, this, this)
@@ -188,7 +200,7 @@ class TileSet extends ScriptedResource implements Disposable {
 			surfaceOffset: surfaceOffset, altitudeOffset: altitudeOffset,
 			base: base,
 			decoration: decoration,
-			ruleHelpers: ruleHelpers
+			ruleHelpers: ruleHelpers, ext: ext
 		] as TileSet
 		configurer.accept tileset
 		
@@ -363,26 +375,18 @@ class TileSet extends ScriptedResource implements Disposable {
 	 * Get the minimum set of Tiles that can fit the given constraints:
 	 * <ul>
 	 * <li>{@code heights} -- a 2x2 {@code int} array (addressed using {@link TileCorner#offsetX},{@link TileCorner#offsetY})</li>
-	 * <li>{@code flavors} -- a list of flavor-constraints that the found Tiles must meet and not exceed</li>
+	 * <li>{@code predicates} -- a list of {@link Predicate}s that the returned set of Tiles must collectively satisfy</li>
 	 * </ul>
 	 */
-	public List<Tile> getMinimalTilesFor(int[][] heights, EnumMap<TileCorner, List<String>> flavors, onlyDecorative = false) {
+	public List<Tile> getMinimalTilesFor(int[][] heights, List<Predicate<Tile>> predicates, boolean onlyDecorative = false) {
 		
-		return searchMinimalTilesFor(heights, flavors, new HashSet<Tile>(), onlyDecorative)
+		return searchMinimalTilesFor(heights, predicates, new HashSet<Tile>(), onlyDecorative)
 	}
 	
 	private List<Tile> searchMinimalTilesFor(int[][] heights,
-			EnumMap<TileCorner, List<String>> remainingFlavors, Set<Tile> currentTiles, boolean onlyDecorative, int depth = 0) {
+			List<Predicate<Tile>> remainingPredicates, Set<Tile> currentTiles, boolean onlyDecorative, int depth = 0) {
 		
-		boolean allDone = true
-		for (TileCorner corner : remainingFlavors.keySet()) {
-			if (remainingFlavors[corner] != null && !remainingFlavors[corner].isEmpty()) {
-				allDone = false
-				break
-			}
-		}
-		
-		if (allDone)
+		if (remainingPredicates.isEmpty() && !currentTiles.isEmpty())
 			return Collections.emptyList()
 		
 		List<Tile> bestTileList = null
@@ -404,33 +408,14 @@ class TileSet extends ScriptedResource implements Disposable {
 				continue
 			
 			//
-			// The tile must not add anything we don't already need
-			boolean addsExtra = false
-			for (TileCorner corner : remainingFlavors.keySet()) {
-				if (addsExtra)
-					break
-				for (String flavor : tile.getProvision().get(corner))
-					if (remainingFlavors[corner] != null && !remainingFlavors[corner].contains(flavor)) {
-						addsExtra = true
-						break
-					}
-			}
-			if (addsExtra)
-				continue
+			// The "new remaining" list of predicates is the old list, minus the
+			// currently-selected tile's fulfilled predicates
+			final List<Predicate<Tile>> newRemaining = []
+			remainingPredicates.findAll { !(it as Predicate).test(tile) }.each { newRemaining << it }
 			
 			//
-			// The "new remaining" list of flavors is the old list, minus the
-			// currently-selected tile's flavors
-			boolean fulfillsAnyFlavors = false
-			final EnumMap<TileCorner, List<String>> newRemaining = new EnumMap<>(TileCorner)
-			for (TileCorner corner : remainingFlavors.keySet()) {
-				final List<String> remaining = new LinkedList<String>(remainingFlavors[corner])
-				if(remaining != null)
-					if(tile.getProvision().containsKey(corner))
-						fulfillsAnyFlavors |= remaining.removeAll(tile.getProvision()[corner])
-				newRemaining[corner] = remaining
-			}
-			if (!fulfillsAnyFlavors)
+			// If the current tile doesn't fulfill *any* predicates, skip it
+			if (newRemaining.size() == remainingPredicates.size())
 				continue
 			
 			//

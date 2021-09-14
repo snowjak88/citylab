@@ -13,17 +13,13 @@ iteratingSystem 'newTerrainFittingSystem', Family.all(IsMapCell).exclude(IsTerra
 	
 	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
 	
-	//	final heights = new int[2][2]
-	//	final flavors = new EnumMap(TileCorner)
 	
-	for(def corner : TileCorner.values()) {
+	for(def corner : TileCorner.values())
 		pendingTerrain.heights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
-		pendingTerrain.flavors.put corner, ['grass']
-	}
 	
 	pendingTerrain.future = submitResultTask {
 		->
-		tileset.getMinimalTilesFor pendingTerrain.heights, pendingTerrain.flavors
+		tileset.getMinimalTilesFor pendingTerrain.heights, [ { t -> t.ext.terrain == 'grass' } ]
 	}
 	entity.add pendingTerrain
 	
@@ -37,17 +33,13 @@ iteratingSystem 'existingTerrainUpdatingSystem', Family.all(IsMapCell, NeedsRepl
 	
 	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
 	
-	//	final heights = new int[2][2]
-	//	final flavors = new EnumMap(TileCorner)
-	
-	for(def corner : TileCorner.values()) {
+	for(def corner : TileCorner.values())
 		pendingTerrain.heights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
-		pendingTerrain.flavors.put corner, ['grass']
-	}
+	
 	
 	pendingTerrain.future = submitResultTask {
 		->
-		tileset.getMinimalTilesFor pendingTerrain.heights, pendingTerrain.flavors
+		tileset.getMinimalTilesFor pendingTerrain.heights, [ { t -> t.ext.terrain == 'grass' } ]
 	}
 	entity.add pendingTerrain
 	

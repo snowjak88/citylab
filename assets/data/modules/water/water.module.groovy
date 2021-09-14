@@ -290,18 +290,18 @@ windowIteratingSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, 
 	final pendingWaterTiles = entity.addAndReturn( state.engine.createComponent( HasPendingWaterTiles ) )
 	
 	final int[][] heights = new int[2][2]
-	final flavors = new EnumMap(TileCorner)
+	final predicates = []
 	for(TileCorner corner : TileCorner.values()) {
 		heights[corner.offsetX][corner.offsetY] = Util.max( seaLevel, state.map.getCellAltitude(cx, cy, corner) )
 		
 		final int vx = cx + corner.offsetX
 		final int vy = cy + corner.offsetY
 		
-		flavors[corner] = []
 		if(state.map.isValidVertex(vx,vy)) {
 			final vertexEntity = state.map.getVertexEntity(vx,vy)
 			if(hasWaterMapper.has(vertexEntity)) {
-				flavors[corner] << 'water'
+				final c = corner
+				predicates << { t -> t.ext?.water?.contains(c) }
 				
 				final hasWater = hasWaterMapper.get(vertexEntity)
 				pendingWaterTiles.tints[corner] = new Color(1, 1, 1, Util.clamp(hasWater.level, 0, 0.8))
@@ -312,7 +312,7 @@ windowIteratingSystem 'waterTileFittingSchedulingSystem', Family.all(IsMapCell, 
 	
 	pendingWaterTiles.future = submitResultTask {
 		->
-		tileset.getMinimalTilesFor heights, flavors
+		tileset.getMinimalTilesFor heights, predicates, true
 	}
 	
 	entity.remove NeedsReplacementWaterTiles
