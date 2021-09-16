@@ -123,5 +123,5 @@ atlas = 'default/default.atlas'
 // define rule-helpers in an included script and use them in the includer.
 //
 include 'default/landscape.groovy'
-
 include 'default/water.groovy'
+include 'default/road.groovy'

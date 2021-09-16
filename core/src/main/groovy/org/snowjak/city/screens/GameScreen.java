@@ -297,7 +297,7 @@ public class GameScreen extends AbstractGameScreen {
 		
 		public void dragStart(int screenX, int screenY, int button) {
 			
-			if (button != Input.Buttons.LEFT) {
+			if (button != Input.Buttons.RIGHT) {
 				ongoing = false;
 				return;
 			}

@@ -9,33 +9,17 @@ import com.badlogic.gdx.files.FileHandle
  *
  */
 class ToolButton {
-	private final FileHandle baseDirectory
 	
+	final FileHandle baseDirectory
 	final Tool tool
 	final String id
 	
 	String group
-	FileHandle buttonUp, buttonDown
+	String buttonUp, buttonDown
 	
 	public ToolButton(Tool tool, String id, FileHandle baseDirectory) {
 		this.tool = tool
 		this.id = id
 		this.baseDirectory = baseDirectory
-	}
-	
-	public void setButtonUp(String filename) {
-		this.buttonUp = baseDirectory.child(filename)
-	}
-	
-	public void setButtonUp(FileHandle file) {
-		this.buttonUp = file;
-	}
-	
-	public void setButtonDown(String filename) {
-		this.buttonDown = baseDirectory.child(filename)
-	}
-	
-	public void setButtonDown(FileHandle file) {
-		this.buttonDown = file;
 	}
 }

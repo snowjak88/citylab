@@ -60,6 +60,8 @@ class Tool {
 	String title
 	boolean enabled = true
 	
+	FileHandle atlas
+	
 	final Module module
 	private final Binding binding = new Binding()
 	private final FileHandle baseDirectory
@@ -93,6 +95,17 @@ class Tool {
 	
 	def propertyMissing(name, value) {
 		binding[name] = value
+	}
+	
+	public void setAtlas(FileHandle file) {
+		this.atlas = file
+	}
+	
+	public void setAtlas(String filename) {
+		if(!filename)
+			this.atlas = null
+		else
+			this.atlas = baseDirectory.child(filename)
 	}
 	
 	public void button(@DelegatesTo(value=ToolButton, strategy=Closure.DELEGATE_FIRST) Closure buttonSpec) {

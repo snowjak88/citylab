@@ -307,6 +307,9 @@ public class MapRenderer implements RenderingSupport {
 		if (!isCellVisible(col, row))
 			return;
 		
+		if(tile == null || tile.getSprite() == null)
+			return;
+		
 		final float color;
 		if (tint == null)
 			color = Color.toFloatBits(batch.getColor().r, batch.getColor().g, batch.getColor().b, batch.getColor().a);

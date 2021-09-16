@@ -3,13 +3,17 @@
  */
 package org.snowjak.city.map.tiles;
 
+import java.util.Iterator;
+
+import com.google.common.collect.Iterators;
+
 /**
  * Describes the corners of a single tile.
  * 
  * @author snowjak88
  *
  */
-public enum TileCorner {
+public enum TileCorner implements Iterable<TileCorner> {
 	
 	/**
 	 * Top of tile-diamond.
@@ -72,11 +76,17 @@ public enum TileCorner {
 		return null;
 	}
 	
-public static TileCorner fromDelta(int dx, int dy) {
+	public static TileCorner fromDelta(int dx, int dy) {
 		
 		for (TileCorner c : TileCorner.values())
 			if (dx == c.dx && dy == c.dy)
 				return c;
 		return null;
+	}
+	
+	@Override
+	public Iterator<TileCorner> iterator() {
+		
+		return Iterators.forArray(TileCorner.values());
 	}
 }

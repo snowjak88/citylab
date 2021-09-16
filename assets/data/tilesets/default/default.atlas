@@ -1,369 +1,474 @@
 
 default.png
-size: 2048, 512
+size: 2048, 1024
 format: RGBA8888
 filter: Linear, Linear
 repeat: none
 grass-flat
   rotate: false
-  xy: 522, 2
+  xy: 652, 293
   size: 128, 97
   orig: 128, 97
   offset: 0, 0
   index: -1
 grass-slope-concave00
   rotate: false
-  xy: 652, 2
+  xy: 782, 423
   size: 128, 97
   orig: 128, 97
   offset: 0, 0
   index: -1
 grass-slope-concave01
   rotate: false
-  xy: 912, 361
+  xy: 392, 621
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 grass-slope-concave02
   rotate: false
-  xy: 132, 361
+  xy: 132, 881
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 grass-slope-concave03
   rotate: false
-  xy: 1302, 361
+  xy: 262, 231
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 grass-slope-convex00
   rotate: false
-  xy: 2, 2
+  xy: 652, 392
   size: 128, 97
   orig: 128, 97
   offset: 0, 0
   index: -1
 grass-slope-convex01
   rotate: false
-  xy: 392, 2
+  xy: 132, 2
   size: 128, 97
   orig: 128, 97
   offset: 0, 0
   index: -1
 grass-slope-convex02
   rotate: false
-  xy: 132, 2
+  xy: 1042, 782
   size: 128, 97
   orig: 128, 97
   offset: 0, 0
   index: -1
 grass-slope-convex03
   rotate: false
-  xy: 1822, 361
+  xy: 1042, 881
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 grass-slope-saddle00
   rotate: false
-  xy: 262, 2
+  xy: 1172, 912
   size: 128, 97
   orig: 128, 97
   offset: 0, 0
   index: -1
 grass-slope-saddle01
   rotate: false
-  xy: 262, 231
+  xy: 132, 621
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 grass-slope00
   rotate: false
-  xy: 1822, 132
+  xy: 782, 522
   size: 128, 97
   orig: 128, 97
   offset: 0, 0
   index: -1
 grass-slope01
   rotate: false
-  xy: 782, 2
+  xy: 912, 553
   size: 128, 97
   orig: 128, 97
   offset: 0, 0
   index: -1
 grass-slope02
   rotate: false
-  xy: 912, 231
+  xy: 2, 101
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 grass-slope03
   rotate: false
-  xy: 132, 231
+  xy: 132, 751
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
+road-flat-4way
+  rotate: false
+  xy: 1042, 617
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+road-flat-curve00
+  rotate: false
+  xy: 262, 35
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+road-flat-curve01
+  rotate: false
+  xy: 392, 35
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+road-flat-curve02
+  rotate: false
+  xy: 912, 487
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+road-flat-curve03
+  rotate: false
+  xy: 1172, 846
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+road-flat-straight00
+  rotate: false
+  xy: 1302, 879
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+road-flat-straight01
+  rotate: false
+  xy: 652, 227
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+road-flat-t00
+  rotate: false
+  xy: 1172, 780
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+road-flat-t01
+  rotate: false
+  xy: 1302, 945
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+road-flat-t02
+  rotate: false
+  xy: 1432, 945
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+road-flat-t03
+  rotate: false
+  xy: 782, 357
+  size: 128, 64
+  orig: 128, 64
+  offset: 0, 0
+  index: -1
+road-slope-straight00
+  rotate: false
+  xy: 2, 2
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
+road-slope-straight01
+  rotate: false
+  xy: 522, 132
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
+road-slope-straight02
+  rotate: false
+  xy: 912, 652
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
+road-slope-straight03
+  rotate: false
+  xy: 1042, 683
+  size: 128, 97
+  orig: 128, 97
+  offset: 0, 0
+  index: -1
 water-flat-00
   rotate: false
-  xy: 652, 101
+  xy: 522, 751
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-flat-01
   rotate: false
-  xy: 2, 361
+  xy: 2, 881
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-flat-02
   rotate: false
-  xy: 1042, 101
+  xy: 782, 881
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-flat-03
   rotate: false
-  xy: 392, 101
+  xy: 262, 621
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-flat-04
   rotate: false
-  xy: 1432, 101
+  xy: 392, 231
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-saddle-flat-00
   rotate: false
-  xy: 1822, 231
+  xy: 522, 231
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-saddle-flat-01
   rotate: false
-  xy: 1172, 361
+  xy: 652, 751
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-saddle-flat-02
   rotate: false
-  xy: 522, 361
+  xy: 132, 491
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-saddle-flat-03
   rotate: false
-  xy: 1432, 231
+  xy: 912, 881
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-concave-flat-00
   rotate: false
-  xy: 652, 231
+  xy: 132, 361
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-concave-flat-01
   rotate: false
-  xy: 1692, 231
+  xy: 912, 751
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-concave-flat-02
   rotate: false
-  xy: 1042, 361
+  xy: 262, 361
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-concave-flat-03
   rotate: false
-  xy: 392, 361
+  xy: 262, 751
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-00
   rotate: false
-  xy: 262, 361
+  xy: 262, 881
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-01
   rotate: false
-  xy: 1302, 231
+  xy: 522, 491
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-02
   rotate: false
-  xy: 522, 101
+  xy: 2, 231
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-03
   rotate: false
-  xy: 1562, 101
+  xy: 782, 621
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-left-00
   rotate: false
-  xy: 2, 101
+  xy: 2, 621
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-left-01
   rotate: false
-  xy: 1172, 101
+  xy: 392, 361
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-left-02
   rotate: false
-  xy: 652, 361
+  xy: 522, 881
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-left-03
   rotate: false
-  xy: 1692, 361
+  xy: 652, 491
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-right-00
   rotate: false
-  xy: 132, 101
+  xy: 2, 491
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-right-01
   rotate: false
-  xy: 1432, 361
+  xy: 652, 621
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-right-02
   rotate: false
-  xy: 782, 361
+  xy: 262, 491
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-convex-flat-right-03
   rotate: false
-  xy: 1692, 101
+  xy: 392, 101
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-00
   rotate: false
-  xy: 912, 101
+  xy: 392, 491
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-01
   rotate: false
-  xy: 262, 101
+  xy: 392, 881
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-02
   rotate: false
-  xy: 1302, 101
+  xy: 782, 751
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-03
   rotate: false
-  xy: 782, 231
+  xy: 652, 881
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-left-00
   rotate: false
-  xy: 1042, 231
+  xy: 522, 621
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-left-01
   rotate: false
-  xy: 392, 231
+  xy: 2, 361
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-left-02
   rotate: false
-  xy: 1562, 361
+  xy: 262, 101
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-left-03
   rotate: false
-  xy: 782, 101
+  xy: 132, 231
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-right-00
   rotate: false
-  xy: 2, 231
+  xy: 2, 751
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-right-01
   rotate: false
-  xy: 1172, 231
+  xy: 132, 101
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-right-02
   rotate: false
-  xy: 522, 231
+  xy: 392, 751
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 water-slope-flat-right-03
   rotate: false
-  xy: 1562, 231
+  xy: 522, 361
   size: 128, 128
   orig: 128, 128
   offset: 0, 0

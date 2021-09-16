@@ -1,0 +1,11 @@
+Tiles are aligned on a dimetric grid.
+Camera from 60 degrees x 45 degrees
+
+A single grid-tile may be modeled by a rectilinear solid with vertices at extremes:
+
+x, y, z
+-2.82842712, 0, -2.82842712
++2.82842712, 1.1547005, +2.82842712
+
+Each unit altitude-change is Y = 1.1547005
+The "sub-surface" is assumed to be 1 unit altitude-change

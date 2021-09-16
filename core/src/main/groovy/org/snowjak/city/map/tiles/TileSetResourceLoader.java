@@ -40,7 +40,8 @@ public class TileSetResourceLoader extends ScriptedResourceLoader<TileSet, TileS
 				if (t.getAtlas() != null) {
 					
 					final TextureAtlas atlas = assetService.get(t.getAtlas().path(), TextureAtlas.class);
-					sprite = atlas.findRegion(t.getFilename().replace(".png", ""));
+					final String fileExtension = t.getFilename().substring(t.getFilename().lastIndexOf('.'));
+					sprite = atlas.findRegion(t.getFilename().replace(fileExtension, ""));
 					
 				} else {
 					final Texture texture = assetService.get(t.getFolder().child(t.getFilename()).path(),
@@ -79,7 +80,7 @@ public class TileSetResourceLoader extends ScriptedResourceLoader<TileSet, TileS
 		final CompilerConfiguration config = super.getDefaultCompilerConfiguration();
 		
 		final ImportCustomizer importCustomizer = new ImportCustomizer();
-		importCustomizer.addStaticStars(TileCorner.class.getName());
+		importCustomizer.addStaticStars(TileCorner.class.getName(), TileEdge.class.getName());
 		
 		config.addCompilationCustomizers(importCustomizer);
 		

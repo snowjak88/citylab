@@ -30,6 +30,7 @@ import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.core.Family
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.google.common.util.concurrent.ListenableFuture
 
 /**
@@ -560,10 +561,13 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 		toolSpec.resolveStrategy = Closure.DELEGATE_FIRST
 		toolSpec()
 		
-		tool.buttons.each { _, button ->
-			if(button.buttonUp) addAssetDependency Texture, button.buttonUp
-			if(button.buttonDown) addAssetDependency Texture, button.buttonDown
-		}
+		if(tool.atlas)
+			addAssetDependency TextureAtlas, tool.atlas.path()
+		else
+			tool.buttons.each { _, button ->
+				if(button.buttonUp) addAssetDependency Texture, button.buttonUp
+				if(button.buttonDown) addAssetDependency Texture, button.buttonDown
+			}
 		
 		tools << ["$id" : tool]
 	}

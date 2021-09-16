@@ -150,8 +150,9 @@ tool 'terrainRaise', {
 
 tool 'terrainLevel', {
 	
+	title = i18n.get 'terrain-tools-level'
+	
 	button {
-		title = i18n.get 'terrain-tools-level'
 		buttonUp = 'terrain_level_button.png'
 		buttonDown = 'terrain_level_button.png'
 		group = 'terrain-tools'
@@ -208,8 +209,9 @@ tool 'terrainLevel', {
 
 tool 'terrainLower', {
 	
+	title = i18n.get 'terrain-tools-lower'
+	
 	button {
-		title = i18n.get 'terrain-tools-lower'
 		buttonUp = 'terrain_lower_button.png'
 		buttonDown = 'terrain_lower_button.png'
 		group = 'terrain-tools'

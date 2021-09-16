@@ -8,15 +8,35 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Pixmap.Filter;
 import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.TextureData.TextureDataType;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 /**
  * @author snowjak88
  *
  */
-public class TextureUtils {
+public class PixmapUtils {
 	
 	private static final ToFloatFunction<Color> toGrayscale = (c) -> (0.21f * c.r + 0.72f * c.g + 0.07f * c.b);
+	
+	public static Pixmap fromTexture(Texture texture) {
+		
+		if (!texture.getTextureData().isPrepared())
+			texture.getTextureData().prepare();
+		return texture.getTextureData().consumePixmap();
+	}
+	
+	public static Pixmap fromTextureRegion(TextureRegion region) {
+		
+		if (!region.getTexture().getTextureData().isPrepared())
+			region.getTexture().getTextureData().prepare();
+		final Pixmap inputPixmap = region.getTexture().getTextureData().consumePixmap();
+		final Pixmap result = new Pixmap(region.getRegionWidth(), region.getRegionHeight(), inputPixmap.getFormat());
+		
+		result.drawPixmap(inputPixmap, 0, 0, region.getRegionX(), region.getRegionY(), region.getRegionWidth(),
+				region.getRegionHeight());
+		
+		return result;
+	}
 	
 	/**
 	 * Convert an {@code input} {@link Texture} to a grayscale equivalent. The
@@ -26,41 +46,30 @@ public class TextureUtils {
 	 * @param input
 	 * @return
 	 */
-	public static Texture grayscale(Texture input) {
+	public static Pixmap grayscale(Pixmap input) {
 		
 		final Pixmap result = new Pixmap(input.getWidth(), input.getHeight(), Format.RGBA8888);
 		
-		if (!input.getTextureData().isPrepared())
-			input.getTextureData().prepare();
-		final Pixmap inputPixmap = input.getTextureData().consumePixmap();
-		
-		for (int x = 0; x < inputPixmap.getWidth(); x++)
-			for (int y = 0; y < inputPixmap.getHeight(); y++) {
-				final Color color = convertToColor(inputPixmap.getPixel(x, y), inputPixmap.getFormat());
+		for (int x = 0; x < input.getWidth(); x++)
+			for (int y = 0; y < input.getHeight(); y++) {
+				final Color color = convertToColor(input.getPixel(x, y), input.getFormat());
 				final float gray = toGrayscale.apply(color);
 				result.drawPixel(x, y, Color.rgba8888(gray, gray, gray, color.a));
 			}
 		
-		return new Texture(result);
+		return result;
 	}
 	
 	/**
 	 * Given a non-square {@code input} {@link Texture}, produce a square Texture
 	 * where the given {@code input} is centered. The output Texture's side-lengths
 	 * will be equal to the greater side-length of the input.
-	 * <p>
-	 * If the input is <em>already</em> square, this simply returns the input
-	 * without modification.
-	 * </p>
 	 * 
 	 * @param input
 	 * @param resultBackground
 	 * @return
 	 */
-	public static Texture center(Texture input, Color resultBackground) {
-		
-		if (input.getWidth() == input.getHeight())
-			return input;
+	public static Pixmap center(Pixmap input, Color resultBackground) {
 		
 		final int dimension = Util.max(input.getWidth(), input.getHeight());
 		final Pixmap result = new Pixmap(dimension, dimension, Format.RGBA8888);
@@ -71,11 +80,9 @@ public class TextureUtils {
 		final int offsetX = (dimension / 2) - (input.getWidth() / 2);
 		final int offsetY = (dimension / 2) - (input.getHeight() / 2);
 		
-		if (!input.getTextureData().isPrepared())
-			input.getTextureData().prepare();
-		result.drawPixmap(input.getTextureData().consumePixmap(), offsetX, offsetY);
+		result.drawPixmap(input, offsetX, offsetY);
 		
-		return new Texture(result);
+		return result;
 	}
 	
 	/**
@@ -86,20 +93,14 @@ public class TextureUtils {
 	 * @param newHeight
 	 * @return
 	 */
-	public static Texture resize(Texture input, int newWidth, int newHeight) {
-		
-		if (input.getWidth() == newWidth && input.getHeight() == newHeight)
-			return input;
+	public static Pixmap resize(Pixmap input, int newWidth, int newHeight) {
 		
 		final Pixmap result = new Pixmap(newWidth, newHeight, Format.RGBA8888);
 		result.setFilter(Filter.BiLinear);
 		
-		if (!input.getTextureData().isPrepared())
-			input.getTextureData().prepare();
-		result.drawPixmap(input.getTextureData().consumePixmap(), 0, 0, input.getWidth(), input.getHeight(), 0, 0,
-				newWidth, newHeight);
+		result.drawPixmap(input, 0, 0, input.getWidth(), input.getHeight(), 0, 0, newWidth, newHeight);
 		
-		return new Texture(result);
+		return result;
 	}
 	
 	/**
@@ -113,23 +114,18 @@ public class TextureUtils {
 	 * @param topOffsetY
 	 * @return
 	 */
-	public static Texture layer(Texture bottom, Texture top, int topOffsetX, int topOffsetY) {
+	public static Pixmap layer(Pixmap bottom, Pixmap top, int topOffsetX, int topOffsetY) {
 		
 		final Pixmap result = new Pixmap(bottom.getWidth(), bottom.getHeight(), Format.RGBA8888);
 		
-		if (!bottom.getTextureData().isPrepared())
-			bottom.getTextureData().prepare();
-		result.drawPixmap(bottom.getTextureData().consumePixmap(), 0, 0);
+		result.drawPixmap(bottom, 0, 0);
 		
 		final int topDrawWidth = Util.clamp(top.getWidth(), 0, bottom.getWidth() - topOffsetX);
 		final int topDrawHeight = Util.clamp(top.getHeight(), 0, bottom.getHeight() - topOffsetY);
 		
-		if (!top.getTextureData().isPrepared())
-			top.getTextureData().prepare();
-		result.drawPixmap(top.getTextureData().consumePixmap(), topOffsetX, topOffsetY, 0, 0, topDrawWidth,
-				topDrawHeight);
+		result.drawPixmap(top, topOffsetX, topOffsetY, 0, 0, topDrawWidth, topDrawHeight);
 		
-		return new Texture(result);
+		return result;
 	}
 	
 	/**
@@ -156,41 +152,26 @@ public class TextureUtils {
 	 * @throws IllegalArgumentException
 	 *             if either of the given Textures are not backed by a Pixmap
 	 */
-	public static Texture mask(Texture input, Texture mask, MaskChannel maskChannel, Color resultBackground,
+	public static Pixmap mask(Pixmap input, Pixmap mask, MaskChannel maskChannel, Color resultBackground,
 			boolean inverseAlpha) {
 		
 		if (input == null)
-			throw new NullPointerException("Cannot mask Texture -- [input] is null!");
+			throw new NullPointerException("Cannot mask Pixmap -- [input] is null!");
 		if (mask == null)
-			throw new NullPointerException("Cannot mask Texture -- [mask] is null!");
+			throw new NullPointerException("Cannot mask Pixmap -- [mask] is null!");
 		if (maskChannel == null)
-			throw new NullPointerException("Cannot mask Texture -- selected [maskChannel] is null!");
-		
-		if (input.getTextureData().getType() != TextureDataType.Pixmap)
-			throw new IllegalArgumentException("Cannot mask Texture -- [input] is not backed by a Pixmap!");
-		
-		if (mask.getTextureData().getType() != TextureDataType.Pixmap)
-			throw new IllegalArgumentException("Cannot mask Texture -- [mask] is not backed by a Pixmap!");
+			throw new NullPointerException("Cannot mask Pixmap -- selected [maskChannel] is null!");
 		
 		final int width = Util.min(input.getWidth(), mask.getWidth());
 		final int height = Util.min(input.getHeight(), mask.getHeight());
 		
 		final Pixmap result = new Pixmap(width, height, Format.RGBA8888);
 		
-		if (!input.getTextureData().isPrepared())
-			input.getTextureData().prepare();
-		final Pixmap inputPixmap = input.getTextureData().consumePixmap();
-		
-		if (!mask.getTextureData().isPrepared())
-			mask.getTextureData().prepare();
-		final Pixmap maskPixmap = mask.getTextureData().consumePixmap();
-		
 		for (int x = 0; x < width; x++)
 			for (int y = 0; y < height; y++) {
 				
-				final Color c = convertToColor(inputPixmap.getPixel(x, y), inputPixmap.getFormat());
-				final float maskValue = maskChannel
-						.getFromColor(convertToColor(maskPixmap.getPixel(x, y), maskPixmap.getFormat()));
+				final Color c = convertToColor(input.getPixel(x, y), input.getFormat());
+				final float maskValue = maskChannel.getFromColor(convertToColor(mask.getPixel(x, y), mask.getFormat()));
 				final float invMaskValue = 1f - maskValue;
 				
 				final float inputAlpha = (inverseAlpha) ? invMaskValue : maskValue;
@@ -207,7 +188,7 @@ public class TextureUtils {
 				result.drawPixel(x, y);
 			}
 		
-		return new Texture(result);
+		return result;
 	}
 	
 	public enum MaskChannel {

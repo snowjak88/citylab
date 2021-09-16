@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.snowjak.city.configuration.Configuration;
 import org.snowjak.city.configuration.processors.AssetAnnotationProcessor;
 import org.snowjak.city.configuration.processors.AssetPreloadAnnotationProcessor;
 import org.snowjak.city.configuration.processors.InjectAllAnnotationProcessor;
@@ -12,9 +13,9 @@ import org.snowjak.city.screens.LoadingScreen;
 import org.snowjak.city.screens.MainMenuScreen;
 import org.snowjak.city.screens.loadingtasks.AssetServiceLoadingTask;
 import org.snowjak.city.service.GameService;
-import org.snowjak.city.util.Util;
 
 import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.utils.Disposable;
 import com.github.czyzby.autumn.context.ContextDestroyer;
@@ -64,11 +65,8 @@ public class CityGame extends Game {
 	/**
 	 * Shared {@link ListeningExecutorService}.
 	 */
-	public static final ListeningExecutorService EXECUTOR = MoreExecutors
-			.listeningDecorator(MoreExecutors.getExitingExecutorService(
-					(ThreadPoolExecutor) Executors
-							.newCachedThreadPool(),
-					Duration.ofSeconds(5)));
+	public static final ListeningExecutorService EXECUTOR = MoreExecutors.listeningDecorator(MoreExecutors
+			.getExitingExecutorService((ThreadPoolExecutor) Executors.newCachedThreadPool(), Duration.ofSeconds(5)));
 	
 	//
 	//
@@ -123,6 +121,7 @@ public class CityGame extends Game {
 		//
 		// Register the disposer
 		destroyer.addAction(() -> gameService.getState().getDisposables().forEach(Disposable::dispose));
+		destroyer.addAction(() -> Gdx.app.getPreferences(Configuration.PREFERENCES_NAME).flush());
 		
 		//
 		// Set the very first Screen instance -- the loading screen, currently

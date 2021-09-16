@@ -12,15 +12,19 @@ import org.snowjak.city.service.SkinService
 import org.snowjak.city.tools.Tool
 import org.snowjak.city.tools.ToolButton
 import org.snowjak.city.tools.ToolGroup
-import org.snowjak.city.util.TextureUtils
-import org.snowjak.city.util.TextureUtils.MaskChannel
+import org.snowjak.city.util.PixmapUtils
+import org.snowjak.city.util.PixmapUtils.MaskChannel
 
 import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
+import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.InputListener
 import com.badlogic.gdx.scenes.scene2d.actions.Actions
 import com.badlogic.gdx.scenes.scene2d.ui.Button
+import com.badlogic.gdx.scenes.scene2d.ui.Cell
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
@@ -63,6 +67,7 @@ class Toolbar extends Window {
 	private final Map<String,Button> groupExpandButtons = [:]
 	private final Map<String,Set<Button>> groupToolButtons = [:]
 	private final Map<String,Button> buttons = [:]
+	private final Map<Button,Cell> buttonCells = [:]
 	private final Map<String,Label> buttonToolTipLabels = [:]
 	
 	private final Table buttonTable;
@@ -75,7 +80,7 @@ class Toolbar extends Window {
 	private final GameService gameService
 	private final GameAssetService assetService
 	
-	private final Texture buttonMask, buttonSunkenMask, buttonHighlight
+	private final Pixmap buttonMask, buttonSunkenMask, buttonHighlight
 	
 	private String activeToolName
 	
@@ -97,9 +102,9 @@ class Toolbar extends Window {
 		assetService.finishLoading BUTTON_MASK_SUNKEN_FILENAME
 		assetService.finishLoading BUTTON_HIGHLIGHT_FILENAME
 		
-		buttonMask = assetService.get(BUTTON_MASK_FILENAME, Texture)
-		buttonSunkenMask = assetService.get(BUTTON_MASK_SUNKEN_FILENAME, Texture)
-		buttonHighlight = assetService.get(BUTTON_HIGHLIGHT_FILENAME, Texture)
+		buttonMask = PixmapUtils.fromTexture( assetService.get(BUTTON_MASK_FILENAME, Texture) )
+		buttonSunkenMask = PixmapUtils.fromTexture( assetService.get(BUTTON_MASK_SUNKEN_FILENAME, Texture) )
+		buttonHighlight = PixmapUtils.fromTexture( assetService.get(BUTTON_HIGHLIGHT_FILENAME, Texture) )
 		
 		movable = true
 		modal = false
@@ -132,6 +137,7 @@ class Toolbar extends Window {
 		] as InputListener)
 		
 		add scrollPane
+		top().left()
 	}
 	
 	@Override
@@ -223,6 +229,8 @@ class Toolbar extends Window {
 		if(buttonTable) {
 			buttonTable.clear()
 			
+			buttonCells.clear()
+			
 			buttonTable.row().left()
 			buttonTable.add(new Label(i18nService.get("tool-button-list-all"), skin, "title")).fillX().prefWidth(120)
 			buttonTable.add expandCollapseAllButton
@@ -242,8 +250,8 @@ class Toolbar extends Window {
 					
 					final button = buttons[buttonDef.id]
 					buttonTable.row().center()
-					buttonTable.add(button)
 					
+					buttonCells[button] = buttonTable.add(button)
 				}
 			}
 			
@@ -405,10 +413,13 @@ class Toolbar extends Window {
 		if(expand) {
 			groupExpandButtons[groupID]?.style = skinService.current.get("minus", ButtonStyle)
 			groupToolButtons[groupID]?.each { b ->
+				buttonCells[b].actor = b
 				b.addAction Actions.sequence(
 						Actions.visible(true),
-						Actions.fadeIn(BUTTON_FOLD_DURATION)
-						)
+						Actions.parallel(
+							Actions.sizeTo(BUTTON_SIZE,BUTTON_SIZE, BUTTON_FOLD_DURATION),
+							Actions.fadeIn(BUTTON_FOLD_DURATION)
+						))
 			}
 			groupExpanded << groupID
 		}
@@ -416,9 +427,11 @@ class Toolbar extends Window {
 			groupExpandButtons[groupID]?.style = skinService.current.get("plus", ButtonStyle)
 			groupToolButtons[groupID]?.each { b ->
 				b.addAction Actions.sequence(
-						Actions.fadeOut(BUTTON_FOLD_DURATION),
-						Actions.visible(false)
-						)
+						Actions.parallel(
+							Actions.sizeTo(BUTTON_SIZE, 0, BUTTON_FOLD_DURATION),
+							Actions.fadeOut(BUTTON_FOLD_DURATION)),
+						Actions.visible(false),
+						Actions.removeActor())
 			}
 			groupExpanded.remove groupID
 		}
@@ -438,10 +451,15 @@ class Toolbar extends Window {
 	private Button createToolButton(ToolButton buttonDef) {
 		
 		final style = new ButtonStyle()
-		style.up = processButtonTexture( assetService.get(buttonDef.buttonUp.path(), Texture.class) )
-		style.down = processButtonTexture( assetService.get(buttonDef.buttonDown.path(), Texture.class), true )
-		style.checked = processButtonTexture( assetService.get(buttonDef.buttonUp.path(), Texture.class), false, true )
-		style.disabled = processButtonTexture( assetService.get(buttonDef.buttonUp.path(), Texture.class), false, false, true )
+		final TextureAtlas atlas = ( buttonDef.tool.atlas ) ? assetService.get(buttonDef.tool.atlas.path(), TextureAtlas) : null
+		
+		final TextureRegion buttonUp = (atlas) ? atlas.findRegion(fileMinusExtension(buttonDef.buttonUp)) : new TextureRegion( assetService.get( buttonDef.baseDirectory.child(buttonDef.buttonUp).path(), Texture ) )
+		final TextureRegion buttonDown = (atlas) ? atlas.findRegion(fileMinusExtension(buttonDef.buttonDown)) : new TextureRegion( assetService.get( buttonDef.baseDirectory.child(buttonDef.buttonDown).path(), Texture ) )
+		
+		style.up = processButtonTexture( buttonUp )
+		style.down = processButtonTexture( buttonDown, true )
+		style.checked = processButtonTexture( buttonUp, false, true )
+		style.disabled = processButtonTexture( buttonUp, false, false, true )
 		
 		final buttonToolTipLabel = new Label(buttonDef.tool.title, skin)
 		buttonToolTipLabels[buttonDef.id] = buttonToolTipLabel
@@ -454,12 +472,23 @@ class Toolbar extends Window {
 	
 	private void updateToolButton(Button button, ToolButton buttonDef) {
 		final style = button.style
-		style.up = processButtonTexture( assetService.get(buttonDef.buttonUp.path(), Texture.class) )
-		style.down = processButtonTexture( assetService.get(buttonDef.buttonDown.path(), Texture.class), true )
-		style.checked = processButtonTexture( assetService.get(buttonDef.buttonUp.path(), Texture.class), false, true )
-		style.disabled = processButtonTexture( assetService.get(buttonDef.buttonUp.path(), Texture.class), false, false, true )
+		
+		final TextureAtlas atlas = ( buttonDef.tool.atlas ) ? assetService.get(buttonDef.tool.atlas.path(), TextureAtlas) : null
+		
+		final TextureRegion buttonUp = (atlas) ? atlas.findRegion(fileMinusExtension(buttonDef.buttonUp)) : new TextureRegion( assetService.get( buttonDef.baseDirectory.child(buttonDef.buttonUp).path(), Texture ) )
+		final TextureRegion buttonDown = (atlas) ? atlas.findRegion(fileMinusExtension(buttonDef.buttonDown)) : new TextureRegion( assetService.get( buttonDef.baseDirectory.child(buttonDef.buttonDown).path(), Texture ) )
+		
+		style.up = processButtonTexture( buttonUp )
+		style.down = processButtonTexture( buttonDown, true )
+		style.checked = processButtonTexture( buttonUp, false, true )
+		style.disabled = processButtonTexture( buttonUp, false, false, true )
 		
 		buttonToolTipLabels[buttonDef.id]?.text = buttonDef.tool.title
+	}
+	
+	private String fileMinusExtension(String filename) {
+		final extension = filename.substring(filename.lastIndexOf('.'))
+		filename.replace(extension, "")
 	}
 	
 	/**
@@ -470,24 +499,19 @@ class Toolbar extends Window {
 	 * <li>A highlight is added if required</li>
 	 * </ul>
 	 */
-	private TextureRegionDrawable processButtonTexture(Texture buttonTexture, boolean isSunken = false, boolean includeHighlight = false, boolean grayscale = false) {
+	private TextureRegionDrawable processButtonTexture(TextureRegion buttonTexture, boolean isSunken = false, boolean includeHighlight = false, boolean grayscale = false) {
 		
-		if(buttonTexture.height != buttonTexture.height)
-			buttonTexture = TextureUtils.center(buttonTexture, TRANSPARENT_COLOR)
-		final maskedTexture = TextureUtils.mask(buttonTexture, (isSunken) ? buttonSunkenMask : buttonMask, MaskChannel.ALPHA, TRANSPARENT_COLOR, false)
+		def buttonPixmap = PixmapUtils.fromTextureRegion(buttonTexture)
+		if(buttonTexture.regionWidth != buttonTexture.regionHeight)
+			buttonPixmap = PixmapUtils.center(buttonPixmap, TRANSPARENT_COLOR)
+		buttonPixmap = PixmapUtils.mask(buttonPixmap, (isSunken) ? buttonSunkenMask : buttonMask, MaskChannel.ALPHA, TRANSPARENT_COLOR, false)
 		
-		final Texture highlit
 		if(includeHighlight)
-			highlit = TextureUtils.layer(maskedTexture, buttonHighlight, 0, 0)
-		else
-			highlit = maskedTexture
+			buttonPixmap = PixmapUtils.layer(buttonPixmap, buttonHighlight, 0, 0)
 		
-		final Texture grayed
 		if(grayscale)
-			grayed = TextureUtils.grayscale(highlit)
-		else
-			grayed = highlit
+			buttonPixmap = PixmapUtils.grayscale(buttonPixmap)
 		
-		new TextureRegionDrawable( TextureUtils.resize(grayed, BUTTON_SIZE, BUTTON_SIZE) )
+		new TextureRegionDrawable( new Texture( PixmapUtils.resize(buttonPixmap, BUTTON_SIZE, BUTTON_SIZE) ) )
 	}
 }

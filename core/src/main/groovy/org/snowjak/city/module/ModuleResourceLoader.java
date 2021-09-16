@@ -8,6 +8,7 @@ import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileCorner;
+import org.snowjak.city.map.tiles.TileEdge;
 import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.module.ModuleResourceLoader.ModuleResourceLoaderParameters;
 import org.snowjak.city.resources.ScriptedResourceLoader;
@@ -68,6 +69,7 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		customizer.addImports(
 				// jCity types
 				CityMap.class.getName(), Tile.class.getName(), TileSet.class.getName(), TileCorner.class.getName(),
+				TileEdge.class.getName(),
 				// Misc. LibGDX types
 				AssetDescriptor.class.getName(), Color.class.getName(),
 				// Ashley ECS types
