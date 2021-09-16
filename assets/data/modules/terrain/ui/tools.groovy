@@ -47,7 +47,7 @@ constrainVertexDeltas = { int vertexX, vertexY, int maxDelta = 1 ->
 }
 
 invalidateNeighbors = { int vertexX, int vertexY ->
-	for(def corner : TileCorner.values()) {
+	for(def corner : TileCorner) {
 		final cx = vertexX - corner.offsetX,
 		cy = vertexY - corner.offsetY
 		
@@ -98,7 +98,7 @@ tool 'terrainRaise', {
 		def lowestAlt = 999
 		final lowestCorners = []
 		int cx = cellX, cy = cellY
-		for(def corner in TileCorner.values()) {
+		for(def corner in TileCorner) {
 			final int vx = cx + corner.offsetX, vy = cy + corner.offsetY
 			
 			if(!state.map.isValidVertex(vx, vy))
@@ -166,7 +166,7 @@ tool 'terrainLevel', {
 			
 		final adjustCorners = []
 		int cx = cellX, cy = cellY
-		for(def corner in TileCorner.values()) {
+		for(def corner in TileCorner) {
 			final int vx = cx + corner.offsetX, vy = cy + corner.offsetY
 			
 			if(!state.map.isValidVertex(vx, vy))
@@ -236,7 +236,7 @@ tool 'terrainLower', {
 		def highestAlt = -999
 		final highestCorners = []
 		int cx = cellX, cy = cellY
-		for(def corner in TileCorner.values()) {
+		for(def corner in TileCorner) {
 			final int vx = cx + corner.offsetX, vy = cy + corner.offsetY
 			
 			if(!state.map.isValidVertex(vx, vy))

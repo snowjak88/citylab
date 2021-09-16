@@ -3,24 +3,30 @@ id = 'cursor-highlighters'
 description = 'Helper objects used by other modules'
 
 //
-// We can publish the controls to a map-cell-outliner.
+// We publish the controls to a map-cell-outliner.
 // This interface comes in the form of a provided object:
 //
 //  * mapCellOutliner.active (boolean)  -- is the map-cell-outliner active?
-//  * mapCellOutliner.cellX (int)       -- the X-coordinate of the map-cell to outline
-//  * mapCellOutliner.cellY (int)       -- the Y-coordinate ...
-//  * mapCellOutliner.refresh (boolean) -- force a re-calculation of the outliner's vertices
+//  *                .cellX (int)       -- the X-coordinate of the map-cell to outline
+//  *                .cellY (int)       -- the Y-coordinate ...
+//  *                .refresh (boolean) -- force a re-calculation of the outliner's vertices
+//  *                .color (Color)     -- color of the map-cell outline (null = WHITE)
 //
 //
 class MapCellOutliner {
 	boolean active, refresh
 	int cellX, cellY
+	Color color
+	def String toString() {
+		"[active: $active, refresh: $refresh, cellX: $cellX, cellY: $cellY, color: $color]"
+	}
 }
 mapCellOutliner = [
 	active: false,
 	cellX: 0,
 	cellY: 0,
-	refresh: false
+	refresh: false,
+	color: null
 ] as MapCellOutliner
 
 //
@@ -29,47 +35,35 @@ mapCellOutliner = [
 provides mapCellOutliner named 'mapCellOutliner'
 
 //
-//
-//
-oldCellX = -1i
-oldCellY = -1i
-vertex0x = 0f
-vertex0y = 0f
-vertex1x = 0f
-vertex1y = 0f
-vertex2x = 0f
-vertex2y = 0f
-vertex3x = 0f
-vertex3y = 0f
+// Notice that our script-name *must* be distinct from the [mapCellOutliner] variable-name.
+include 'highlighter-mapCellOutliner.groovy'
 
-customRenderHook 'tool-mapCellOutliner', { delta, batch, shapeDrawer, renderingSupport ->
-	
-	if(!mapCellOutliner.active)
-		return
-	if( !renderingSupport.isCellVisible(mapCellOutliner.cellX, mapCellOutliner.cellY) )
-		return
-	
-	if(mapCellOutliner.refresh || oldCellX != mapCellOutliner.cellX || oldCellY != mapCellOutliner.cellY) {
-		final vertices = renderingSupport.getCellVertices( mapCellOutliner.cellX, mapCellOutliner.cellY, null )
-		vertex0x = vertices[0].x
-		vertex0y = vertices[0].y
-		vertex1x = vertices[1].x
-		vertex1y = vertices[1].y
-		vertex2x = vertices[2].x
-		vertex2y = vertices[2].y
-		vertex3x = vertices[3].x
-		vertex3y = vertices[3].y
-		oldCellX = mapCellOutliner.cellX
-		oldCellY = mapCellOutliner.cellY
-		mapCellOutliner.refresh = false
+//
+// We can extend that map-cell-outliner to an outliner for multiple cells simultaneously.
+//
+//  * mapCellListOutliner.active  (boolean) -- is the outliner active?
+//  *                    .cellX   (List)    -- X-coordinates to outline
+//  *                    .cellY   (List)    -- Y-coordinates to outline
+//  *                    .refresh (boolean) -- force a re-calculation of the vertices for each cell
+//                                             in the list instead of relying on the internal vertex-cache
+//  *                    .color   (Color)   -- color of the map-cell outlines (null = WHITE)
+//
+class MapCellListOutliner {
+	boolean active, refresh
+	List cellX, cellY
+	Color color
+	def String toString() {
+		"[active: $active, refresh: $refresh, cellX: $cellX, cellY: $cellY, color: $color]"
 	}
-	
-	shapeDrawer.line vertex0x, vertex0y, vertex1x, vertex1y, Color.WHITE
-	shapeDrawer.line vertex1x, vertex1y, vertex2x, vertex2y, Color.WHITE
-	shapeDrawer.line vertex2x, vertex2y, vertex3x, vertex3y, Color.WHITE
-	shapeDrawer.line vertex3x, vertex3y, vertex0x, vertex0y, Color.WHITE
-} after 'map'
+}
+mapCellListOutliner = [
+	active: false,
+	cellX: [],
+	cellY: [],
+	refresh: false,
+	color: null
+] as MapCellListOutliner
 
-//
-//
-//
+provides mapCellListOutliner named 'mapCellListOutliner'
+
+include 'highlighter-mapCellListOutliner.groovy'

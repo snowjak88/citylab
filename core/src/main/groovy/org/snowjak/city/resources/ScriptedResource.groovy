@@ -216,8 +216,7 @@ public abstract class ScriptedResource {
 	
 	private void includeJar(FileHandle handle) {
 		
-		final cl = (URLClassLoader) this.class.classLoader
-		cl.addURL(handle.file().toURI().toURL())
+		shell.classLoader.addURL(handle.file().toURI().toURL())
 	}
 	
 	private void includeScript(FileHandle handle) {

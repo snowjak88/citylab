@@ -184,7 +184,7 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		else
 			config.scriptBaseClass = DelegatingScript.name
 		
-		final shell = new GroovyShell(this.class.classLoader, config)
+		final shell = new GroovyShell(new GroovyClassLoader(this.class.classLoader), config)
 		
 		final script = (DelegatingScript) shell.parse(file.file())
 		

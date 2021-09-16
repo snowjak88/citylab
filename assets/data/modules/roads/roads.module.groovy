@@ -60,6 +60,49 @@ hasRoadTileMapper = ComponentMapper.getFor(HasRoadTile)
 //
 //
 
+//
+// Here's a useful helper-function:
+// Can the given cell validly host a road-tile?
+isValidRoadCell = { int cx, int cy ->
+	
+	if(!state.map.isValidCell(cx,cy))
+		return false
+	
+	final entity = state.map.getEntity(cx,cy)
+	
+	//
+	// A valid road-cell is either flat, or simply sloped -- i.e., there
+	// are always 2 consecutive vertices at the same altitude
+	
+	def isFlat = true
+	def altitude = state.map.getCellAltitude(cx, cy, TileCorner.TOP)
+	def lastAltitude = altitude
+	def consecutiveSameAltitudeCount = 0
+	def lastConsecutiveSameAltitudeCount = 0
+	
+	for(def corner in [ TileCorner.RIGHT, TileCorner.BOTTOM, TileCorner.LEFT ]) {
+		final thisAltitude = state.map.getCellAltitude(cx,cy,corner)
+		
+		if(thisAltitude != lastAltitude) {
+			isFlat = false
+			lastConsecutiveSameAltitudeCount = consecutiveSameAltitudeCount
+			consecutiveSameAltitudeCount = 0
+		}
+		
+		if(thisAltitude == lastAltitude)
+			consecutiveSameAltitudeCount++
+		
+		lastAltitude = thisAltitude
+	}
+	
+	( isFlat ) || ( lastConsecutiveSameAltitudeCount == 1 ) || ( consecutiveSameAltitudeCount == 1 )
+}
+
+//
+//
+//
+
+include 'pathfinding.groovy'
 include 'systems.groovy'
 include 'tools.groovy'
 include 'renderer.groovy'

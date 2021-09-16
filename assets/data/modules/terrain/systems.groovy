@@ -14,7 +14,7 @@ iteratingSystem 'newTerrainFittingSystem', Family.all(IsMapCell).exclude(IsTerra
 	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
 	
 	
-	for(def corner : TileCorner.values())
+	for(def corner : TileCorner)
 		pendingTerrain.heights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
 	
 	pendingTerrain.future = submitResultTask {
@@ -33,7 +33,7 @@ iteratingSystem 'existingTerrainUpdatingSystem', Family.all(IsMapCell, NeedsRepl
 	
 	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
 	
-	for(def corner : TileCorner.values())
+	for(def corner : TileCorner)
 		pendingTerrain.heights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
 	
 	
