@@ -16,13 +16,12 @@ import com.badlogic.gdx.ai.pfa.indexed.IndexedGraph
 import java.util.concurrent.LinkedBlockingQueue
 
 class PathfindRequest implements Poolable {
-	IsMapCell start, end
+	final List<IsMapCell> checkpoints = []
 	final List<IsMapCell> result = []
 	boolean success, done
 	
 	void reset() {
-		start = null
-		end = null
+		checkpoints.clear()
 		result.clear()
 		success = false
 		done = false
@@ -105,15 +104,19 @@ onActivate {
 			final currentRequest = requestQueue.take()
 			final graphPath = new DefaultGraphPath<IsMapCell>()
 			
-			final success = pathfinder.searchNodePath(
-					currentRequest.start,
-					currentRequest.end,
-					pathfindingHeuristic,
-					graphPath )
+			def success = false
+			def startNode = currentRequest.checkpoints[0]
+			for(endNode : currentRequest.checkpoints) {
+				if(endNode === startNode)
+					continue
+				
+				success |= pathfinder.searchNodePath( startNode, endNode, pathfindingHeuristic, graphPath )
+				
+				if(success)
+					for( def node : graphPath )
+						currentRequest.result << node
+			}
 			
-			if(success)
-				for( def node : graphPath )
-					currentRequest.result << node
 			currentRequest.success = success
 			currentRequest.done = true
 		}

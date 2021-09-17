@@ -136,6 +136,7 @@ tool 'terrainRaise', {
 		mapCellOutliner.active = true
 		mapCellOutliner.cellX = cellX
 		mapCellOutliner.cellY = cellY
+		mapCellOutliner.color = null
 	}
 	
 	mapClick Buttons.LEFT, startRaise
@@ -200,6 +201,7 @@ tool 'terrainLevel', {
 		mapCellOutliner.active = true
 		mapCellOutliner.cellX = cellX
 		mapCellOutliner.cellY = cellY
+		mapCellOutliner.color = null
 	}
 	
 	mapDragStart Buttons.LEFT, startLevel
@@ -225,6 +227,7 @@ tool 'terrainLower', {
 		mapCellOutliner.active = true
 		mapCellOutliner.cellX = cellX
 		mapCellOutliner.cellY = cellY
+		mapCellOutliner.color = null
 	}
 	
 	activeLower = false

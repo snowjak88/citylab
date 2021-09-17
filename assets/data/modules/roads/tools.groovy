@@ -94,8 +94,8 @@ planRoad = { float cellX, float cellY ->
 		Pools.free(roadPlan.currentPathfindRequest)
 	
 	roadPlan.currentPathfindRequest = Pools.obtain(PathfindRequest)
-	roadPlan.currentPathfindRequest.start = roadPlanStartCell
-	roadPlan.currentPathfindRequest.end = endCell
+	roadPlan.currentPathfindRequest.checkpoints << roadPlanStartCell
+	roadPlan.currentPathfindRequest.checkpoints << endCell
 	
 	roadPlan.roadPlanDrawn = false
 	
@@ -147,5 +147,6 @@ tool 'placeRoad', {
 		}
 		
 		mapCellListOutliner.active = false
+		mapCellListOutliner.color = null
 	}
 }
