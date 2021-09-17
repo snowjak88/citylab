@@ -315,6 +315,15 @@ public class GameInputProcessor extends InputAdapter {
 		else if (keycode == Input.Keys.SHIFT_LEFT || keycode == Input.Keys.SHIFT_RIGHT)
 			shiftCount++;
 		
+		if (hasReceiversFor(KeyDownEvent.class)) {
+			final KeyDownEvent e = getEventInstance(KeyDownEvent.class);
+			e.setAlt(altCount > 0);
+			e.setCtrl(ctrlCount > 0);
+			e.setShift(shiftCount > 0);
+			e.setKeycode(keycode);
+			sendEvent(e);
+		}
+		
 		return true;
 	}
 	
@@ -327,6 +336,15 @@ public class GameInputProcessor extends InputAdapter {
 			ctrlCount--;
 		else if (keycode == Input.Keys.SHIFT_LEFT || keycode == Input.Keys.SHIFT_RIGHT)
 			shiftCount--;
+		
+		if (hasReceiversFor(KeyUpEvent.class)) {
+			final KeyUpEvent e = getEventInstance(KeyUpEvent.class);
+			e.setAlt(altCount > 0);
+			e.setCtrl(ctrlCount > 0);
+			e.setShift(shiftCount > 0);
+			e.setKeycode(keycode);
+			sendEvent(e);
+		}
 		
 		return true;
 	}

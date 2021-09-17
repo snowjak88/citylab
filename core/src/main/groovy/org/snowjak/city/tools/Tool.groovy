@@ -9,12 +9,15 @@ import static org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain.TOOL
 import java.util.function.Consumer
 
 import org.snowjak.city.input.InputEventReceiver
+import org.snowjak.city.input.KeyDownEvent
+import org.snowjak.city.input.KeyUpEvent
 import org.snowjak.city.input.MapClickEvent
 import org.snowjak.city.input.MapDragEndEvent
 import org.snowjak.city.input.MapDragStartEvent
 import org.snowjak.city.input.MapDragUpdateEvent
 import org.snowjak.city.input.MapHoverEvent
 import org.snowjak.city.input.hotkeys.Hotkey
+import org.snowjak.city.input.modifiers.ModifierKey
 import org.snowjak.city.module.Module
 import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain
 import org.snowjak.city.service.GameService
@@ -149,6 +152,31 @@ class Tool {
 	//
 	//
 	//
+	
+	/**
+	 * Register a modifier-key listener activity. While the associated tool is active, this activity
+	 * will be listening for {@link ModifierKey} presses. The given Closures {@code onKeyDown} and
+	 * {@code onKeyUp} (if provided) will be called when that key is pressed and released, respectively.
+	 * @param key
+	 * @param onKeyDown
+	 * @param onKeyUp
+	 */
+	public void modifier(ModifierKey key, Closure onKeyDown, Closure onKeyUp) {
+		
+		if(onKeyDown)
+			activities << new InputReceivingActivity(this, gameService, KeyDownEvent,
+					[ receive: { KeyDownEvent e ->
+							if(key.matches(e.keycode))
+								onKeyDown()
+						} ] as InputEventReceiver<KeyDownEvent>)
+		
+		if(onKeyUp)
+			activities << new InputReceivingActivity(this, gameService, KeyUpEvent,
+					[ receive: { KeyUpEvent e ->
+							if(key.matches(e.keycode))
+								onKeyUp()
+						} ] as InputEventReceiver<KeyDownEvent>)
+	}
 	
 	/**
 	 * Register a map-hover activity. While the associated tool is active, this activity will be

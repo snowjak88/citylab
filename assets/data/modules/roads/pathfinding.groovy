@@ -79,7 +79,22 @@ onActivate {
 	
 	pathfindingHeuristic = new Heuristic<IsMapCell>() {
 				public float estimate(IsMapCell node, IsMapCell endNode) {
-					Math.abs(node.cellX - endNode.cellX) + Math.abs(node.cellY - endNode.cellY)
+					
+					final simpleDistance = Math.abs(node.cellX - endNode.cellX) + Math.abs(node.cellY - endNode.cellY)
+					def costMultiplier = 1
+					
+					if(!isValidRoadCell((int) node.cellX, (int) node.cellY))
+						costMultiplier += 1000
+					if(!isValidRoadCell((int) endNode.cellX, (int) endNode.cellY))
+						costMultiplier += 1000
+					if(!isValidRoadConnection((int) node.cellX, (int) node.cellY, (int) endNode.cellX, (int) endNode.cellY))
+						costMultiplier += 1000
+					
+					final corner = ((int)node.cellX != (int)endNode.cellX && (int)node.cellY != (int)endNode.cellY)
+					if(roadPlan.penalizeCorners && corner)
+						costMultiplier += 10
+					
+					simpleDistance * costMultiplier
 				}
 			}
 	

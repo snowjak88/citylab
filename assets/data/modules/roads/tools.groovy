@@ -27,7 +27,7 @@ placeRoad = { float cellX, float cellY ->
 			continue
 		
 		final neighbor = state.map.getEntity(nx,ny)
-		if(hasRoadMapper.has(neighbor)) {
+		if(hasRoadMapper.has(neighbor) && isValidRoadConnection(cx, cy, nx, ny)) {
 			
 			hasRoad.edges << edge
 			hasRoadMapper.get(neighbor).edges << edge.opposite
@@ -46,6 +46,7 @@ roadPlan = [
 	roadPlanStartY: -1,
 	roadPlanEndX: -1,
 	roadPlanEndY: -1,
+	penalizeCorners: false,
 	roadPlanStartEntity: null,
 	roadPlanStartCell: null,
 	currentPathfindRequest: null,
@@ -112,6 +113,12 @@ tool 'placeRoad', {
 		buttonUp = 'road-flat-4way.png'
 		buttonDown = 'road-flat-4way.png'
 		group = 'road-tools'
+	}
+	
+	modifier SHIFT, { ->
+		roadPlan.penalizeCorners = true
+	}, { ->
+		roadPlan.penalizeCorners = false
 	}
 	
 	mapHover { cellX, cellY ->

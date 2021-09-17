@@ -63,6 +63,13 @@ hasRoadTileMapper = ComponentMapper.getFor(HasRoadTile)
 //
 // Here's a useful helper-function:
 // Can the given cell validly host a road-tile?
+validRoadTiles = [
+	[[0, 0], [0, 0]],
+	[[1, 1], [0, 0]],
+	[[0, 1], [0, 1]],
+	[[0, 0], [1, 1]],
+	[[1, 0], [1, 0]]
+]
 isValidRoadCell = { int cx, int cy ->
 	
 	if(!state.map.isValidCell(cx,cy))
@@ -74,28 +81,43 @@ isValidRoadCell = { int cx, int cy ->
 	// A valid road-cell is either flat, or simply sloped -- i.e., there
 	// are always 2 consecutive vertices at the same altitude
 	
-	def isFlat = true
-	def altitude = state.map.getCellAltitude(cx, cy, TileCorner.TOP)
-	def lastAltitude = altitude
-	def consecutiveSameAltitudeCount = 0
-	def lastConsecutiveSameAltitudeCount = 0
+	//
+	// "Normalize" the 4 vertices' altitudes
+	final alt = new int[2][2]
+	for(def corner : TileCorner)
+		alt[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cx, cy, corner)
+	def minAltitude = 99999
+	for(def corner : TileCorner)
+		minAltitude = Util.min( minAltitude, alt[corner.offsetX][corner.offsetY] )
+	for(def corner : TileCorner)
+		alt[corner.offsetX][corner.offsetY] -= minAltitude
 	
-	for(def corner in [ TileCorner.RIGHT, TileCorner.BOTTOM, TileCorner.LEFT ]) {
-		final thisAltitude = state.map.getCellAltitude(cx,cy,corner)
+	validRoadTiles.any {
 		
-		if(thisAltitude != lastAltitude) {
-			isFlat = false
-			lastConsecutiveSameAltitudeCount = consecutiveSameAltitudeCount
-			consecutiveSameAltitudeCount = 0
-		}
+		println "this ($it) matches $alt ?"
 		
-		if(thisAltitude == lastAltitude)
-			consecutiveSameAltitudeCount++
-		
-		lastAltitude = thisAltitude
+		it[0][0] == alt[0][0] &&
+				it[1][0] == alt[1][0] &&
+				it[0][1] == alt[0][1] &&
+				it[1][1] == alt[1][1]
 	}
+}
+
+isValidRoadConnection = { int fromX, int fromY, int toX, int toY ->
 	
-	( isFlat ) || ( lastConsecutiveSameAltitudeCount == 1 ) || ( consecutiveSameAltitudeCount == 1 )
+	if(!state.map.isValidCell(fromX, fromY))
+		return false
+	if(!state.map.isValidCell(toX, toY))
+		return false
+	
+	final edge = TileEdge.fromDelta(toX - fromX, toY - fromY)
+	if(!edge)
+		return false
+	
+	final alt1 = state.map.getCellAltitude(fromX, fromY, edge.corners[0])
+	final alt2 = state.map.getCellAltitude(fromX, fromY, edge.corners[1])
+	
+	(alt1 == alt2)
 }
 
 //

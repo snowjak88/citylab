@@ -5,6 +5,7 @@ package org.snowjak.city.module;
 
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
+import org.snowjak.city.input.modifiers.ModifierKey;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileCorner;
@@ -66,6 +67,9 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		customizer.addStarImports("com.badlogic.gdx.utils");
 		customizer.addImport("Buttons", Input.Buttons.class.getName());
 		customizer.addImport("Poolable", Poolable.class.getName());
+		
+		customizer.addStaticStars(ModifierKey.class.getName());
+		
 		customizer.addImports(
 				// jCity types
 				CityMap.class.getName(), Tile.class.getName(), TileSet.class.getName(), TileCorner.class.getName(),
