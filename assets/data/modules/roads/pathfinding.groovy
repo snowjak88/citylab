@@ -61,6 +61,8 @@ onActivate {
 						
 						if(!isValidRoadCell(nx,ny))
 							continue
+						if(!isValidRoadConnection(cx, cy, nx, ny))
+							continue
 						
 						result.add new DefaultConnection( fromNode, isCellMapper.get(neighbor) )
 					}
@@ -82,13 +84,6 @@ onActivate {
 					
 					final simpleDistance = Math.abs(node.cellX - endNode.cellX) + Math.abs(node.cellY - endNode.cellY)
 					def costMultiplier = 1
-					
-					if(!isValidRoadCell((int) node.cellX, (int) node.cellY))
-						costMultiplier += 1000
-					if(!isValidRoadCell((int) endNode.cellX, (int) endNode.cellY))
-						costMultiplier += 1000
-					if(!isValidRoadConnection((int) node.cellX, (int) node.cellY, (int) endNode.cellX, (int) endNode.cellY))
-						costMultiplier += 1000
 					
 					final corner = ((int)node.cellX != (int)endNode.cellX && (int)node.cellY != (int)endNode.cellY)
 					if(roadPlan.penalizeCorners && corner)

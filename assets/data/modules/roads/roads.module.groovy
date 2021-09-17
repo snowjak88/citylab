@@ -94,8 +94,6 @@ isValidRoadCell = { int cx, int cy ->
 	
 	validRoadTiles.any {
 		
-		println "this ($it) matches $alt ?"
-		
 		it[0][0] == alt[0][0] &&
 				it[1][0] == alt[1][0] &&
 				it[0][1] == alt[0][1] &&
