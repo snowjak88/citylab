@@ -7,7 +7,7 @@ cellRenderHook 'roadRender', { delta, cellX, cellY, support ->
 			for(def tile in roadTile.tiles)
 				support.renderTile cellX, cellY, tile
 		}
-} after 'terrainRender'
+} after 'terrainRender' before 'waterRender'
 
 customRenderHook 'roadPlanRender', { delta, batch, shapeDrawer, renderingSupport ->
 	

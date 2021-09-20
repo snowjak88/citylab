@@ -62,17 +62,17 @@ public class MapRenderer implements RenderingSupport {
 	
 	private static final int NUM_VERTICES = 20;
 	
-	private static final float TILE_WIDTH = 1f;
-	private static final float TILE_HEIGHT = 0.5f;
-	private static final float TILE_ALTITUDE_MUTIPLIER = 0.25f;
+	private static final float LOGICAL_TILE_WIDTH = 1f;
+	private static final float LOGICAL_TILE_HEIGHT = 0.5f;
+	private static final float LOGICAL_ALTITUDE_MUTIPLIER = 0.25f;
 	
-	private static final float HALF_TILE_WIDTH = TILE_WIDTH * 0.5f;
-	private static final float HALF_TILE_HEIGHT = TILE_HEIGHT * 0.5f;
+	private static final float HALF_TILE_WIDTH = LOGICAL_TILE_WIDTH * 0.5f;
+	private static final float HALF_TILE_HEIGHT = LOGICAL_TILE_HEIGHT * 0.5f;
 	
-	public static final float DISPLAYED_GRID_UNIT_SIZE = 64f;
-	private static final float DISPLAYED_GRID_WIDTH = DISPLAYED_GRID_UNIT_SIZE * TILE_WIDTH;
-	private static final float DISPLAYED_GRID_HEIGHT = DISPLAYED_GRID_UNIT_SIZE * TILE_HEIGHT;
-	private static final float DISPLAYED_ALTITUDE_MULTIPLIER = DISPLAYED_GRID_UNIT_SIZE * TILE_ALTITUDE_MUTIPLIER;
+	public static final float WORLD_GRID_UNIT_SIZE = 64f;
+	private static final float WORLD_GRID_WIDTH = WORLD_GRID_UNIT_SIZE * LOGICAL_TILE_WIDTH;
+	private static final float WORLD_GRID_HEIGHT = WORLD_GRID_UNIT_SIZE * LOGICAL_TILE_HEIGHT;
+	private static final float WORLD_ALTITUDE_MULTIPLIER = WORLD_GRID_UNIT_SIZE * LOGICAL_ALTITUDE_MUTIPLIER;
 	
 	private Matrix4 isoTransform;
 	private Matrix4 invIsotransform;
@@ -105,9 +105,8 @@ public class MapRenderer implements RenderingSupport {
 	private final Vector2 cellVertex = new Vector2();
 	
 	private final GameState state;
-	private Batch batch;
+	private SpriteBatch batch;
 	private ShapeDrawer shapeDrawer;
-	private boolean ownsBatch = false;
 	
 	/**
 	 * The rendering-hook that actually executes the map-renderer. In effect, this
@@ -176,10 +175,9 @@ public class MapRenderer implements RenderingSupport {
 		}
 	}
 	
-	public void setBatch(Batch batch) {
+	private void setBatch(SpriteBatch batch) {
 		
-		this.batch = (batch != null) ? batch : new SpriteBatch();
-		ownsBatch = (batch == null);
+		this.batch = (batch != null) ? batch : new SpriteBatch(1024);
 		
 		final Pixmap shapeDrawerPixmap = new Pixmap(1, 1, Format.RGB888);
 		shapeDrawerPixmap.setColor(Color.WHITE);
@@ -188,7 +186,7 @@ public class MapRenderer implements RenderingSupport {
 		final TextureRegion shapeDrawerRegion = new TextureRegion(shapeDrawerTexture);
 		
 		this.shapeDrawer = new ShapeDrawer(this.batch, shapeDrawerRegion);
-		this.shapeDrawer.setDefaultLineWidth(1f / DISPLAYED_GRID_WIDTH);
+		this.shapeDrawer.setDefaultLineWidth(1f / WORLD_GRID_WIDTH);
 	}
 	
 	/**
@@ -241,11 +239,11 @@ public class MapRenderer implements RenderingSupport {
 		
 		// transforming screen coordinates to iso coordinates (so we don't render more
 		// than we need to)
-		mapVisibleMinY = (int) (viewportToMap(topLeft, true).y / TILE_WIDTH) - 2;
-		mapVisibleMaxY = (int) (viewportToMap(bottomRight, true).y / TILE_WIDTH) + 2;
+		mapVisibleMinY = (int) (viewportToMap(topLeft, true).y / LOGICAL_TILE_WIDTH) - 2;
+		mapVisibleMaxY = (int) (viewportToMap(bottomRight, true).y / LOGICAL_TILE_WIDTH) + 2;
 		
-		mapVisibleMinX = (int) (viewportToMap(bottomLeft, true).x / TILE_WIDTH) - 2;
-		mapVisibleMaxX = (int) (viewportToMap(topRight, true).x / TILE_WIDTH) + 2;
+		mapVisibleMinX = (int) (viewportToMap(bottomLeft, true).x / LOGICAL_TILE_WIDTH) - 2;
+		mapVisibleMaxX = (int) (viewportToMap(topRight, true).x / LOGICAL_TILE_WIDTH) + 2;
 	}
 	
 	public void render(float delta) {
@@ -253,10 +251,8 @@ public class MapRenderer implements RenderingSupport {
 		if (state == null || state.getMap() == null)
 			return;
 		
-		if (ownsBatch) {
-			batch.enableBlending();
-			batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-		}
+		batch.enableBlending();
+		batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 		
 		updateViewportBounds();
 		
@@ -307,7 +303,7 @@ public class MapRenderer implements RenderingSupport {
 		if (!isCellVisible(col, row))
 			return;
 		
-		if(tile == null || tile.getSprite() == null)
+		if (tile == null || tile.getSprite() == null)
 			return;
 		
 		final float color;
@@ -512,7 +508,7 @@ public class MapRenderer implements RenderingSupport {
 	private float computeCellVertexY(int vertexX, int vertexY, int altitude) {
 		
 		return (vertexY * HALF_TILE_HEIGHT) - (vertexX * HALF_TILE_HEIGHT)
-				+ ((float) altitude * TILE_ALTITUDE_MUTIPLIER);
+				+ ((float) altitude * LOGICAL_ALTITUDE_MUTIPLIER);
 	}
 	
 	@Override

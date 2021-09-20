@@ -104,21 +104,23 @@ onActivate {
 			final currentRequest = requestQueue.take()
 			final graphPath = new DefaultGraphPath<IsMapCell>()
 			
-			def success = false
-			def startNode = currentRequest.checkpoints[0]
-			for(endNode : currentRequest.checkpoints) {
-				if(endNode === startNode)
+			synchronized(currentRequest) {
+				def success = false
+				def startNode = currentRequest.checkpoints[0]
+				for(endNode : currentRequest.checkpoints) {
+					if(endNode === startNode)
 					continue
-				
-				success |= pathfinder.searchNodePath( startNode, endNode, pathfindingHeuristic, graphPath )
-				
-				if(success)
+					
+					success |= pathfinder.searchNodePath( startNode, endNode, pathfindingHeuristic, graphPath )
+					
+					if(success)
 					for( def node : graphPath )
-						currentRequest.result << node
+					currentRequest.result << node
+				}
+				
+				currentRequest.success = success
+				currentRequest.done = true
 			}
-			
-			currentRequest.success = success
-			currentRequest.done = true
 		}
 	}
 }

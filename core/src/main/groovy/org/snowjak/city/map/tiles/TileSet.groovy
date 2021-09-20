@@ -43,6 +43,8 @@ class TileSet extends ScriptedResource implements Disposable {
 	boolean decoration = false
 	TileCorner base = TileCorner.TOP
 	
+	boolean redrawFront = false, redrawBack = false
+	
 	Map<String,Closure> ruleHelpers = [:]
 	
 	Expando ext = new Expando()
@@ -100,6 +102,7 @@ class TileSet extends ScriptedResource implements Disposable {
 			gridWidth: gridWidth, gridHeight: gridHeight,
 			surfaceOffset: surfaceOffset, altitudeOffset: altitudeOffset,
 			base: base,
+			redrawFront: redrawFront, redrawBack: redrawBack,
 			decoration: decoration,
 			ruleHelpers: new HashMap(ruleHelpers)
 		] as Tile

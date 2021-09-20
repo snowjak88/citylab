@@ -32,6 +32,7 @@ import org.snowjak.city.util.UnregistrationHandle;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -41,7 +42,6 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.github.czyzby.autumn.annotation.Component;
 import com.github.czyzby.autumn.annotation.Initiate;
 import com.github.czyzby.kiwi.log.Logger;
-import com.github.czyzby.kiwi.util.gdx.GdxUtilities;
 
 /**
  * Presents the actual game-screen.
@@ -54,6 +54,8 @@ public class GameScreen extends AbstractGameScreen {
 	
 	private static final Logger LOG = LoggerService.forClass(GameScreen.class);
 	
+	private static final float MIN_ZOOM = 0.25f, MAX_ZOOM = 4f;
+	
 	private final MainMenuScreen mainMenuScreen;
 	private final I18NService i18nService;
 	
@@ -65,12 +67,14 @@ public class GameScreen extends AbstractGameScreen {
 		this.i18nService = i18nService;
 		this.mainMenuScreen = mainMenuScreen;
 		this.renderer = new MapRenderer(gameService.getState());
+		
+		this.setBackgroundColor(Color.BLACK);
 	}
 	
 	private GameInputProcessor inputProcessor;
 	private final ScreenViewport viewport = new ScreenViewport();
 	{
-		viewport.setUnitsPerPixel(1f / MapRenderer.DISPLAYED_GRID_UNIT_SIZE);
+		viewport.setUnitsPerPixel(1f / MapRenderer.WORLD_GRID_UNIT_SIZE);
 	}
 	
 	private float cameraOffsetX, cameraOffsetY;
@@ -205,11 +209,10 @@ public class GameScreen extends AbstractGameScreen {
 	@Override
 	public void renderBeforeStage(float delta) {
 		
-		GdxUtilities.clearScreen();
-		
 		if (renderer != null) {
 			
 			if (cameraUpdated) {
+				
 				viewport.getCamera().position.set(cameraOffsetX, cameraOffsetY, 0);
 				viewport.getCamera().update();
 				renderer.setView((OrthographicCamera) viewport.getCamera());
@@ -386,7 +389,7 @@ public class GameScreen extends AbstractGameScreen {
 		@Override
 		public void setZoom(float zoomLevel) {
 			
-			final float newZoom = max(min(zoomLevel, 8f), 1f);
+			final float newZoom = max(min(zoomLevel, MAX_ZOOM), MIN_ZOOM);
 			((OrthographicCamera) viewport.getCamera()).zoom = newZoom;
 			cameraUpdated = true;
 		}

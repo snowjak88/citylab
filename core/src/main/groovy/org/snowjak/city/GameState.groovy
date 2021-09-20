@@ -11,7 +11,6 @@ import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.renderer.RenderingHookRegistry
 import org.snowjak.city.module.Module
 import org.snowjak.city.module.ModuleExceptionRegistry
-import org.snowjak.city.screens.GameScreen
 import org.snowjak.city.screens.GameScreen.GameCameraControl
 import org.snowjak.city.service.GameAssetService
 import org.snowjak.city.tools.Tool
@@ -32,6 +31,11 @@ public class GameState {
 	String seed = Long.toString(System.currentTimeMillis())
 	
 	final Random rnd = new Random()
+	
+	/**
+	 * Should the game display its current frames-per-second?
+	 */
+	boolean showFPS = true
 	
 	/**
 	 * Active {@link CityMap} (may be {@code null})

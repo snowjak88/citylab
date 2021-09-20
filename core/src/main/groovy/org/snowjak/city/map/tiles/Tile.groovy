@@ -28,6 +28,8 @@ class Tile implements Disposable {
 	int surfaceOffset, altitudeOffset
 	TileCorner base = TileCorner.TOP
 	
+	boolean redrawFront = false, redrawBack = false
+	
 	boolean decoration = false
 	
 	Map<String,Closure> ruleHelpers = new LinkedHashMap<>()

@@ -91,7 +91,9 @@ planRoad = { float cellX, float cellY ->
 	roadPlan.roadPlanEndY = cy
 	
 	if(roadPlan.currentPathfindRequest)
-		Pools.free(roadPlan.currentPathfindRequest)
+		synchronized(roadPlan.currentPathfindRequest) {
+			Pools.free(roadPlan.currentPathfindRequest)
+		}
 	
 	roadPlan.currentPathfindRequest = Pools.obtain(PathfindRequest)
 	roadPlan.currentPathfindRequest.checkpoints << roadPlanStartCell
@@ -115,9 +117,11 @@ tool 'placeRoad', {
 		group = 'road-tools'
 	}
 	
-	modifier SHIFT, { ->
+	modifier SHIFT, {
+		->
 		roadPlan.penalizeCorners = true
-	}, { ->
+	}, {
+		->
 		roadPlan.penalizeCorners = false
 	}
 	

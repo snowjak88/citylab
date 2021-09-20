@@ -22,6 +22,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Align;
 import com.github.czyzby.kiwi.util.gdx.GdxUtilities;
@@ -47,8 +48,12 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	
 	private Actor root;
 	
+	private Label fpsLabel;
+	
 	private Skin skin;
-	private Color backgroundColor;
+	
+	private boolean clearScreen = true;
+	private Color backgroundColor, skinBackgroundColor;
 	
 	private Game game;
 	
@@ -86,6 +91,57 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	}
 	
 	/**
+	 * Will this screen automatically clear itself with every frame? (default =
+	 * true)
+	 * 
+	 * @return
+	 */
+	public boolean isClearScreen() {
+		
+		return clearScreen;
+	}
+	
+	/**
+	 * Set whether this screen will automatically clear itself with every frame.
+	 * (default = true)
+	 * 
+	 * @param clearScreen
+	 */
+	public void setClearScreen(boolean clearScreen) {
+		
+		this.clearScreen = clearScreen;
+	}
+	
+	/**
+	 * Clear the screen using the configured background color (if any)
+	 */
+	public void clearScreen() {
+		
+		final Color clearColor;
+		if (backgroundColor != null)
+			clearColor = backgroundColor;
+		else if (skinBackgroundColor != null)
+			clearColor = skinBackgroundColor;
+		else
+			clearColor = null;
+		
+		if (clearColor != null)
+			GdxUtilities.clearScreen(clearColor.r, clearColor.g, clearColor.b);
+		else
+			GdxUtilities.clearScreen();
+	}
+	
+	public Color getBackgroundColor() {
+		
+		return backgroundColor;
+	}
+	
+	public void setBackgroundColor(Color backgroundColor) {
+		
+		this.backgroundColor = backgroundColor;
+	}
+	
+	/**
 	 * Performs the following steps:
 	 * <ol>
 	 * <li>Sets up an {@link InputMultiplexer} between {@link #getInputProcessor()
@@ -107,9 +163,13 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		
 		skin = skinService.getCurrent();
 		if (skin.has("background", Color.class))
-			backgroundColor = skin.get("background", Color.class);
+			skinBackgroundColor = skin.get("background", Color.class);
 		else
-			backgroundColor = null;
+			skinBackgroundColor = null;
+		
+		fpsLabel = new Label("", skinService.getCurrent());
+		fpsLabel.setPosition(15, 15);
+		stage.addActor(fpsLabel);
 		
 		root = getRoot();
 		if (root != null) {
@@ -178,10 +238,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	@Override
 	public void render(float delta) {
 		
-		if (backgroundColor != null)
-			GdxUtilities.clearScreen(backgroundColor.r, backgroundColor.g, backgroundColor.b);
-		else
-			GdxUtilities.clearScreen();
+		if (clearScreen)
+			clearScreen();
 		
 		if (gameService.getState().getModuleExceptionRegistry().hasUnreportedFailure()
 				&& !exceptionReportingWindow.isVisible()) {
@@ -202,6 +260,11 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		renderAfterStage(delta);
 		
 		console.render();
+		
+		fpsLabel.setVisible(gameService.getState().isShowFPS());
+		if (gameService.getState().isShowFPS())
+			fpsLabel.setText(Gdx.graphics.getFramesPerSecond() + " fps");
+		
 	}
 	
 	public abstract void beforeStageAct(float delta);
@@ -216,6 +279,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		stage.getViewport().update(width, height, true);
 		console.resize(width, height);
 		
+		fpsLabel.setPosition(15, 15);
+		
 		exceptionReportingWindow.setPosition(width / 2, height / 2, Align.center);
 	}
 	
@@ -224,6 +289,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		
 		if (root != null)
 			root.remove();
+		
+		fpsLabel.remove();
 		
 		exceptionReportingWindow.remove();
 	}
