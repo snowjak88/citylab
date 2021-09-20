@@ -48,13 +48,13 @@ visualParameter {
 //
 class IsTerrainTile implements Component, Poolable {
 	
-	List<Tile> tiles = []
+	Tile tile = null
 	
 	//
 	// Poolable components require a "reset" method,
 	// to return them to a blank state
 	void reset() {
-		tiles.clear()
+		tile = null
 	}
 }
 

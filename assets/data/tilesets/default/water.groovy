@@ -89,6 +89,25 @@ tile {
 	ext.water = [ LEFT ]
 }
 
+tile {
+	id = 'water-saddle-flat-north-south'
+	filename = 'water-saddle-flat-04.png'
+	base = TOP
+	rule {
+		altDelta(TOP, [BOTTOM], 0) && altDelta(TOP, [RIGHT,LEFT], +1)
+	}
+	ext.water = [ TOP, BOTTOM ]
+}
+tile {
+	id = 'water-saddle-flat-east-west'
+	filename = 'water-saddle-flat-05.png'
+	base = LEFT
+	rule {
+		altDelta(LEFT, [RIGHT], 0) && altDelta(LEFT, [TOP,BOTTOM], +1)
+	}
+	ext.water = [ LEFT, RIGHT ]
+}
+
 //
 //
 //

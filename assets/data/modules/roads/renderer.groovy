@@ -3,9 +3,7 @@ cellRenderHook 'roadRender', { delta, cellX, cellY, support ->
 	if(entity)
 		if(hasRoadTileMapper.has(entity)) {
 			final roadTile = hasRoadTileMapper.get(entity)
-			
-			for(def tile in roadTile.tiles)
-				support.renderTile cellX, cellY, tile
+			support.renderTile cellX, cellY, roadTile.tile
 		}
 } after 'terrainRender' before 'waterRender'
 

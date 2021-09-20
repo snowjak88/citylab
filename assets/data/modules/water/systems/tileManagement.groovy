@@ -1,8 +1,20 @@
 
 //
+// When a cell is tagged as watery or not, tag it as NonBuildable or not.
+//
+listeningSystem 'waterTileNonBuildableSystem', Family.all(IsWateryCell).get(), { entity, deltaTime ->
+	if(isCellNonBuildableMapper.has(entity))
+		isCellNonBuildableMapper.get(entity).blockerIDs << 'water'
+	else
+		entity.addAndReturn( state.engine.createComponent( IsNonBuildableCell ) ).blockerIDs << 'water'
+}, { entity, deltaTime ->
+	isCellNonBuildableMapper.get(entity).blockerIDs.remove 'water'
+}
+
+//
 // Any entity tagged as watery, but lacking water-tiles, needs to be scheduled for a fitting!
 //
-iteratingSystem 'waterTileFitSchedulingSystem', Family.all(IsWateryCell, IsMapCell).exclude(HasPendingWaterTiles, HasWaterTiles).get(), { entity, deltaTime ->
+iteratingSystem 'waterTileFitSchedulingSystem', Family.all(IsWateryCell, IsMapCell).exclude(HasPendingWaterTile, HasWaterTile).get(), { entity, deltaTime ->
 	
 	final thisCell = isCellMapper.get(entity)
 	final int cx = thisCell.cellX
@@ -23,25 +35,27 @@ iteratingSystem 'waterTileFitSchedulingSystem', Family.all(IsWateryCell, IsMapCe
 			predicates << { t -> t.ext.water != null && t.ext.water.contains(corner) }
 	}
 	
-	final pending = entity.addAndReturn( state.engine.createComponent(HasPendingWaterTiles) )
+	final pending = entity.addAndReturn( state.engine.createComponent(HasPendingWaterTile) )
 	pending.future = submitResultTask {
 		->
-		tileset.getMinimalTilesFor heights, predicates, true
+		tileset.getTileFor heights, predicates, true
 	}
 }
 
-iteratingSystem 'waterTileFitProcessingSystem', Family.all(IsMapCell, IsWateryCell, HasPendingWaterTiles).get(), { entity, deltaTime ->
+//
+// Tiles being fitted must be checked to see if their fitting is complete.
+//
+iteratingSystem 'waterTileFitProcessingSystem', Family.all(IsMapCell, IsWateryCell, HasPendingWaterTile).get(), { entity, deltaTime ->
 	
-	final pending = hasPendingWaterTilesMapper.get(entity)
+	final pending = hasPendingWaterTileMapper.get(entity)
 	
 	if(!pending.future.isDone())
 		return
 	
-	final newTiles = pending.future.get()
+	final newTile = pending.future.get()
 	
-	final roadTiles = entity.addAndReturn( state.engine.createComponent( HasWaterTiles ))
-	if(newTiles)
-		roadTiles.tiles.addAll newTiles
+	final waterTile = entity.addAndReturn( state.engine.createComponent( HasWaterTile ))
+	waterTile.tile = newTile
 	
-	entity.remove HasPendingWaterTiles
+	entity.remove HasPendingWaterTile
 }

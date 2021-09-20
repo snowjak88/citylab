@@ -21,7 +21,7 @@ timeSliceSystem 'roadTileSchedulingSystem', Family.all(HasRoad, IsMapCell).exclu
 	final pending = entity.addAndReturn( state.engine.createComponent(HasPendingRoadTile) )
 	pending.future = submitResultTask {
 		->
-		tileset.getMinimalTilesFor heights, predicates, true
+		tileset.getTileFor heights, predicates, true
 	}
 	
 }
@@ -33,11 +33,9 @@ iteratingSystem 'roadTileProcessingSystem', Family.all(HasRoad, HasPendingRoadTi
 	if(!pending.future.isDone())
 		return
 	
-	final newTiles = pending.future.get()
+	final newTile = pending.future.get()
 	
-	final roadTiles = entity.addAndReturn( state.engine.createComponent( HasRoadTile ))
-	if(newTiles)
-		roadTiles.tiles.addAll newTiles
+	entity.addAndReturn( state.engine.createComponent( HasRoadTile )).tile = newTile
 	
 	entity.remove HasPendingRoadTile
 }

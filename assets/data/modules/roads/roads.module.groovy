@@ -37,20 +37,22 @@ class HasRoad implements Component, Poolable {
 }
 
 class HasPendingRoadTile implements Component, Poolable {
-	ListenableFuture<List<Tile>> future
+	ListenableFuture<Tile> future
 	void reset() {
 		future = null
 	}
 }
 
 class HasRoadTile implements Component, Poolable {
-	List<Tile> tiles = []
+	Tile tile = null
 	void reset() {
-		tiles.clear()
+		tile = null
 	}
 }
 
 isCellMapper = ComponentMapper.getFor(IsMapCell)
+isCellNonBuildableMapper = ComponentMapper.getFor(IsNonBuildableCell)
+
 hasRoadMapper = ComponentMapper.getFor(HasRoad)
 hasPendingRoadMapper = ComponentMapper.getFor(HasPendingRoadTile)
 hasRoadTileMapper = ComponentMapper.getFor(HasRoadTile)
@@ -75,6 +77,9 @@ isValidRoadCell = { int cx, int cy ->
 		return false
 	
 	final entity = state.map.getEntity(cx,cy)
+	
+	if(isCellNonBuildableMapper.has(entity))
+		return false
 	
 	//
 	// A valid road-cell is either flat, or simply sloped -- i.e., there

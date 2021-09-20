@@ -56,17 +56,17 @@ class IsWateryCell implements Component, Poolable {
 	}
 }
 
-class HasPendingWaterTiles implements Component, Poolable {
-	ListenableFuture<List<Tile>> future = null
+class HasPendingWaterTile implements Component, Poolable {
+	ListenableFuture<Tile> future = null
 	void reset() {
 		future = null
 	}
 }
 
-class HasWaterTiles implements Component, Poolable {
-	final List<Tile> tiles = []
+class HasWaterTile implements Component, Poolable {
+	Tile tile = null
 	void reset() {
-		tiles.clear()
+		tile = null
 	}
 }
 
@@ -93,14 +93,15 @@ onActivate {
 
 isCellMapper = ComponentMapper.getFor(IsMapCell)
 isCellRearrangedMapper = ComponentMapper.getFor(IsMapCellRearranged)
+isCellNonBuildableMapper = ComponentMapper.getFor(IsNonBuildableCell)
 
 isVertexMapper = ComponentMapper.getFor(IsMapVertex)
 isVertexRearrangedMapper = ComponentMapper.getFor(IsMapVertexRearranged)
 
 isWaterVertexMapper = ComponentMapper.getFor(IsWateryVertex)
 isWaterCellMapper = ComponentMapper.getFor(IsWateryCell)
-hasPendingWaterTilesMapper = ComponentMapper.getFor(HasPendingWaterTiles)
-hasWaterTilesMapper = ComponentMapper.getFor(HasWaterTiles)
+hasPendingWaterTileMapper = ComponentMapper.getFor(HasPendingWaterTile)
+hasWaterTileMapper = ComponentMapper.getFor(HasWaterTile)
 
 //
 //

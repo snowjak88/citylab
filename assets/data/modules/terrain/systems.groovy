@@ -19,7 +19,10 @@ iteratingSystem 'newTerrainFittingSystem', Family.all(IsMapCell).exclude(IsTerra
 	
 	pendingTerrain.future = submitResultTask {
 		->
-		tileset.getMinimalTilesFor pendingTerrain.heights, [ { t -> t.ext.terrain == 'grass' } ]
+		tileset.getTileFor pendingTerrain.heights, [
+			{ t ->
+				t.ext.terrain == 'grass' }
+		]
 	}
 	entity.add pendingTerrain
 	
@@ -39,7 +42,10 @@ iteratingSystem 'existingTerrainUpdatingSystem', Family.all(IsMapCell, NeedsRepl
 	
 	pendingTerrain.future = submitResultTask {
 		->
-		tileset.getMinimalTilesFor pendingTerrain.heights, [ { t -> t.ext.terrain == 'grass' } ]
+		tileset.getTileFor pendingTerrain.heights, [
+			{ t ->
+				t.ext.terrain == 'grass' }
+		]
 	}
 	entity.add pendingTerrain
 	
@@ -60,19 +66,11 @@ iteratingSystem 'pendingTerrainUpdatingSystem', Family.all(PendingTerrainTile).g
 		
 		final isMapCell = isCellMapper.get(entity)
 		
-		IsTerrainTile terrainTile = null
-		if(terrainTileMapper.has(entity))
-			terrainTile = terrainTileMapper.get(entity)
+		final newTile = pendingTerrain.future.get()
+		
+		if(newTile)
+			entity.addAndReturn(state.engine.createComponent(IsTerrainTile)).tile = newTile
 		else
-			terrainTile = entity.addAndReturn(state.engine.createComponent(IsTerrainTile))
-		
-		terrainTile.tiles.clear()
-		
-		final newTiles = pendingTerrain.future.get()
-		if(newTiles)
-			terrainTile.tiles.addAll newTiles
-		
-		if(terrainTile.tiles.isEmpty())
 			entity.remove IsTerrainTile
 	}
 	

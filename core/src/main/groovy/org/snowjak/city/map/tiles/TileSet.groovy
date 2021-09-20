@@ -367,25 +367,16 @@ class TileSet extends ScriptedResource implements Disposable {
 	}
 	
 	/**
-	 * Get the minimum set of Tiles that can fit the given constraints:
+	 * Get the Tile that can best fit the given constraints:
 	 * <ul>
 	 * <li>{@code heights} -- a 2x2 {@code int} array (addressed using {@link TileCorner#offsetX},{@link TileCorner#offsetY})</li>
-	 * <li>{@code predicates} -- a list of {@link Predicate}s that the returned set of Tiles must collectively satisfy</li>
+	 * <li>{@code predicates} -- a list of {@link Predicate}s that the returned Tile must satisfy</li>
 	 * </ul>
 	 */
-	public List<Tile> getMinimalTilesFor(int[][] heights, List<Predicate<Tile>> predicates, boolean onlyDecorative = false) {
+	public Tile getTileFor(int[][] heights, List<Predicate<Tile>> predicates, boolean onlyDecorative = false) {
 		
-		return searchMinimalTilesFor(heights, predicates, new HashSet<Tile>(), onlyDecorative)
-	}
-	
-	private List<Tile> searchMinimalTilesFor(int[][] heights,
-			List<Predicate<Tile>> remainingPredicates, Set<Tile> currentTiles, boolean onlyDecorative, int depth = 0) {
-		
-		if (remainingPredicates.isEmpty() && !currentTiles.isEmpty())
-			return Collections.emptyList()
-		
-		List<Tile> bestTileList = null
-		List<Tile> currentTileList = new LinkedList<>()
+		int bestRemainingPredicateCount = Integer.MAX_VALUE;
+		Tile bestTile = null;
 		
 		//
 		// Consider each tile in order.
@@ -398,60 +389,31 @@ class TileSet extends ScriptedResource implements Disposable {
 				continue
 			
 			//
-			// If we've already added this tile to the current chain -- skip it.
-			if (currentTiles.contains(tile))
-				continue
-			
-			//
-			// The "new remaining" list of predicates is the old list, minus the
-			// currently-selected tile's fulfilled predicates
-			final List<Predicate<Tile>> newRemaining = []
-			remainingPredicates.findAll { !(it as Predicate).test(tile) }.each { newRemaining << it }
-			
-			//
-			// If the current tile doesn't fulfill *any* predicates, skip it
-			if (newRemaining.size() == remainingPredicates.size())
-				continue
-			
-			//
 			// If the tile's rules don't allow it to fit here -- skip it.
 			if (!tile.isAcceptable(heights))
 				continue
 			
 			//
-			// OK -- now get ready to go a level deeper.
-			//
-			// Prepare the list that will receive the results of our search.
-			//
-			if (currentTileList == null)
-				currentTileList = new LinkedList<>()
-			else
-				currentTileList.clear()
-			currentTileList << tile
+			// The "new remaining" list of predicates is the old list, minus the
+			// currently-selected tile's fulfilled predicates
+			final int remainingPredicateCount = predicates.count { !(it as Predicate).test(tile) }
 			
 			//
-			// We don't want to select the current tile again in our search.
-			currentTiles << tile
+			// If the current tile doesn't fulfill *any* predicates, skip it
+			if (remainingPredicateCount == predicates.size())
+				continue
 			
 			//
-			// Do the search and capture the results in the list.
-			final List<Tile> searchResult = searchMinimalTilesFor(heights, newRemaining, currentTiles, true, depth + 1)
-			if (searchResult != null)
-				currentTileList.addAll searchResult
-			
-			currentTiles.remove tile
-			
-			//
-			// If we haven't chosen a best list yet,
-			// or if the current list is shorter than our best,
+			// If we haven't chosen a best tile yet,
+			// or if the current tile satisfies more predicates than our best,
 			// make the current our best.
-			if (bestTileList == null || bestTileList.size() > currentTileList.size()) {
-				bestTileList = currentTileList
-				currentTileList = null
+			if (bestTile == null || bestRemainingPredicateCount > remainingPredicateCount) {
+				bestTile = tile
+				bestRemainingPredicateCount = remainingPredicateCount
 			}
 		}
 		
-		bestTileList
+		bestTile
 	}
 	
 	@Override

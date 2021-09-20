@@ -14,6 +14,5 @@ cellRenderHook 'terrainRender', { delta, cellX, cellY, support ->
 	final entity = state.map.getEntity(cellX, cellY)
 	if(entity)
 		if(terrainMapper.has(entity))
-			for(def tile in terrainMapper.get(entity).tiles)
-				support.renderTile cellX, cellY, tile
+			support.renderTile cellX, cellY, terrainMapper.get(entity).tile
 }
