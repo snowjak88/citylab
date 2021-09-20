@@ -1,5 +1,6 @@
 
 decoration = true
+transparent = true
 base = TOP
 surfaceOffset = 0
 

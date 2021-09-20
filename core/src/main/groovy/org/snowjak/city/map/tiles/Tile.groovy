@@ -30,7 +30,7 @@ class Tile implements Disposable {
 	
 	boolean redrawFront = false, redrawBack = false
 	
-	boolean decoration = false
+	boolean decoration = false, transparent = false
 	
 	Map<String,Closure> ruleHelpers = new LinkedHashMap<>()
 	final Expando ext = new Expando()

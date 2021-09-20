@@ -25,11 +25,13 @@ import static com.badlogic.gdx.graphics.g2d.Batch.Y3;
 import static com.badlogic.gdx.graphics.g2d.Batch.Y4;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 
 import org.snowjak.city.GameState;
 import org.snowjak.city.map.CityMap;
+import org.snowjak.city.map.renderer.RenderCachingRenderingSupport.RenderBean;
 import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
 import org.snowjak.city.map.tiles.Tile;
@@ -37,8 +39,8 @@ import org.snowjak.city.map.tiles.TileCorner;
 import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.util.PrioritizationFailedException;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Pixmap.Format;
@@ -46,17 +48,20 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Disposable;
+import com.badlogic.gdx.utils.Pools;
 import com.github.czyzby.kiwi.log.Logger;
 
 import space.earlygrey.shapedrawer.ShapeDrawer;
 
-public class MapRenderer implements RenderingSupport {
+public class MapRenderer implements RenderingSupport, Disposable {
 	
 	private static final Logger LOG = LoggerService.forClass(MapRenderer.class);
 	
@@ -105,8 +110,13 @@ public class MapRenderer implements RenderingSupport {
 	private final Vector2 cellVertex = new Vector2();
 	
 	private final GameState state;
+	private final ShaderProgram maskingShaderProgram = new ShaderProgram(
+			Gdx.files.internal("mapTileVertexShader.vert").readString(),
+			Gdx.files.internal("mapTileFragmentShader.frag").readString());
 	private SpriteBatch batch;
 	private ShapeDrawer shapeDrawer;
+	
+	private final RenderCachingRenderingSupport RENDER_SUPPORT = new RenderCachingRenderingSupport(this);
 	
 	/**
 	 * The rendering-hook that actually executes the map-renderer. In effect, this
@@ -132,10 +142,43 @@ public class MapRenderer implements RenderingSupport {
 			
 			for (int cellY = mapVisibleMaxY; cellY >= mapVisibleMinY; cellY--)
 				for (int cellX = mapVisibleMinX; cellX <= mapVisibleMaxX; cellX++)
-					if (map.isValidCell(cellX, cellY))
+					if (map.isValidCell(cellX, cellY)) {
+						
+						//
+						// Gather render-calls from the various rendering-hooks
+						//
 						for (AbstractCellRenderingHook hook : prioritizedCellRenderingHooks)
 							if (hook.isEnabled())
-								hook.renderCell(delta, cellX, cellY, support);
+								hook.renderCell(delta, cellX, cellY, RENDER_SUPPORT);
+								
+						//
+						// Now -- scan backwards through the list of gathered render-calls.
+						// Once we reach a tile that is *not* at all transparent, we know we can discard
+						// the rest
+						// of the render-calls.
+						//
+						boolean simplyRemove = false;
+						final Iterator<RenderBean> descIterator = RENDER_SUPPORT.getCached().descendingIterator();
+						while (descIterator.hasNext()) {
+							final RenderBean rb = descIterator.next();
+							if (simplyRemove)
+								descIterator.remove();
+							else if (!rb.getTile().isTransparent())
+								simplyRemove = true;
+							
+						}
+						
+						//
+						// Finally, we can run forward through our render-calls and actually execute them.
+						//
+						final Iterator<RenderBean> iterator = RENDER_SUPPORT.getCached().iterator();
+						while (iterator.hasNext()) {
+							final RenderBean rb = iterator.next();
+							renderTile(rb.getCellX(), rb.getCellY(), rb.getTile(), rb.getAltitudeOverride());
+							iterator.remove();
+							Pools.free(rb);
+						}
+					}
 		}
 		
 	};
@@ -143,7 +186,7 @@ public class MapRenderer implements RenderingSupport {
 	public MapRenderer(GameState state) {
 		
 		this.state = state;
-		setBatch(null);
+		setupBatch();
 		init();
 	}
 	
@@ -175,9 +218,12 @@ public class MapRenderer implements RenderingSupport {
 		}
 	}
 	
-	private void setBatch(SpriteBatch batch) {
+	private void setupBatch() {
 		
-		this.batch = (batch != null) ? batch : new SpriteBatch(1024);
+		this.batch = new SpriteBatch(2048);
+		
+		this.batch.disableBlending();
+		this.batch.setShader(maskingShaderProgram);
 		
 		final Pixmap shapeDrawerPixmap = new Pixmap(1, 1, Format.RGB888);
 		shapeDrawerPixmap.setColor(Color.WHITE);
@@ -216,6 +262,8 @@ public class MapRenderer implements RenderingSupport {
 		// given the Camera's position defines the middle of the viewport,
 		// our viewing bounds are easy to derive
 		viewBounds.set(camera.position.x - w / 2, camera.position.y - h / 2, w, h);
+		
+		updateViewportBounds();
 	}
 	
 	@Override
@@ -228,33 +276,34 @@ public class MapRenderer implements RenderingSupport {
 		
 		// setting up the viewport bounds
 		// COL1
-		topRight.set(viewBounds.x + viewBounds.width - layerOffsetX, viewBounds.y - layerOffsetY);
+		topRight.set(viewBounds.x + viewBounds.width - layerOffsetX, viewBounds.y + viewBounds.height - layerOffsetY);
 		// COL2
-		bottomLeft.set(viewBounds.x - layerOffsetX, viewBounds.y + viewBounds.height - layerOffsetY);
+		bottomLeft.set(viewBounds.x - layerOffsetX, viewBounds.y - layerOffsetY);
 		// ROW1
-		topLeft.set(viewBounds.x - layerOffsetX, viewBounds.y - layerOffsetY);
+		topLeft.set(viewBounds.x - layerOffsetX, viewBounds.y + viewBounds.height - layerOffsetY);
 		// ROW2
-		bottomRight.set(viewBounds.x + viewBounds.width - layerOffsetX,
-				viewBounds.y + viewBounds.height - layerOffsetY);
+		bottomRight.set(viewBounds.x + viewBounds.width - layerOffsetX, viewBounds.y - layerOffsetY);
 		
 		// transforming screen coordinates to iso coordinates (so we don't render more
 		// than we need to)
-		mapVisibleMinY = (int) (viewportToMap(topLeft, true).y / LOGICAL_TILE_WIDTH) - 2;
-		mapVisibleMaxY = (int) (viewportToMap(bottomRight, true).y / LOGICAL_TILE_WIDTH) + 2;
+		final int overlap = 0;
+		// mapVisibleMinY = (int) (viewportToMap(topLeft, true).y) - overlap;
+		// mapVisibleMaxY = (int) (viewportToMap(bottomRight, true).y) + overlap;
+		//
+		// mapVisibleMinX = (int) (viewportToMap(bottomLeft, true).x) - overlap;
+		// mapVisibleMaxX = (int) (viewportToMap(topRight, true).x) + overlap;
 		
-		mapVisibleMinX = (int) (viewportToMap(bottomLeft, true).x / LOGICAL_TILE_WIDTH) - 2;
-		mapVisibleMaxX = (int) (viewportToMap(topRight, true).x / LOGICAL_TILE_WIDTH) + 2;
+		mapVisibleMinY = (int) (viewportToMap(bottomLeft, true).y) - overlap;
+		mapVisibleMaxY = (int) (viewportToMap(topRight, true).y) + overlap;
+		
+		mapVisibleMinX = (int) (viewportToMap(topLeft, true).x) - overlap;
+		mapVisibleMaxX = (int) (viewportToMap(bottomRight, true).x) + overlap;
 	}
 	
 	public void render(float delta) {
 		
 		if (state == null || state.getMap() == null)
 			return;
-		
-		batch.enableBlending();
-		batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-		
-		updateViewportBounds();
 		
 		batch.begin();
 		
@@ -292,7 +341,7 @@ public class MapRenderer implements RenderingSupport {
 	}
 	
 	@Override
-	public void renderTile(int col, int row, Tile tile, Color tint, int altitudeOverride) {
+	public void renderTile(int col, int row, Tile tile, int altitudeOverride) {
 		
 		if (state == null || state.getMap() == null)
 			return;
@@ -306,11 +355,8 @@ public class MapRenderer implements RenderingSupport {
 		if (tile == null || tile.getSprite() == null)
 			return;
 		
-		final float color;
-		if (tint == null)
-			color = Color.toFloatBits(batch.getColor().r, batch.getColor().g, batch.getColor().b, batch.getColor().a);
-		else
-			color = Color.toFloatBits(tint.r, tint.g, tint.b, tint.a);
+		final float color = Color.toFloatBits(batch.getColor().r, batch.getColor().g, batch.getColor().b,
+				batch.getColor().a);
 		
 		final float tileScale = 1f / (float) tile.getGridWidth();
 		final TileCorner base = tile.getBase();
@@ -563,6 +609,9 @@ public class MapRenderer implements RenderingSupport {
 			viewportToMapScratchV3.mul(invIsotransform);
 			final float flatMapCellX = viewportToMapScratchV3.x, flatMapCellY = viewportToMapScratchV3.y;
 			
+			if (ignoreAltitude)
+				return new Vector2(flatMapCellX, flatMapCellY);
+				
 			//
 			// this is the column we need to scan ...
 			final int column = Math.round(flatMapCellX + flatMapCellY);
@@ -618,6 +667,18 @@ public class MapRenderer implements RenderingSupport {
 			//
 			// Eh. Return our best guess.
 			return new Vector2(flatMapCellX, flatMapCellY);
+		}
+	}
+	
+	@Override
+	public void dispose() {
+		
+		if (batch != null) {
+			if (batch.isDrawing())
+				batch.end();
+			
+			batch.dispose();
+			maskingShaderProgram.dispose();
 		}
 	}
 }

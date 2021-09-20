@@ -107,6 +107,14 @@ public class GameScreen extends AbstractGameScreen {
 	}
 	
 	@Override
+	public void dispose() {
+		
+		super.dispose();
+		
+		renderer.dispose();
+	}
+	
+	@Override
 	protected Actor getRoot() {
 		
 		buttonList = new Toolbar(i18nService, getSkinService(), getGameService(), getAssetService(),

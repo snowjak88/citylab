@@ -6,7 +6,6 @@ package org.snowjak.city.map.renderer;
 import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileCorner;
 
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
@@ -33,21 +32,7 @@ public interface RenderingSupport {
 	 */
 	public default void renderTile(int cellX, int cellY, Tile tile) {
 		
-		renderTile(cellX, cellY, tile, null);
-	}
-	
-	/**
-	 * Draw the given {@link Tile} at the given cell location.
-	 * 
-	 * @param cellX
-	 * @param cellY
-	 * @param tile
-	 * @param tint
-	 *            {@code null} if no tint
-	 */
-	public default void renderTile(int cellX, int cellY, Tile tile, Color tint) {
-		
-		renderTile(cellX, cellY, tile, tint, -1);
+		renderTile(cellX, cellY, tile, -1);
 	}
 	
 	/**
@@ -60,24 +45,7 @@ public interface RenderingSupport {
 	 *            ignore the cell's height and use this instead. {@code <0} if no
 	 *            override
 	 */
-	public default void renderTile(int cellX, int cellY, Tile tile, int altitudeOverride) {
-		
-		renderTile(cellX, cellY, tile, null, altitudeOverride);
-	}
-	
-	/**
-	 * Draw the given {@link Tile} at the given cell location.
-	 * 
-	 * @param cellX
-	 * @param cellY
-	 * @param tile
-	 * @param tint
-	 *            {@code null} if no tint
-	 * @param altitudeOverride
-	 *            ignore the cell's height and use this instead. {@code <0} if no
-	 *            override
-	 */
-	public void renderTile(int cellX, int cellY, Tile tile, Color tint, int altitudeOverride);
+	public void renderTile(int cellX, int cellY, Tile tile, int altitudeOverride);
 	
 	/**
 	 * 

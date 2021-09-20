@@ -90,7 +90,7 @@ planRoad = { float cellX, float cellY ->
 	roadPlan.roadPlanEndX = cx
 	roadPlan.roadPlanEndY = cy
 	
-	if(roadPlan.currentPathfindRequest)
+	if(roadPlan.currentPathfindRequest?.done)
 		synchronized(roadPlan.currentPathfindRequest) {
 			Pools.free(roadPlan.currentPathfindRequest)
 		}

@@ -1,9 +1,9 @@
-import java.awt.Color
-
-import javax.management.remote.rmi.RMIConnector.Util
-
 id = 'clouds'
-description = 'Adds some fluffy white clouds floating by.'
+
+i18n.addBundle 'i18n'
+
+title = i18n.get 'title'
+description = i18n.get 'description'
 
 //
 // Declare a "custom" rendering hook into the map-rendering loop.

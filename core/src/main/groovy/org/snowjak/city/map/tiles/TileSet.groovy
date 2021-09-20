@@ -40,7 +40,7 @@ class TileSet extends ScriptedResource implements Disposable {
 	FileHandle folder
 	FileHandle atlas
 	String filename = ""
-	boolean decoration = false
+	boolean decoration = false, transparent = false
 	TileCorner base = TileCorner.TOP
 	
 	boolean redrawFront = false, redrawBack = false
@@ -103,7 +103,7 @@ class TileSet extends ScriptedResource implements Disposable {
 			surfaceOffset: surfaceOffset, altitudeOffset: altitudeOffset,
 			base: base,
 			redrawFront: redrawFront, redrawBack: redrawBack,
-			decoration: decoration,
+			decoration: decoration, transparent: transparent,
 			ruleHelpers: new HashMap(ruleHelpers)
 		] as Tile
 		

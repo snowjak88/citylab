@@ -1,5 +1,6 @@
 
 decoration = true
+transparent = true
 surfaceOffset = 0
 
 tile {
@@ -41,6 +42,7 @@ tile {
 tile {
 	id = 'water-flat-all'
 	filename = 'water-flat-04.png'
+	transparent = false
 	base = TOP
 	rule {
 		isFlat()
