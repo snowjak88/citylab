@@ -25,20 +25,21 @@ import static com.badlogic.gdx.graphics.g2d.Batch.Y3;
 import static com.badlogic.gdx.graphics.g2d.Batch.Y4;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.function.Predicate;
 
 import org.snowjak.city.GameState;
+import org.snowjak.city.ecs.components.HasMapLayers;
 import org.snowjak.city.map.CityMap;
-import org.snowjak.city.map.renderer.RenderCachingRenderingSupport.RenderBean;
-import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
 import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileCorner;
 import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.util.PrioritizationFailedException;
 
+import com.badlogic.ashley.core.ComponentMapper;
+import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -56,7 +57,6 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Disposable;
-import com.badlogic.gdx.utils.Pools;
 import com.github.czyzby.kiwi.log.Logger;
 
 import space.earlygrey.shapedrawer.ShapeDrawer;
@@ -116,14 +116,14 @@ public class MapRenderer implements RenderingSupport, Disposable {
 	private SpriteBatch batch;
 	private ShapeDrawer shapeDrawer;
 	
-	private final RenderCachingRenderingSupport RENDER_SUPPORT = new RenderCachingRenderingSupport(this);
-	
 	/**
 	 * The rendering-hook that actually executes the map-renderer. In effect, this
 	 * MapRenderer hooks into itself, with id = "map". This enables the MapRenderer
 	 * to allow other rendering-hooks to execute prior to the map being rendered.
 	 */
 	public final AbstractCustomRenderingHook MAP_RENDERING_HOOK = new AbstractCustomRenderingHook("map") {
+		
+		private final ComponentMapper<HasMapLayers> layerMapper = ComponentMapper.getFor(HasMapLayers.class);
 		
 		@Override
 		public void render(float delta, Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
@@ -135,48 +135,52 @@ public class MapRenderer implements RenderingSupport, Disposable {
 				return;
 			
 			final CityMap map = state.getMap();
-			final List<AbstractCellRenderingHook> prioritizedCellRenderingHooks = state.getRenderingHookRegistry()
-					.getPrioritizedCellRenderingHooks();
-			if (prioritizedCellRenderingHooks.isEmpty())
+			final List<MapLayer> prioritizedMapLayers = state.getRenderingHookRegistry().getPrioritizedMapLayers();
+			if (prioritizedMapLayers.isEmpty())
 				return;
+			
+			final ListIterator<MapLayer> listerator = prioritizedMapLayers.listIterator(prioritizedMapLayers.size());
 			
 			for (int cellY = mapVisibleMaxY; cellY >= mapVisibleMinY; cellY--)
 				for (int cellX = mapVisibleMinX; cellX <= mapVisibleMaxX; cellX++)
 					if (map.isValidCell(cellX, cellY)) {
 						
-						//
-						// Gather render-calls from the various rendering-hooks
-						//
-						for (AbstractCellRenderingHook hook : prioritizedCellRenderingHooks)
-							if (hook.isEnabled())
-								hook.renderCell(delta, cellX, cellY, RENDER_SUPPORT);
-								
-						//
-						// Now -- scan backwards through the list of gathered render-calls.
-						// Once we reach a tile that is *not* at all transparent, we know we can discard
-						// the rest
-						// of the render-calls.
-						//
-						boolean simplyRemove = false;
-						final Iterator<RenderBean> descIterator = RENDER_SUPPORT.getCached().descendingIterator();
-						while (descIterator.hasNext()) {
-							final RenderBean rb = descIterator.next();
-							if (simplyRemove)
-								descIterator.remove();
-							else if (!rb.getTile().isTransparent())
-								simplyRemove = true;
+						final Entity entity = map.getEntity(cellX, cellY);
+						if (entity == null)
+							continue;
+						if (!layerMapper.has(entity))
+							continue;
 							
+						//
+						// Reset the MapLayer iterator back to the top
+						//
+						while (listerator.hasNext())
+							listerator.next();
+						
+						final HasMapLayers hasLayers = layerMapper.get(entity);
+						
+						//
+						// Scan downward until previous() yields a non-transparent Tile
+						// (or we get to the beginning of the list)
+						//
+						while (listerator.hasPrevious()) {
+							final String layerID = listerator.previous().getId();
+							final Tile tile = hasLayers.getTiles().get(layerID);
+							if (tile == null)
+								continue;
+							if (!tile.isTransparent())
+								break;
 						}
 						
 						//
-						// Finally, we can run forward through our render-calls and actually execute them.
-						//
-						final Iterator<RenderBean> iterator = RENDER_SUPPORT.getCached().iterator();
-						while (iterator.hasNext()) {
-							final RenderBean rb = iterator.next();
-							renderTile(rb.getCellX(), rb.getCellY(), rb.getTile(), rb.getAltitudeOverride());
-							iterator.remove();
-							Pools.free(rb);
+						// Now render all these tiles in order.
+						while (listerator.hasNext()) {
+							final String layerID = listerator.next().getId();
+							final Tile tile = hasLayers.getTiles().get(layerID);
+							final Color tint = hasLayers.getTints().get(layerID);
+							final Integer altitudeOverride = hasLayers.getAltitudeOverrides().get(layerID);
+							
+							renderTile(cellX, cellY, tile, tint, (altitudeOverride == null) ? -1 : altitudeOverride);
 						}
 					}
 		}
@@ -340,8 +344,7 @@ public class MapRenderer implements RenderingSupport, Disposable {
 				&& cellY <= mapVisibleMaxY);
 	}
 	
-	@Override
-	public void renderTile(int col, int row, Tile tile, int altitudeOverride) {
+	public void renderTile(int col, int row, Tile tile, Color tint, int altitudeOverride) {
 		
 		if (state == null || state.getMap() == null)
 			return;
@@ -355,8 +358,12 @@ public class MapRenderer implements RenderingSupport, Disposable {
 		if (tile == null || tile.getSprite() == null)
 			return;
 		
-		final float color = Color.toFloatBits(batch.getColor().r, batch.getColor().g, batch.getColor().b,
-				batch.getColor().a);
+		final float color;
+		
+		if (tint == null)
+			color = Color.toFloatBits(batch.getColor().r, batch.getColor().g, batch.getColor().b, batch.getColor().a);
+		else
+			color = Color.toFloatBits(tint.r, tint.g, tint.b, tint.a);
 		
 		final float tileScale = 1f / (float) tile.getGridWidth();
 		final TileCorner base = tile.getBase();

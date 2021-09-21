@@ -4,28 +4,28 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
+import org.snowjak.city.map.renderer.hooks.CustomRenderingHook;
 import org.snowjak.city.util.PrioritizationFailedException;
 import org.snowjak.city.util.RelativePriorityList;
 
 /**
- * Serves as a registry for rendering-hooks.
+ * Serves as a registry for {@link CustomRenderingHook}s and {@link MapLayer}s.
  * 
  * @author snowjak88
  *
  */
 public class RenderingHookRegistry {
 	
-	private final Map<String, AbstractCellRenderingHook> cellRenderingHooks = new LinkedHashMap<>();
-	private final RelativePriorityList<String, AbstractCellRenderingHook> prioritizedCellRenderingHooks = new RelativePriorityList<>();
+	private final Map<String, MapLayer> mapLayers = new LinkedHashMap<>();
+	private final RelativePriorityList<String, MapLayer> prioritizedMapLayers = new RelativePriorityList<>();
 	
 	private final Map<String, AbstractCustomRenderingHook> customRenderingHooks = new LinkedHashMap<>();
 	private final RelativePriorityList<String, AbstractCustomRenderingHook> prioritizedCustomRenderingHooks = new RelativePriorityList<>();
 	
-	public List<AbstractCellRenderingHook> getPrioritizedCellRenderingHooks() {
+	public List<MapLayer> getPrioritizedMapLayers() {
 		
-		return prioritizedCellRenderingHooks;
+		return prioritizedMapLayers;
 	}
 	
 	public List<AbstractCustomRenderingHook> getPrioritizedCustomRenderingHooks() {
@@ -33,40 +33,38 @@ public class RenderingHookRegistry {
 		return prioritizedCustomRenderingHooks;
 	}
 	
-	public AbstractCellRenderingHook addCellRenderingHook(AbstractCellRenderingHook hook)
-			throws PrioritizationFailedException {
+	public MapLayer addMapLayer(MapLayer layer) throws PrioritizationFailedException {
 		
-		final AbstractCellRenderingHook previous = cellRenderingHooks.put(hook.getId(), hook);
+		final MapLayer previous = mapLayers.put(layer.getId(), layer);
 		
 		if (previous != null)
-			prioritizedCellRenderingHooks.remove(previous);
+			prioritizedMapLayers.remove(previous);
 		
 		try {
 			
-			prioritizedCellRenderingHooks.add(hook);
-			
+			prioritizedMapLayers.add(layer);
 			return previous;
 			
-		} catch (RuntimeException e) {
+		} catch (PrioritizationFailedException e) {
 			
 			if (!(e.getCause() instanceof PrioritizationFailedException))
 				throw e;
 			
 			if (previous == null)
-				cellRenderingHooks.remove(hook.getId());
+				mapLayers.remove(layer.getId());
 			else {
-				cellRenderingHooks.put(hook.getId(), previous);
-				prioritizedCellRenderingHooks.add(previous);
+				mapLayers.put(layer.getId(), previous);
+				prioritizedMapLayers.add(previous);
 			}
 			
 			throw (PrioritizationFailedException) e.getCause();
 		}
 	}
 	
-	public void removeCellRenderingHook(AbstractCellRenderingHook hook) {
+	public void removeMapLayer(MapLayer layer) {
 		
-		cellRenderingHooks.remove(hook.getId());
-		prioritizedCellRenderingHooks.remove(hook);
+		mapLayers.remove(layer.getId());
+		prioritizedMapLayers.remove(layer);
 	}
 	
 	public AbstractCustomRenderingHook addCustomRenderingHook(AbstractCustomRenderingHook hook)

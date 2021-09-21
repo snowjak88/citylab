@@ -1,5 +1,5 @@
 
-timeSliceSystem 'roadTileSchedulingSystem', Family.all(HasRoad, IsMapCell).exclude(HasPendingRoadTile, HasRoadTile).get(), 1/30, { entity, deltaTime ->
+scheduleRoadTileFitting = { entity ->
 	
 	final thisCell = isCellMapper.get(entity)
 	final int cx = thisCell.cellX
@@ -24,9 +24,14 @@ timeSliceSystem 'roadTileSchedulingSystem', Family.all(HasRoad, IsMapCell).exclu
 		tileset.getTileFor heights, predicates, true
 	}
 	
+	entity.remove NeedsReplacementRoadTile
 }
 
-iteratingSystem 'roadTileProcessingSystem', Family.all(HasRoad, HasPendingRoadTile).get(), { entity, deltaTime ->
+timeSliceSystem 'roadTileSchedulingSystem', Family.all(HasRoad, IsMapCell).exclude(HasPendingRoadTile, HasRoadTile).get(), 1/30, { entity, deltaTime ->	 scheduleRoadTileFitting entity }
+
+timeSliceSystem 'roadTileReschedulingSystem', Family.all(HasRoad, IsMapCell, HasRoadTile, NeedsReplacementRoadTile).exclude(HasPendingRoadTile).get(), 1/30, { entity, deltaTime -> scheduleRoadTileFitting entity }
+
+iteratingSystem 'roadTileProcessingSystem', Family.all(HasRoad, HasPendingRoadTile, HasMapLayers).get(), { entity, deltaTime ->
 	
 	final pending = hasPendingRoadMapper.get(entity)
 	
@@ -35,12 +40,21 @@ iteratingSystem 'roadTileProcessingSystem', Family.all(HasRoad, HasPendingRoadTi
 	
 	final newTile = pending.future.get()
 	
-	entity.addAndReturn( state.engine.createComponent( HasRoadTile )).tile = newTile
+	final layers = hasLayersMapper.get(entity)
+	layers.tiles['road'] = newTile
+	layers.tints['road'] = null
+	layers.altitudeOverrides['road'] = null
+	
+	entity.add state.engine.createComponent(HasRoadTile)
 	
 	entity.remove HasPendingRoadTile
 }
 
-listeningSystem 'roadCellRearrangedListener', Family.all(IsMapCellRearranged).one(HasRoad, HasPendingRoadTile, HasRoadTile).get(), { entity, deltaTime ->
+listeningSystem 'roadCellRearrangedListener', Family.all(IsMapCellRearranged, HasMapLayers).one(HasRoad, HasPendingRoadTile).get(), { entity, deltaTime ->
+	
+	final layers = hasLayersMapper.get(entity)
+	layers?.removeAll 'road'
+	
 	entity.remove HasRoad
 	entity.remove HasPendingRoadTile
 	entity.remove HasRoadTile

@@ -10,6 +10,7 @@ import java.util.function.DoubleConsumer
 import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
 import org.snowjak.city.configuration.InitPriority
+import org.snowjak.city.ecs.components.HasMapLayers
 import org.snowjak.city.ecs.components.IsMapCell
 import org.snowjak.city.ecs.components.IsMapVertex
 import org.snowjak.city.ecs.systems.impl.IsMapCellManagementSystem
@@ -19,7 +20,6 @@ import org.snowjak.city.ecs.systems.impl.RemoveMapCellRearrangedSystem
 import org.snowjak.city.ecs.systems.impl.RemoveMapVertexRearrangedSystem
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.generator.MapGenerator
-import org.snowjak.city.map.renderer.hooks.DelegatingCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
 import org.snowjak.city.module.Module
 import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain
@@ -135,6 +135,8 @@ class GameService {
 			if(mapCell && map)
 				map.setEntity( (int) mapCell.cellX, (int) mapCell.cellY, null )
 			
+			entity.remove HasMapLayers
+			
 			final mapVertex = (IsMapVertex) entity.remove(IsMapVertex)
 			if(mapVertex && map)
 				map.setVertexEntity( (int) mapVertex.vertexX, (int) mapVertex.vertexY, null )
@@ -168,6 +170,8 @@ class GameService {
 					entity.add isMapCell
 					map.setEntity x, y, entity
 					state.engine.addEntity entity
+					
+					entity.add state.engine.createComponent(HasMapLayers)
 					
 					progress += progressStep
 					progressReporter?.accept progress
@@ -456,27 +460,28 @@ class GameService {
 		
 		progressReporter?.accept 0
 		
-		if (!module.cellRenderingHooks.isEmpty()) {
+		if(!module.mapLayers.isEmpty()) {
 			
-			LOG.info "Adding cell rendering hooks ..."
-			final progressStep = 2f / (float)module.cellRenderingHooks.size()
+			LOG.info "Setting up map-layers ..."
+			final progressStep = 2f / (float)module.mapLayers.size()
 			def progress = 0
 			
-			for (def hook : module.cellRenderingHooks)
+			for (def layer : module.mapLayers)
 				try {
-					final previousHook = state.renderingHookRegistry.addCellRenderingHook hook
 					
-					if(previousHook)
-						if(previousHook instanceof DelegatingCellRenderingHook)
-							LOG.info "\"$hook.id\" overrides render-hook from \"${(previousHook as DelegatingCellRenderingHook).module.id}\" [${(previousHook as DelegatingCellRenderingHook).module.scriptFile.path()}]"
+					final previousLayer = state.renderingHookRegistry.addMapLayer layer
 					
 				} catch (PrioritizationFailedException e) {
-					LOG.error "Cannot initialize cell-rendering hook [{0}] for module [{1}] -- too many conflicting priorities!",
-							hook.id, module.id
+					
+					LOG.error "Cannot initialize map-layer [{0}] for module [{1}] -- too many conflicting priorities!", layer.id, module.id
+					
 				} finally {
+					
 					progress += progressStep
 					progressReporter?.accept progress
+					
 				}
+			
 		}
 		
 		progressReporter?.accept 0.5
@@ -505,14 +510,14 @@ class GameService {
 	
 	public void uninitializeModuleRenderingHooks(Module module, DoubleConsumer progressReporter = {p -> }) {
 		
-		if(!module.cellRenderingHooks.isEmpty()) {
-			LOG.info "Removing cell-rendering hooks ..."
+		if(!module.mapLayers.isEmpty()) {
+			LOG.info "Removing map-layers ..."
 			
-			final progressStep = 2f / (float)module.cellRenderingHooks.size()
+			final progressStep = 2f / (float)module.mapLayers.size()
 			def progress = 0
 			
-			for(def hook : module.cellRenderingHooks) {
-				state.renderingHookRegistry.removeCellRenderingHook hook
+			for(def layer : module.mapLayers) {
+				state.renderingHookRegistry.removeMapLayer layer
 				
 				progress += progressStep
 				progressReporter?.accept progress

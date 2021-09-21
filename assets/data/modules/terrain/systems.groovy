@@ -1,12 +1,13 @@
 
 isCellMapper = ComponentMapper.getFor(IsMapCell)
-terrainTileMapper = ComponentMapper.getFor(IsTerrainTile)
+hasLayersMapper = ComponentMapper.getFor(HasMapLayers)
+
 pendingTerrainTileMapper = ComponentMapper.getFor(PendingTerrainTile)
 
 //
 // Any map-cell that doesn't already have a terrain-tile should get one!
 //
-iteratingSystem 'newTerrainFittingSystem', Family.all(IsMapCell).exclude(IsTerrainTile, PendingTerrainTile).get(), { entity, deltaTime ->
+iteratingSystem 'newTerrainFittingSystem', Family.all(IsMapCell).exclude(PendingTerrainTile, HasTerrainTile).get(), { entity, deltaTime ->
 	final mapCell = isCellMapper.get(entity)
 	final int cellX = mapCell.cellX
 	final int cellY = mapCell.cellY
@@ -50,29 +51,27 @@ iteratingSystem 'existingTerrainUpdatingSystem', Family.all(IsMapCell, NeedsRepl
 	entity.add pendingTerrain
 	
 	entity.remove NeedsReplacementTerrainTile
+	entity.remove HasTerrainTile
 }
 
-iteratingSystem 'pendingTerrainUpdatingSystem', Family.all(PendingTerrainTile).get(), { entity, deltaTime ->
+iteratingSystem 'pendingTerrainUpdatingSystem', Family.all(PendingTerrainTile, HasMapLayers).get(), { entity, deltaTime ->
 	
 	final pendingTerrain = pendingTerrainTileMapper.get(entity)
 	if(!pendingTerrain.future.isDone())
 		return
 	
-	//
-	// We always want to remove the PendingTerrainTile component (at the end of this system),
-	// but we need not always create an IsTerrainTile component.
-	//
-	if(isCellMapper.has(entity)) {
-		
-		final isMapCell = isCellMapper.get(entity)
-		
-		final newTile = pendingTerrain.future.get()
-		
-		if(newTile)
-			entity.addAndReturn(state.engine.createComponent(IsTerrainTile)).tile = newTile
-		else
-			entity.remove IsTerrainTile
-	}
+	final layer = hasLayersMapper.get(entity)
+	final newTile = pendingTerrain.future.get()
+	
+	layer.tiles['terrain'] = newTile
+	layer.tints['terrain'] = null
+	layer.altitudeOverrides['terrain'] = null
+	
+	if(newTile)
+		entity.add state.engine.createComponent(HasTerrainTile)
+	else
+		entity.remove HasTerrainTile
+	
 	
 	entity.remove PendingTerrainTile
 	
@@ -81,10 +80,10 @@ iteratingSystem 'pendingTerrainUpdatingSystem', Family.all(PendingTerrainTile).g
 //
 // When a map-cell is "rearranged" -- i.e., it changes a corner-height, or flavor, or whatever --
 // we need to make sure that we re-assign the terrain-tile.
-//
-listeningSystem 'terrainRearrangementSystem', Family.all(IsTerrainTile, IsMapCellRearranged).exclude(NeedsReplacementTerrainTile).get(), { entity, deltaTime ->
+//.exclude(NeedsReplacementTerrainTile, PendingTerrainTile)
+listeningSystem 'terrainRearrangementSystem', Family.all(IsMapCellRearranged).get(), { entity, deltaTime ->
 	//
-	// When we "hear" the IsMapCellRearranged hit our IsTerrainTile,
+	// When we "hear" the IsMapCellRearranged hit a terrain-tile,
 	// flag the entity so we can regenerate its terrain.
 	//
 	// If this entity is still a map-cell, then the 'existingTerrainUpdatingSystem'

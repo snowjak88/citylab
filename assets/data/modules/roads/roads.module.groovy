@@ -36,6 +36,10 @@ class HasRoad implements Component, Poolable {
 	}
 }
 
+class NeedsReplacementRoadTile implements Component, Poolable {
+	void reset() { }
+}
+
 class HasPendingRoadTile implements Component, Poolable {
 	ListenableFuture<Tile> future
 	void reset() {
@@ -44,18 +48,15 @@ class HasPendingRoadTile implements Component, Poolable {
 }
 
 class HasRoadTile implements Component, Poolable {
-	Tile tile = null
-	void reset() {
-		tile = null
-	}
+	void reset() { }
 }
 
 isCellMapper = ComponentMapper.getFor(IsMapCell)
 isCellNonBuildableMapper = ComponentMapper.getFor(IsNonBuildableCell)
+hasLayersMapper = ComponentMapper.getFor(HasMapLayers)
 
 hasRoadMapper = ComponentMapper.getFor(HasRoad)
 hasPendingRoadMapper = ComponentMapper.getFor(HasPendingRoadTile)
-hasRoadTileMapper = ComponentMapper.getFor(HasRoadTile)
 
 //
 //
@@ -125,6 +126,8 @@ isValidRoadConnection = { int fromX, int fromY, int toX, int toY ->
 //
 //
 //
+
+mapLayer 'road' after 'terrain' before 'water'
 
 include 'pathfinding.groovy'
 include 'systems.groovy'

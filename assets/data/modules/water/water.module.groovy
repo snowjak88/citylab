@@ -64,11 +64,10 @@ class HasPendingWaterTile implements Component, Poolable {
 }
 
 class HasWaterTile implements Component, Poolable {
-	Tile tile = null
-	void reset() {
-		tile = null
-	}
+	void reset() { }
 }
+
+mapLayer 'water' after 'terrain'
 
 //
 //
@@ -94,6 +93,7 @@ onActivate {
 isCellMapper = ComponentMapper.getFor(IsMapCell)
 isCellRearrangedMapper = ComponentMapper.getFor(IsMapCellRearranged)
 isCellNonBuildableMapper = ComponentMapper.getFor(IsNonBuildableCell)
+hasLayersMapper = ComponentMapper.getFor(HasMapLayers)
 
 isVertexMapper = ComponentMapper.getFor(IsMapVertex)
 isVertexRearrangedMapper = ComponentMapper.getFor(IsMapVertexRearranged)
@@ -101,7 +101,6 @@ isVertexRearrangedMapper = ComponentMapper.getFor(IsMapVertexRearranged)
 isWaterVertexMapper = ComponentMapper.getFor(IsWateryVertex)
 isWaterCellMapper = ComponentMapper.getFor(IsWateryCell)
 hasPendingWaterTileMapper = ComponentMapper.getFor(HasPendingWaterTile)
-hasWaterTileMapper = ComponentMapper.getFor(HasWaterTile)
 
 //
 //
@@ -160,4 +159,3 @@ listeningSystem 'wateryVertexCellUpdatingSystem', Family.all(IsMapVertex, IsWate
 //
 
 include 'systems/tileManagement.groovy'
-include 'renderer.groovy'

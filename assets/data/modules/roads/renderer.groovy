@@ -1,12 +1,3 @@
-cellRenderHook 'roadRender', { delta, cellX, cellY, support ->
-	final entity = state.map.getEntity(cellX, cellY)
-	if(entity)
-		if(hasRoadTileMapper.has(entity)) {
-			final roadTile = hasRoadTileMapper.get(entity)
-			support.renderTile cellX, cellY, roadTile.tile
-		}
-} after 'terrainRender' before 'waterRender'
-
 customRenderHook 'roadPlanRender', { delta, batch, shapeDrawer, renderingSupport ->
 	
 	if(roadPlan.roadPlanDrawn)

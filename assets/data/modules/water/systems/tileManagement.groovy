@@ -45,7 +45,11 @@ iteratingSystem 'waterTileFitSchedulingSystem', Family.all(IsWateryCell, IsMapCe
 //
 // Tiles being fitted must be checked to see if their fitting is complete.
 //
-iteratingSystem 'waterTileFitProcessingSystem', Family.all(IsMapCell, IsWateryCell, HasPendingWaterTile).get(), { entity, deltaTime ->
+iteratingSystem 'waterTileFitProcessingSystem', Family.all(IsMapCell, HasPendingWaterTile, HasMapLayers).get(), { entity, deltaTime ->
+	
+	final thisCell = isCellMapper.get(entity)
+	final int cx = thisCell.cellX
+	final int cy = thisCell.cellY
 	
 	final pending = hasPendingWaterTileMapper.get(entity)
 	
@@ -54,8 +58,19 @@ iteratingSystem 'waterTileFitProcessingSystem', Family.all(IsMapCell, IsWateryCe
 	
 	final newTile = pending.future.get()
 	
-	final waterTile = entity.addAndReturn( state.engine.createComponent( HasWaterTile ))
-	waterTile.tile = newTile
+	final layers = hasLayersMapper.get(entity)
+	layers.tiles['water'] = newTile
+	layers.tints['water'] = null
+	
+	if(newTile) {
+		final normalAltitude = state.map.getCellAltitude( cx, cy, newTile.base )
+		layers.altitudeOverrides['water'] = (normalAltitude < sealevel) ? sealevel : null
+		
+		entity.add state.engine.createComponent(HasWaterTile)
+		
+	} else
+		entity.remove HasWaterTile
+	
 	
 	entity.remove HasPendingWaterTile
 }

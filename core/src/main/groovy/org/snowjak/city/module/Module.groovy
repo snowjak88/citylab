@@ -7,11 +7,9 @@ import java.util.function.Consumer
 
 import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
-import org.snowjak.city.map.renderer.hooks.AbstractCellRenderingHook
+import org.snowjak.city.map.renderer.MapLayer
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook
-import org.snowjak.city.map.renderer.hooks.CellRenderingHook
 import org.snowjak.city.map.renderer.hooks.CustomRenderingHook
-import org.snowjak.city.map.renderer.hooks.DelegatingCellRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
 import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain
 import org.snowjak.city.module.ui.VisualParameter
@@ -95,7 +93,7 @@ public class Module extends ScriptedResource {
 	
 	final Map<String,EntitySystem> systems = [:]
 	
-	final Set<AbstractCellRenderingHook> cellRenderingHooks = []
+	final Set<MapLayer> mapLayers = []
 	final Set<AbstractCustomRenderingHook> customRenderingHooks = []
 	
 	final Map<String,ToolGroup> toolGroups = [:]
@@ -129,23 +127,18 @@ public class Module extends ScriptedResource {
 	}
 	
 	/**
-	 * Specify a CellRenderingHook to be included in the game's render-loop.
+	 * Define a MapLayer with the given ID. Once you have specified this layer's priority using
+	 * the returned RelativePriority, you may render to this layer by updating a map-cell entity's
+	 * {@link HasMapLayers}.
 	 * 
-	 * @param id Identifies this cell-renderer. Subsequent Modules may overwrite this renderer by using the same ID.
-	 * @param hook
-	 * @return a {@link RelativePriority prioritizer}
+	 * @param id
+	 * @return
 	 */
-	public RelativePriority cellRenderHook(String id, Closure hook) {
-		if(isDependencyCheckingMode())
-			return new RelativePriority()
+	public RelativePriority mapLayer(String id) {
 		
-		hook.resolveStrategy = Closure.DELEGATE_FIRST
-		hook.delegate = this
-		
-		def newHook = new DelegatingCellRenderingHook(id, state.moduleExceptionRegistry, this, hook as CellRenderingHook)
-		hook.owner = newHook
-		cellRenderingHooks << newHook
-		newHook.relativePriority
+		final newLayer = [ id: id ] as MapLayer
+		mapLayers << newLayer
+		newLayer.relativePriority
 	}
 	
 	/**
@@ -638,7 +631,7 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 		this.onActivationActions.addAll module.onActivationActions
 		this.onDeactivationActions.addAll module.onDeactivationActions
 		this.systems.putAll module.systems
-		this.cellRenderingHooks.addAll module.cellRenderingHooks
+		this.mapLayers.addAll module.mapLayers
 		this.customRenderingHooks.addAll module.customRenderingHooks
 		this.toolGroups.putAll module.toolGroups
 		this.tools.putAll module.tools

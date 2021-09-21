@@ -3,7 +3,6 @@
  */
 package org.snowjak.city.map.renderer;
 
-import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileCorner;
 
 import com.badlogic.gdx.math.Rectangle;
@@ -22,30 +21,6 @@ public interface RenderingSupport {
 	 * @return
 	 */
 	public Rectangle getViewportWorldBounds();
-	
-	/**
-	 * Draw the given {@link Tile} at the given cell location.
-	 * 
-	 * @param cellX
-	 * @param cellY
-	 * @param tile
-	 */
-	public default void renderTile(int cellX, int cellY, Tile tile) {
-		
-		renderTile(cellX, cellY, tile, -1);
-	}
-	
-	/**
-	 * Draw the given {@link Tile} at the given cell location.
-	 * 
-	 * @param cellX
-	 * @param cellY
-	 * @param tile
-	 * @param altitudeOverride
-	 *            ignore the cell's height and use this instead. {@code <0} if no
-	 *            override
-	 */
-	public void renderTile(int cellX, int cellY, Tile tile, int altitudeOverride);
 	
 	/**
 	 * 

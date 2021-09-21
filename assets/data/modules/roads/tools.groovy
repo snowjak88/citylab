@@ -14,7 +14,7 @@ placeRoad = { float cellX, float cellY ->
 	if(hasRoadMapper.has(entity))
 		entity.remove HasRoad
 	
-	final hasRoad = entity.addAndReturn( state.engine.createComponent(HasRoad) )
+	final hasRoad = entity.addAndReturn( state.engine.createComponent( HasRoad) )
 	
 	//
 	// Scan neighboring cells for roads.
@@ -33,12 +33,12 @@ placeRoad = { float cellX, float cellY ->
 			hasRoadMapper.get(neighbor).edges << edge.opposite
 			
 			//
-			// Ensure that the neighboring cell has its road-tiles re-fitted
-			neighbor.remove HasRoadTile
+			// Ensure that the neighboring cell has its road-tile re-fitted
+			neighbor.add state.engine.createComponent(NeedsReplacementRoadTile)
 		}
 	}
 	
-	entity.remove HasRoadTile
+	entity.add state.engine.createComponent(NeedsReplacementRoadTile)
 }
 
 roadPlan = [

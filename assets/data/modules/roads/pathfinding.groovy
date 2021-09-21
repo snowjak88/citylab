@@ -109,13 +109,13 @@ onActivate {
 				def startNode = currentRequest.checkpoints[0]
 				for(endNode : currentRequest.checkpoints) {
 					if(endNode === startNode)
-					continue
+						continue
 					
 					success |= pathfinder.searchNodePath( startNode, endNode, pathfindingHeuristic, graphPath )
 					
 					if(success)
-					for( def node : graphPath )
-					currentRequest.result << node
+						for( def node : graphPath )
+							currentRequest.result << node
 				}
 				
 				currentRequest.success = success

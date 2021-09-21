@@ -40,26 +40,7 @@ visualParameter {
 }
 
 //
-// We need to declare a couple of components for this Module to work.
-//
-// IsTerrainTile: marks an entity as having terrain-tile(s) assigned to it.
-// IsTerrainTile is populated by the terrain-tile-fitter (in "systems.groovy"), and
-// is read by the terrain-cell-renderer ("renderers/terrainRenderer.groovy").
-//
-class IsTerrainTile implements Component, Poolable {
-	
-	Tile tile = null
-	
-	//
-	// Poolable components require a "reset" method,
-	// to return them to a blank state
-	void reset() {
-		tile = null
-	}
-}
-
-//
-// NeedsReplacementTerrainTile: marks an entity as requiring its IsTerrainTile
+// NeedsReplacementTerrainTile: marks an entity as requiring its terrain-tile
 // to be recomputed (because the map has changed somehow at that location).
 // This is a "marker" component, with no fields.
 //
@@ -68,7 +49,7 @@ class NeedsReplacementTerrainTile implements Component, Poolable {
 }
 
 //
-// PendingTerrainTile: marks an entity as waiting on its terrain-tiles to
+// PendingTerrainTile: marks an entity as waiting on its terrain-tile to
 // be (re-)computed. Has a Future, giving us an endpoint for the background-task
 // that's busy doing that terrain-tile-fitting.
 //
@@ -84,9 +65,12 @@ class PendingTerrainTile implements Component, Poolable {
 	}
 }
 
-//
-// The "terrain" renderer will automatically share every variable we've declared so far.
-include 'renderers/terrainRenderer.groovy'
+// HasTerrainTile: marks an entity as having had its terrain-tile computed.
+class HasTerrainTile implements Component, Poolable {
+	void reset() { }
+}
+
+mapLayer 'terrain'
 
 //
 // This module declares its entity-processing systems in another file.
