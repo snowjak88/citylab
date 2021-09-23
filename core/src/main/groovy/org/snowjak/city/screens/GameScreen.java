@@ -13,6 +13,7 @@ import org.snowjak.city.GameState;
 import org.snowjak.city.configuration.InitPriority;
 import org.snowjak.city.console.Console;
 import org.snowjak.city.input.GameInputProcessor;
+import org.snowjak.city.input.KeyDownEvent;
 import org.snowjak.city.input.KeyTypedEvent;
 import org.snowjak.city.input.ScreenDragEndEvent;
 import org.snowjak.city.input.ScreenDragStartEvent;
@@ -20,16 +21,20 @@ import org.snowjak.city.input.ScreenDragUpdateEvent;
 import org.snowjak.city.input.ScrollEvent;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.renderer.MapRenderer;
+import org.snowjak.city.screens.loadingtasks.CompositeLoadingTask;
 import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.LoggerService;
 import org.snowjak.city.service.SkinService;
+import org.snowjak.city.service.loadingtasks.GameMapEntityDestructionTask;
+import org.snowjak.city.service.loadingtasks.GameModulesUninitializationTask;
 import org.snowjak.city.tools.Tool;
 import org.snowjak.city.tools.ui.Toolbar;
 import org.snowjak.city.util.UnregistrationHandle;
 
 import com.badlogic.ashley.core.Engine;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
@@ -37,6 +42,11 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Window;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.github.czyzby.autumn.annotation.Component;
@@ -56,20 +66,24 @@ public class GameScreen extends AbstractGameScreen {
 	
 	private static final float MIN_ZOOM = 0.25f, MAX_ZOOM = 4f;
 	
+	private final LoadingScreen loadingScreen;
 	private final MainMenuScreen mainMenuScreen;
 	private final I18NService i18nService;
 	
 	public GameScreen(GameService gameService, Console console, I18NService i18nService, SkinService skinService,
-			GameAssetService assetService, Stage stage, MainMenuScreen mainMenuScreen) {
+			GameAssetService assetService, Stage stage, LoadingScreen loadingScreen, MainMenuScreen mainMenuScreen) {
 		
 		super(gameService, console, i18nService, skinService, assetService, stage);
 		
 		this.i18nService = i18nService;
+		this.loadingScreen = loadingScreen;
 		this.mainMenuScreen = mainMenuScreen;
 		this.renderer = new MapRenderer(gameService.getState());
 		
 		this.setBackgroundColor(Color.BLACK);
 	}
+	
+	private Window exitConfirmWindow;
 	
 	private GameInputProcessor inputProcessor;
 	private final ScreenViewport viewport = new ScreenViewport();
@@ -104,6 +118,58 @@ public class GameScreen extends AbstractGameScreen {
 			// ... then viewport- to map-coordinates ...
 			return renderer.viewportToMap(tmp);
 		});
+		
+		//
+		// Set up the "exit-game" confirmation window.
+		final Skin skin = getSkinService().getCurrent();
+		
+		final TextButton exitConfirmCancelButton = new TextButton(i18nService.get("game-exit-cancel"), skin);
+		exitConfirmCancelButton.addListener(new ChangeListener() {
+			
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				
+				final TextButton b = (TextButton) actor;
+				if (b.isChecked()) {
+					b.setChecked(false);
+					exitConfirmWindow.setVisible(false);
+				}
+			}
+		});
+		
+		final TextButton exitConfirmOkButton = new TextButton(i18nService.get("game-exit-ok"), skin);
+		exitConfirmOkButton.addListener(new ChangeListener() {
+			
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				
+				final TextButton b = (TextButton) actor;
+				if (b.isChecked()) {
+					b.setChecked(false);
+					exitConfirmWindow.setVisible(false);
+					loadingScreen.setLoadingTask(
+							new CompositeLoadingTask(new GameModulesUninitializationTask(getGameService(), i18nService),
+									new GameMapEntityDestructionTask(getGameService(), i18nService)));
+					loadingScreen.setLoadingCompleteAction(() -> loadingScreen.changeScreen(mainMenuScreen));
+					changeScreen(loadingScreen);
+				}
+			}
+		});
+		
+		exitConfirmWindow = new Window(i18nService.get("game-exit"), skin);
+		exitConfirmWindow.setVisible(false);
+		exitConfirmWindow.setModal(true);
+		exitConfirmWindow.setMovable(false);
+		
+		exitConfirmWindow.row().pad(15);
+		exitConfirmWindow.add(new Label(i18nService.get("game-exit-text"), skin)).left().colspan(2);
+		exitConfirmWindow.row().pad(15);
+		exitConfirmWindow.add(exitConfirmCancelButton).right();
+		exitConfirmWindow.add(exitConfirmOkButton).left();
+		
+		exitConfirmWindow.pack();
+		
+		getStage().addActor(exitConfirmWindow);
 	}
 	
 	@Override
@@ -172,6 +238,14 @@ public class GameScreen extends AbstractGameScreen {
 				.add(inputProcessor.register(ScreenDragEndEvent.class, e -> inputHandler.dragEnd(e.getX(), e.getY())));
 		inputUnregistrations.add(
 				inputProcessor.register(ScrollEvent.class, e -> inputHandler.scroll(e.getAmountX(), e.getAmountY())));
+		
+		inputUnregistrations.add(inputProcessor.register(KeyDownEvent.class, e -> {
+			if (e.getKeycode() == Input.Keys.ESCAPE)
+				if (getGameService().getState().getActiveTool() != null)
+					Gdx.app.postRunnable(() -> getGameService().getState().getActiveTool().deactivate());
+				else
+					exitConfirmWindow.setVisible(true);
+		}));
 		
 		state.getModules().forEach((id, module) -> {
 			if (!module.getActivated())
@@ -252,6 +326,8 @@ public class GameScreen extends AbstractGameScreen {
 		super.resize(width, height);
 		viewport.update(width, height);
 		cameraUpdated = true;
+		
+		exitConfirmWindow.setPosition(width / 2, height / 2, Align.center);
 	}
 	
 	/**

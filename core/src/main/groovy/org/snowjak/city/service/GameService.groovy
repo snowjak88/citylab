@@ -429,8 +429,7 @@ class GameService {
 				} catch(Throwable t) {
 					state.moduleExceptionRegistry.reportFailure module, FailureDomain.OTHER, t
 				}
-			}
-		}
+			}		}
 		
 		//
 		// Remove this module's rendering-hooks
@@ -466,6 +465,8 @@ class GameService {
 			
 			initializeToolbar()
 		}
+		
+		state.modules.remove module.id
 		
 		progressReporter?.accept 1
 		

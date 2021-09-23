@@ -147,11 +147,13 @@ listeningSystem 'wateryVertexCellUpdatingSystem', Family.all(IsMapVertex, IsWate
 	
 }, { entity, deltaTime ->
 	
-	final thisVertex = isVertexMapper.get(entity)
-	final vx = thisVertex.vertexX
-	final vy = thisVertex.vertexY
-	
-	checkWateryVertexCells entity, (int) vx, (int) vy
+	if(isVertexMapper.has(entity)) {
+		final thisVertex = isVertexMapper.get(entity)
+		final vx = thisVertex.vertexX
+		final vy = thisVertex.vertexY
+		
+		checkWateryVertexCells entity, (int) vx, (int) vy
+	}
 }
 
 //

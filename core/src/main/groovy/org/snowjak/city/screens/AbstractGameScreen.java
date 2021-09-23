@@ -75,8 +75,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	
 	public void changeScreen(Screen screen) {
 		
-		stage.getRoot().addAction(
-				Actions.sequence(Actions.fadeOut(SCREEN_FADE_TIME), Actions.run(() -> this.game.setScreen(screen))));
+		stage.getRoot().addAction(Actions.sequence(Actions.fadeOut(SCREEN_FADE_TIME),
+				Actions.run(() -> this.game.setScreen(screen)), Actions.fadeIn(SCREEN_FADE_TIME)));
 	}
 	
 	/**
