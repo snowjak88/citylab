@@ -18,6 +18,7 @@ import org.snowjak.city.ecs.systems.impl.IsMapVertexManagementSystem
 import org.snowjak.city.ecs.systems.impl.MapCellBlockerRemovingSystem
 import org.snowjak.city.ecs.systems.impl.RemoveMapCellRearrangedSystem
 import org.snowjak.city.ecs.systems.impl.RemoveMapVertexRearrangedSystem
+import org.snowjak.city.ecs.systems.impl.UnselectionSystem
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.generator.MapGenerator
 import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
@@ -114,6 +115,7 @@ class GameService {
 		state.engine.addSystem new RemoveMapCellRearrangedSystem()
 		state.engine.addSystem new RemoveMapVertexRearrangedSystem()
 		state.engine.addSystem new MapCellBlockerRemovingSystem()
+		state.engine.addSystem new UnselectionSystem()
 		
 		progressUpdater?.accept 1.0
 	}

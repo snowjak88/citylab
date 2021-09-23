@@ -23,6 +23,7 @@ import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain
 import org.snowjak.city.service.GameService
 import org.snowjak.city.tools.activity.Activity
 import org.snowjak.city.tools.activity.InputReceivingActivity
+import org.snowjak.city.tools.activity.RunnableActivity
 
 import com.badlogic.gdx.files.FileHandle
 
@@ -291,6 +292,20 @@ class Tool {
 	@FunctionalInterface
 	public interface MapCoordReceiver {
 		public void receive(float cellX, float cellY)
+	}
+	
+	/**
+	 * Register an "while-active" handler. Every frame that this Tool is active, the given Closure will be executed.
+	 * <p>
+	 * The Closure is expected to have no parameters -- i.e., to be of the form:
+	 * <pre>
+	 * { -> ... }
+	 * </pre>
+	 * </p>
+	 * @param runnable
+	 */
+	public void whileActive(Closure handler) {
+		activities << new RunnableActivity(this, handler as Runnable)
 	}
 	
 	//

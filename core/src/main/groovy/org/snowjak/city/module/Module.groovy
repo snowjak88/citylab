@@ -24,6 +24,7 @@ import org.snowjak.city.tools.Tool
 import org.snowjak.city.tools.ToolGroup
 import org.snowjak.city.util.RelativePriority
 
+import com.badlogic.ashley.core.Component
 import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.core.Family
 import com.badlogic.gdx.files.FileHandle
@@ -257,20 +258,20 @@ class ''' + legalID + ''' extends com.badlogic.ashley.systems.IteratingSystem {
 class ''' + legalID + ''' extends com.badlogic.ashley.systems.IntervalSystem {
 	final Closure implementation, exceptionReporter
 	public ''' + legalID + '''(float interval, Closure implementation, Closure exceptionReporter) {
-			super(interval);
-			this.implementation = implementation
-			this.exceptionReporter = exceptionReporter
+		super(interval);
+		this.implementation = implementation
+		this.exceptionReporter = exceptionReporter
+	}
+	
+	protected void updateInterval() {
+		try {
+			implementation(interval)
+		} catch(Throwable t) {
+			exceptionReporter(t)
+			processing = false
 		}
-		
-		protected void updateInterval() {
-			try {
-				implementation(interval)
-			} catch(Throwable t) {
-				exceptionReporter(t)
-				processing = false
-			}
-		}
-	}'''
+	}
+}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
 		final system = systemClass.newInstance(interval, implementation, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
@@ -305,20 +306,20 @@ class ''' + legalID + ''' extends com.badlogic.ashley.systems.IntervalSystem {
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.IntervalIteratingSystem {
 	final Closure implementation, exceptionReporter
 	public ''' + legalID + '''(Family family, float interval, Closure implementation, Closure exceptionReporter) {
-			super(family, interval);
-			this.implementation = implementation
-			this.exceptionReporter = exceptionReporter
+		super(family, interval);
+		this.implementation = implementation
+		this.exceptionReporter = exceptionReporter
+	}
+	
+	protected void processEntity(Entity entity, float deltaTime) {
+		try {
+			implementation(entity, deltaTime)
+		} catch(Throwable t) {
+			exceptionReporter(t)
+			processing = false
 		}
-		
-		protected void processEntity(Entity entity, float deltaTime) {
-			try {
-				implementation(entity, deltaTime)
-			} catch(Throwable t) {
-				exceptionReporter(t)
-				processing = false
-			}
-		}
-	}'''
+	}
+}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
 		final system = systemClass.newInstance(family, interval, implementation, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
@@ -353,20 +354,20 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.IntervalIterating
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.WindowIteratingSystem {
 	final Closure implementation, exceptionReporter
 	public ''' + legalID + '''(Family family, int window, Closure implementation, Closure exceptionReporter) {
-			super(window, family);
-			this.implementation = implementation
-			this.exceptionReporter = exceptionReporter
+		super(window, family);
+		this.implementation = implementation
+		this.exceptionReporter = exceptionReporter
+	}
+	
+	protected void processEntity(Entity entity, float deltaTime) {
+		try {
+			implementation(entity, deltaTime)
+		} catch(Throwable t) {
+			exceptionReporter(t)
+			processing = false
 		}
-		
-		protected void processEntity(Entity entity, float deltaTime) {
-			try {
-				implementation(entity, deltaTime)
-			} catch(Throwable t) {
-				exceptionReporter(t)
-				processing = false
-			}
-		}
-	}'''
+	}
+}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
 		final system = systemClass.newInstance(family, window, implementation, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
@@ -401,20 +402,20 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.WindowIteratingSy
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.TimeSliceIteratingSystem {
 	final Closure implementation, exceptionReporter
 	public ''' + legalID + '''(Family family, float timeSlice, Closure implementation, Closure exceptionReporter) {
-			super(family, timeSlice);
-			this.implementation = implementation
-			this.exceptionReporter = exceptionReporter
+		super(family, timeSlice);
+		this.implementation = implementation
+		this.exceptionReporter = exceptionReporter
+	}
+	
+	protected void processEntity(Entity entity, float deltaTime) {
+		try {
+			implementation(entity, deltaTime)
+		} catch(Throwable t) {
+			exceptionReporter(t)
+			processing = false
 		}
-		
-		protected void processEntity(Entity entity, float deltaTime) {
-			try {
-				implementation(entity, deltaTime)
-			} catch(Throwable t) {
-				exceptionReporter(t)
-				processing = false
-			}
-		}
-	}'''
+	}
+}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
 		final system = systemClass.newInstance(family, timeSlice, implementation, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
@@ -447,20 +448,20 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.TimeSliceIteratin
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.BulkSystem {
 	final Closure implementation, exceptionReporter
 	public ''' + legalID + '''(Family family, Closure implementation, Closure exceptionReporter) {
-			super(family);
-			this.implementation = implementation
-			this.exceptionReporter = exceptionReporter
+		super(family);
+		this.implementation = implementation
+		this.exceptionReporter = exceptionReporter
+	}
+	
+	protected void update(Set<Entity> entities, float deltaTime) {
+		try {
+			implementation(entities, deltaTime)
+		} catch(Throwable t) {
+			exceptionReporter(t)
+			processing = false
 		}
-		
-		protected void update(Set<Entity> entities, float deltaTime) {
-			try {
-				implementation(entities, deltaTime)
-			} catch(Throwable t) {
-				exceptionReporter(t)
-				processing = false
-			}
-		}
-	}'''
+	}
+}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
 		final system = systemClass.newInstance(family, implementation, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
@@ -494,29 +495,29 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.BulkSystem {
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 	final Closure onAdd, onDrop, exceptionReporter
 	public ''' + legalID + '''(Family family, Closure onAdd, Closure onDrop, Closure exceptionReporter) {
-			super(family);
-			this.onAdd = onAdd
-			this.onDrop = onDrop
-			this.exceptionReporter = exceptionReporter
+		super(family);
+		this.onAdd = onAdd
+		this.onDrop = onDrop
+		this.exceptionReporter = exceptionReporter
+	}
+	
+	public void added(Entity entity, float deltaTime) {
+		try {
+			onAdd(entity, deltaTime)
+		} catch(Throwable t) {
+			exceptionReporter(t)
+			processing = false
 		}
-		
-		public void added(Entity entity, float deltaTime) {
-			try {
-				onAdd(entity, deltaTime)
-			} catch(Throwable t) {
-				exceptionReporter(t)
-				processing = false
-			}
+	}
+	public void dropped(Entity entity, float deltaTime) {
+		try {
+			onDrop(entity, deltaTime)
+		} catch(Throwable t) {
+			exceptionReporter(t)
+			processing = false
 		}
-		public void dropped(Entity entity, float deltaTime) {
-			try {
-				onDrop(entity, deltaTime)
-			} catch(Throwable t) {
-				exceptionReporter(t)
-				processing = false
-			}
-		}
-	}'''
+	}
+}'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
 		final system = systemClass.newInstance(family, added, dropped, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
@@ -529,6 +530,33 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 		dropped.resolveStrategy = Closure.DELEGATE_FIRST
 		
 		systems << ["$id" : system]
+	}
+	
+	/**
+	 * Register the given Component as an "event-Component" -- i.e., a marker-Component that will only persist
+	 * on its Entity for a single update-cycle.
+	 * <p>
+	 * Behind the scenes, this entails the creation of a {@link org.snowjak.city.ecs.systems.EventComponentSystem}.
+	 * </p>
+	 * @param eventType
+	 */
+	public void eventComponent(Class<Component> eventType) {
+		
+		if(isDependencyCheckingMode())
+			return
+		
+		final legalID = legalizeID("${id}_${eventType.simpleName}")
+		
+		final systemClassDefinition = '''
+class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSystem {
+		public ''' + legalID + '''(Class<Component> eventType) {
+		super(eventType);
+	}
+}'''
+		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
+		final system = systemClass.newInstance(eventType)
+		
+		systems << ["$legalID" : system]
 	}
 	
 	public void buttonGroup(String id, @DelegatesTo(value=ToolGroup, strategy=Closure.DELEGATE_FIRST) Closure groupSpec) {

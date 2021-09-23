@@ -11,7 +11,9 @@ import org.codehaus.groovy.control.customizers.CompilationCustomizer
 import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.codehaus.groovy.control.customizers.SecureASTCustomizer
 import org.codehaus.groovy.syntax.Types
+import org.snowjak.city.CityGame
 import org.snowjak.city.service.GameAssetService
+import org.snowjak.city.service.LoggerService
 import org.snowjak.city.util.Util
 
 import com.badlogic.gdx.assets.AssetDescriptor
@@ -20,6 +22,7 @@ import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.assets.loaders.AsynchronousAssetLoader
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.utils.Array
+import com.github.czyzby.kiwi.log.Logger
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 
@@ -28,6 +31,8 @@ import com.google.common.collect.HashBiMap
  *
  */
 abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends AssetLoaderParameters<R>> extends AsynchronousAssetLoader<R, P> {
+	
+	private static final Logger LOG = LoggerService.forClass(ScriptedResourceLoader.class);
 	
 	private final GameAssetService assetService
 	
@@ -38,6 +43,10 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 	private final Map<String,Object> providedObjects = [:]
 	
 	private final Map<FileHandle, R> loaded = [:]
+	
+	private final Set<FileHandle> loadedSharedClassesFor = []
+	
+	private final GroovyClassLoader superClassLoader = new GroovyClassLoader(ScriptedResourceLoader.classLoader)
 	
 	public ScriptedResourceLoader(GameAssetService assetService) {
 		super(GameAssetService.FILE_HANDLE_RESOLVER)
@@ -175,6 +184,15 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 	 */
 	protected R loadResource(FileHandle file, boolean dependencyMode) throws IOException, CompilationFailedException {
 		
+		if(!loadedSharedClassesFor.contains(file)) {
+			loadedSharedClassesFor << file
+			
+			final sharedClassesDirectory = file.parent().child(CityGame.RESOURCE_SHARED_CLASSES_DIRECTORY_NAME)
+			if(sharedClassesDirectory.exists() && sharedClassesDirectory.isDirectory())
+				scanSharedClasses sharedClassesDirectory
+		}
+		
+		
 		final config = resourceCompilerConfigs.computeIfAbsent(file, { f ->
 			getDefaultCompilerConfiguration()
 		} )
@@ -184,8 +202,7 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		else
 			config.scriptBaseClass = DelegatingScript.name
 		
-		final shell = new GroovyShell(new GroovyClassLoader(this.class.classLoader), config)
-		
+		final shell = new GroovyShell(new GroovyClassLoader(superClassLoader), config)
 		final script = (DelegatingScript) shell.parse(file.file())
 		
 		final r = newInstance()
@@ -216,12 +233,33 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		
 		if(!dependencyMode) {
 			r.binding.variables.putAll r.providedObjects
-			this.providedObjects.putAll r.providedObjects
+			providedObjects.putAll r.providedObjects
 		}
 		
 		afterLoad r, assetService, dependencyMode
 		
 		r
+	}
+	
+	private void scanSharedClasses(FileHandle directory) {
+		
+		if(!directory.exists())
+			return
+		
+		for(def child : directory.list()) {
+			if(child.directory)
+				scanSharedClasses(child)
+			else if(child.extension().equalsIgnoreCase("groovy")) {
+				
+				LOG.info "Loading shared-class [{0}] ...", child.path()
+				try {
+					
+					superClassLoader.parseClass child.file()
+				} catch(IOException | CompilationFailedException e) {
+					LOG.error e, "Could not load shared-class [{0}]!", child.path()
+				}
+			}
+		}
 	}
 	
 	/**
@@ -249,9 +287,7 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		final config = new CompilerConfiguration()
 		
 		final secureCustomizer = new SecureASTCustomizer()
-		secureCustomizer.disallowedTokens = [
-			Types.KEYWORD_PACKAGE
-		]
+		secureCustomizer.disallowedTokens = [Types.KEYWORD_PACKAGE]
 		
 		final importCustomizer = new ImportCustomizer()
 		importCustomizer.addImport "Util", Util.name

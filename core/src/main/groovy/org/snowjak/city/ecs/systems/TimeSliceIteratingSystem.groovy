@@ -5,6 +5,7 @@ import com.badlogic.ashley.core.Entity
 import com.badlogic.ashley.core.EntityListener
 import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.core.Family
+import com.badlogic.gdx.utils.TimeUtils
 
 /**
  * IteratingSystem in which each cycle's execution is limited to a certain time-slice.
@@ -44,7 +45,7 @@ abstract class TimeSliceIteratingSystem extends EntitySystem implements EntityLi
 		
 		super(priority);
 		this.family = family
-		this.delta = (long)(delta * 1000000f)
+		this.delta = TimeUtils.millisToNanos((long)(delta * 1000f))
 	}
 	
 	@Override

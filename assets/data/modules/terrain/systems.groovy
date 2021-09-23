@@ -40,7 +40,6 @@ iteratingSystem 'existingTerrainUpdatingSystem', Family.all(IsMapCell, NeedsRepl
 	for(def corner : TileCorner)
 		pendingTerrain.heights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
 	
-	
 	pendingTerrain.future = submitResultTask {
 		->
 		tileset.getTileFor pendingTerrain.heights, [
@@ -72,16 +71,31 @@ iteratingSystem 'pendingTerrainUpdatingSystem', Family.all(PendingTerrainTile, H
 	else
 		entity.remove HasTerrainTile
 	
-	
+	entity.add state.engine.createComponent(TerrainTileChanged)
 	entity.remove PendingTerrainTile
 	
 }
+
+
+//
+// Set up "event-Component" handling.
+// Event-Components should persist on any Entity for only 1 cycle.
+// We need to set up EventComponentSystems for each of our 3 event-Components.
+//
+// Because these Components should be shared with other Modules, these Components
+// cannot be defined inside this Module. Instead, they are defined under:
+//   /modules/shared/terrain/
+//
+eventComponent CellHeightChanged
+eventComponent VertexHeightChanged
+eventComponent TerrainTileChanged
+
 
 //
 // When a map-cell is "rearranged" -- i.e., it changes a corner-height, or flavor, or whatever --
 // we need to make sure that we re-assign the terrain-tile.
 //.exclude(NeedsReplacementTerrainTile, PendingTerrainTile)
-listeningSystem 'terrainRearrangementSystem', Family.all(IsMapCellRearranged).get(), { entity, deltaTime ->
+listeningSystem 'terrainRearrangementSystem', Family.all(CellHeightChanged).get(), { entity, deltaTime ->
 	//
 	// When we "hear" the IsMapCellRearranged hit a terrain-tile,
 	// flag the entity so we can regenerate its terrain.
@@ -89,9 +103,13 @@ listeningSystem 'terrainRearrangementSystem', Family.all(IsMapCellRearranged).ge
 	// If this entity is still a map-cell, then the 'existingTerrainUpdatingSystem'
 	// will take care of reassigning the terrain-tile
 	//
+	final mapCell = isCellMapper.get(entity)
+	final int cellX = mapCell.cellX
+	final int cellY = mapCell.cellY
 	entity.add state.engine.createComponent(NeedsReplacementTerrainTile)
 }, { entity, deltaTime ->
 	//
 	// nothing to do when the IsMapCellRearranged "drops off" this entity
 	//
 }
+

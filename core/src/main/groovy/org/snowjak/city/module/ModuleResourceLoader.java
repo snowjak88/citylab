@@ -57,19 +57,7 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		
 		final CompilerConfiguration config = super.getDefaultCompilerConfiguration();
 		
-		final ImportCustomizer customizer = new ImportCustomizer();
-		customizer.addStarImports("org.snowjak.city.ecs.components");
-		customizer.addStarImports("com.badlogic.ashley.core");
-		customizer.addStarImports("com.badlogic.gdx.audio");
-		customizer.addStarImports("com.badlogic.gdx.files");
-		customizer.addStarImports("com.badlogic.gdx.graphics");
-		customizer.addStarImports("com.badlogic.gdx.math");
-		customizer.addStarImports("com.badlogic.gdx.utils");
-		customizer.addImport("Buttons", Input.Buttons.class.getName());
-		customizer.addImport("Poolable", Poolable.class.getName());
-		
-		customizer.addStaticStars(ModifierKey.class.getName());
-		
+		final ImportCustomizer customizer = getDefaultImportCustomizer();
 		customizer.addImports(
 				// jCity types
 				CityMap.class.getName(), Tile.class.getName(), TileSet.class.getName(), TileCorner.class.getName(),
@@ -83,7 +71,26 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		
 		config.addCompilationCustomizers(customizer);
 		config.setScriptBaseClass(DelegatingScript.class.getName());
+		
 		return config;
+	}
+	
+	private ImportCustomizer getDefaultImportCustomizer() {
+		
+		final ImportCustomizer customizer = new ImportCustomizer();
+		customizer.addStarImports("org.snowjak.city.ecs.components");
+		customizer.addStarImports("com.badlogic.ashley.core");
+		customizer.addStarImports("com.badlogic.gdx.audio");
+		customizer.addStarImports("com.badlogic.gdx.files");
+		customizer.addStarImports("com.badlogic.gdx.graphics");
+		customizer.addStarImports("com.badlogic.gdx.math");
+		customizer.addStarImports("com.badlogic.gdx.utils");
+		customizer.addImport("Buttons", Input.Buttons.class.getName());
+		customizer.addImport("Poolable", Poolable.class.getName());
+		
+		customizer.addStaticStars(ModifierKey.class.getName());
+		
+		return customizer;
 	}
 	
 	@Override

@@ -19,7 +19,7 @@ abstract class ListeningSystem extends EntitySystem implements EntityListener {
 	private final Family family
 	private final Set<Entity> entities = new HashSet<>()
 	
-	private final Queue<Entity> newlyAdded = new LinkedList<>(), newlyDropped = new LinkedList<>()
+	private final LinkedHashSet<Entity> newlyAdded = new LinkedHashSet<>(), newlyDropped = new LinkedHashSet<>()
 	
 	public ListeningSystem(Family family, int priority = 0) {
 		super(priority)
@@ -50,13 +50,17 @@ abstract class ListeningSystem extends EntitySystem implements EntityListener {
 		
 		super.update(deltaTime)
 		
-		Entity current
-		while(current = newlyAdded.poll())
-			added current, deltaTime
+		final addedIterator = newlyAdded.iterator()
+		while(addedIterator.hasNext()) {
+			added addedIterator.next(), deltaTime
+			addedIterator.remove()
+		}
 		
-		current = null
-		while(current = newlyDropped.poll())
-			dropped current, deltaTime
+		final droppedIterator = newlyDropped.iterator()
+		while(droppedIterator.hasNext()) {
+			dropped droppedIterator.next(), deltaTime
+			droppedIterator.remove()
+		}
 	}
 	
 	/**

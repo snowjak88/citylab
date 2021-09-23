@@ -1,6 +1,7 @@
 id = 'roads'
 
 dependsOn 'cursor-highlighters'
+dependsOn 'terrain'
 
 i18n.addBundle 'i18n'
 
@@ -50,6 +51,8 @@ class HasPendingRoadTile implements Component, Poolable {
 class HasRoadTile implements Component, Poolable {
 	void reset() { }
 }
+
+eventComponent RoadCellUpdated
 
 isCellMapper = ComponentMapper.getFor(IsMapCell)
 isCellNonBuildableMapper = ComponentMapper.getFor(IsNonBuildableCell)
@@ -108,9 +111,13 @@ isValidRoadCell = { int cx, int cy ->
 
 isValidRoadConnection = { int fromX, int fromY, int toX, int toY ->
 	
-	if(!state.map.isValidCell(fromX, fromY))
+	if(!isValidRoadCell(fromX, fromY))
 		return false
-	if(!state.map.isValidCell(toX, toY))
+	
+	if(fromX == toX && fromY == toY)
+		return true
+	
+	if(!isValidRoadCell(toX, toY))
 		return false
 	
 	final edge = TileEdge.fromDelta(toX - fromX, toY - fromY)
@@ -129,7 +136,5 @@ isValidRoadConnection = { int fromX, int fromY, int toX, int toY ->
 
 mapLayer 'road' after 'terrain' before 'water'
 
-include 'pathfinding.groovy'
 include 'systems.groovy'
-include 'tools.groovy'
-include 'renderer.groovy'
+include 'tools/tools.groovy'

@@ -31,6 +31,7 @@ import java.util.function.Predicate;
 
 import org.snowjak.city.GameState;
 import org.snowjak.city.ecs.components.HasMapLayers;
+import org.snowjak.city.ecs.components.IsSelected;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
 import org.snowjak.city.map.tiles.Tile;
@@ -124,6 +125,9 @@ public class MapRenderer implements RenderingSupport, Disposable {
 	public final AbstractCustomRenderingHook MAP_RENDERING_HOOK = new AbstractCustomRenderingHook("map") {
 		
 		private final ComponentMapper<HasMapLayers> layerMapper = ComponentMapper.getFor(HasMapLayers.class);
+		private final ComponentMapper<IsSelected> selectedMapper = ComponentMapper.getFor(IsSelected.class);
+		
+		private final float lineWidth = 1f / WORLD_GRID_UNIT_SIZE;
 		
 		@Override
 		public void render(float delta, Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
@@ -181,6 +185,16 @@ public class MapRenderer implements RenderingSupport, Disposable {
 							final Integer altitudeOverride = hasLayers.getAltitudeOverrides().get(layerID);
 							
 							renderTile(cellX, cellY, tile, tint, (altitudeOverride == null) ? -1 : altitudeOverride);
+						}
+						
+						//
+						// Draw a selection-box around this cell?
+						if(selectedMapper.has(entity)) {
+							final Vector2[] vertices = support.getCellVertices(cellX, cellY, null);
+							shapeDrawer.line(vertices[0], vertices[1], Color.WHITE, lineWidth);
+							shapeDrawer.line(vertices[1], vertices[2], Color.WHITE, lineWidth);
+							shapeDrawer.line(vertices[2], vertices[3], Color.WHITE, lineWidth);
+							shapeDrawer.line(vertices[3], vertices[0], Color.WHITE, lineWidth);
 						}
 					}
 		}

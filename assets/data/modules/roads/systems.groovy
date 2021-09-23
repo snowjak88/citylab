@@ -50,7 +50,10 @@ iteratingSystem 'roadTileProcessingSystem', Family.all(HasRoad, HasPendingRoadTi
 	entity.remove HasPendingRoadTile
 }
 
-listeningSystem 'roadCellRearrangedListener', Family.all(IsMapCellRearranged, HasMapLayers).one(HasRoad, HasPendingRoadTile).get(), { entity, deltaTime ->
+//
+// There are all sorts of reasons why a road might get destroyed.
+//
+listeningSystem 'roadCellDestroyedListener', Family.all(HasRoad, HasMapLayers).one(CellHeightChanged, TerrainTileChanged, IsNonBuildableCell).get(), { entity, deltaTime ->
 	
 	final layers = hasLayersMapper.get(entity)
 	layers?.removeAll 'road'

@@ -35,23 +35,33 @@ placeRoad = { float cellX, float cellY ->
 			//
 			// Ensure that the neighboring cell has its road-tile re-fitted
 			neighbor.add state.engine.createComponent(NeedsReplacementRoadTile)
+			neighbor.add state.engine.createComponent(RoadCellUpdated)
 		}
 	}
+	
+	entity.add state.engine.createComponent(RoadCellUpdated)
 	
 	entity.add state.engine.createComponent(NeedsReplacementRoadTile)
 }
 
 roadPlan = [
-	roadPlanStartX: -1,
-	roadPlanStartY: -1,
-	roadPlanEndX: -1,
-	roadPlanEndY: -1,
-	penalizeCorners: false,
-	roadPlanStartEntity: null,
-	roadPlanStartCell: null,
-	currentPathfindRequest: null,
-	roadPlanDrawn: true
+	startX: -1,
+	startY: -1,
+	startEntity: null,
+	endX: -1,
+	endY: -1,
+	endEntity: null,
+	onlyStraight: true,
+	doPathfinding: false,
+	checkpoints: [],
+	pathEntities: [],
+	pathDone: false,
+	pathSuccess: false
 ]
+
+include 'straightRoads.groovy'
+include 'orthogonalRoads.groovy'
+include 'pathfoundRoads.groovy'
 
 planRoad = { float cellX, float cellY ->
 	
@@ -60,51 +70,46 @@ planRoad = { float cellX, float cellY ->
 	if(!state.map.isValidCell(cx,cy))
 		return
 	
-	if(roadPlan.roadPlanStartX < 0) {
+	if(roadPlan.startX < 0) {
 		
-		roadPlan.roadPlanStartX = cx
-		roadPlan.roadPlanStartY = cy
+		roadPlan.startX = cx
+		roadPlan.startY = cy
 		
-		roadPlanStartEntity = state.map.getEntity(cx,cy)
-		if(!roadPlanStartEntity)
+		roadPlan.startEntity = state.map.getEntity(cx,cy)
+		if(!roadPlan.startEntity)
 			throw new RuntimeException("Given map-cell ($cx,$cy) has no entity!")
-		if(!isCellMapper.has(roadPlanStartEntity))
+		if(!isCellMapper.has(roadPlan.startEntity))
 			throw new RuntimeException("Given map-cell ($cx,$cy) has an entity, but is not configured as a map-cell!")
-		roadPlanStartCell = isCellMapper.get(roadPlanStartEntity)
 		
 		return
 	}
 	
-	if(cx == roadPlan.roadPlanStartX && cy == roadPlan.roadPlanStartY)
+	if(cx == roadPlan.startX && cy == roadPlan.startY)
 		return
-	if(cx == roadPlan.roadPlanEndX && cy == roadPlan.roadPlanEndY)
+	if(cx == roadPlan.endX && cy == roadPlan.endY)
 		return
 	
-	final endEntity = state.map.getEntity(cx,cy)
-	if(!endEntity)
-		throw new RuntimeException("Given map-cell ($cx,$cy) has no entity!")
-	if(!isCellMapper.has(endEntity))
-		throw new RuntimeException("Given map-cell ($cx,$cy) has an entity, but is not configured as a map-cell!")
-	endCell = isCellMapper.get(endEntity)
+	roadPlan.endX = cx
+	roadPlan.endY = cy
+	roadPlan.endEntity = state.map.getEntity(cx,cy)
 	
-	roadPlan.roadPlanEndX = cx
-	roadPlan.roadPlanEndY = cy
+	roadPlan.checkpoints.clear()
+	roadPlan.checkpoints << roadPlan.startEntity
+	roadPlan.checkpoints << roadPlan.endEntity
 	
-	if(roadPlan.currentPathfindRequest?.done)
-		synchronized(roadPlan.currentPathfindRequest) {
-			Pools.free(roadPlan.currentPathfindRequest)
-		}
+	if(roadPlan.pathEntities?.size() > 0) {
+		roadPlan.pathEntities.each { it.remove IsSelected }
+		roadPlan.pathEntities.clear()
+	}
 	
-	roadPlan.currentPathfindRequest = Pools.obtain(PathfindRequest)
-	roadPlan.currentPathfindRequest.checkpoints << roadPlanStartCell
-	roadPlan.currentPathfindRequest.checkpoints << endCell
+	roadPlan.pathSuccess = false
 	
-	roadPlan.roadPlanDrawn = false
-	
-	mapCellListOutliner.cellX.clear()
-	mapCellListOutliner.cellY.clear()
-	
-	submitPathfindRequest roadPlan.currentPathfindRequest
+	if (roadPlan.doPathfinding && !roadPlan.onlyStraight)
+		planPathfoundRoad()
+	else if(!roadPlan.onlyStraight)
+		planOrthogonalRoad()
+	else
+		planStraightRoad()
 }
 
 tool 'placeRoad', {
@@ -117,12 +122,16 @@ tool 'placeRoad', {
 		group = 'road-tools'
 	}
 	
-	modifier SHIFT, {
-		->
-		roadPlan.penalizeCorners = true
-	}, {
-		->
-		roadPlan.penalizeCorners = false
+	modifier SHIFT, { ->
+		roadPlan.onlyStraight = false
+	}, { ->
+		roadPlan.onlyStraight = true
+	}
+	
+	modifier CONTROL, { ->
+		roadPlan.doPathfinding = true
+	}, { ->
+		roadPlan.doPathfinding = false
 	}
 	
 	mapHover { cellX, cellY ->
@@ -134,23 +143,25 @@ tool 'placeRoad', {
 	
 	mapClick Buttons.LEFT, placeRoad
 	mapDragStart Buttons.LEFT, { cellX, cellY ->
-		roadPlan.roadPlanStartX = -1
-		roadPlan.roadPlanStartY = -1
-		roadPlan.roadPlanEndX = -1
-		roadPlan.roadPlanEndY = -1
+		roadPlan.startX = -1
+		roadPlan.startY = -1
+		roadPlan.endX = -1
+		roadPlan.endY = -1
 		planRoad cellX, cellY
 	}
 	mapDragUpdate Buttons.LEFT, planRoad
 	mapDragEnd Buttons.LEFT, { float cellX, float cellY ->
-		if(roadPlan.currentPathfindRequest?.done && roadPlan.currentPathfindRequest?.success) {
-			
-			for(def node : roadPlan.currentPathfindRequest.result)
-				placeRoad node.cellX, node.cellY
-			
-			Pools.free roadPlan.currentPathfindRequest
+		if(roadPlan.pathSuccess) {
+			for(def entity : roadPlan.pathEntities) {
+				final mapCell = isCellMapper.get(entity)
+				placeRoad mapCell.cellX, mapCell.cellY
+				entity.remove IsSelected
+			}
 		}
-		
-		mapCellListOutliner.active = false
-		mapCellListOutliner.color = null
+	}
+	
+	whileActive { ->
+		if(roadPlan.doPathfinding && !roadPlan.pathDone)
+			updatePathfinder()
 	}
 }

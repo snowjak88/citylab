@@ -1,3 +1,4 @@
+import javax.management.remote.rmi.RMIConnector.Util
 
 //
 // Here we define the terrain tools -- raise and lower, really
@@ -46,17 +47,21 @@ constrainVertexDeltas = { int vertexX, vertexY, int maxDelta = 1 ->
 		}
 }
 
+cellChangedMapper = ComponentMapper.getFor(CellHeightChanged)
+vertexChangedMapper = ComponentMapper.getFor(VertexHeightChanged)
+
 invalidateNeighbors = { int vertexX, int vertexY ->
 	for(def corner : TileCorner) {
-		final cx = vertexX - corner.offsetX,
-		cy = vertexY - corner.offsetY
+		final cx = vertexX - corner.offsetX
+		final cy = vertexY - corner.offsetY
 		
-		if(state.map.isValidCell(cx, cy))
-			state.map.getEntity(cx,cy)?.add( state.engine.createComponent( IsMapCellRearranged ) )
+		if(state.map.isValidCell(cx, cy)) {
+			state.map.getEntity(cx,cy)?.add( state.engine.createComponent( CellHeightChanged ) )
+		}
 	}
 	
 	if(state.map.isValidVertex(vertexX, vertexY))
-		state.map.getVertexEntity(vertexX, vertexY)?.add state.engine.createComponent( IsMapVertexRearranged )
+		state.map.getVertexEntity(vertexX, vertexY)?.add state.engine.createComponent( VertexHeightChanged )
 }
 
 modifyVertexAltitude = { int vertexX, int vertexY, desiredAltitude ->
@@ -94,7 +99,7 @@ tool 'terrainRaise', {
 	raiseCell = { cellX, cellY ->
 		if(!activeRaise)
 			return
-			
+		
 		def lowestAlt = 999
 		final lowestCorners = []
 		int cx = cellX, cy = cellY
@@ -116,7 +121,7 @@ tool 'terrainRaise', {
 		
 		if(raiseAlt == 999)
 			raiseAlt = lowestAlt + 1
-	
+		
 		lowestCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, raiseAlt }
 		lowestCorners.each { constrainVertexDeltas cx + it.offsetX, cy + it.offsetY }
 		
@@ -164,7 +169,7 @@ tool 'terrainLevel', {
 	levelCell = { cellX, cellY ->
 		if(!activeLevel)
 			return
-			
+		
 		final adjustCorners = []
 		int cx = cellX, cy = cellY
 		for(def corner in TileCorner) {
@@ -177,11 +182,11 @@ tool 'terrainLevel', {
 			
 			if(levelAlt == 999)
 				levelAlt = altitude
-				
+			
 			if(altitude != levelAlt)
 				adjustCorners << corner
 		}
-	
+		
 		adjustCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, levelAlt }
 		adjustCorners.each { constrainVertexDeltas cx + it.offsetX, cy + it.offsetY }
 		
@@ -235,7 +240,7 @@ tool 'terrainLower', {
 	lowerCell = { cellX, cellY ->
 		if(!activeLower)
 			return
-			
+		
 		def highestAlt = -999
 		final highestCorners = []
 		int cx = cellX, cy = cellY

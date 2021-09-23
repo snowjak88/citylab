@@ -58,6 +58,14 @@ public class CityGame extends Game {
 	 */
 	public static final String EXTERNAL_ROOT_MODULES = "data/modules/";
 	
+	/**
+	 * Each scripted-resource (modules, tilesets, etc.) may have classes they
+	 * define and share with other resources of the same type, besides all those classes that are imported
+	 * automatically. These classes will always be located in the resource's directory,
+	 * in a subdirectory of this name. 
+	 */
+	public static final String RESOURCE_SHARED_CLASSES_DIRECTORY_NAME = "SharedClasses";
+	
 	//
 	//
 	//
