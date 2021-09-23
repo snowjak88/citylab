@@ -1,6 +1,5 @@
 id = 'roads'
 
-dependsOn 'cursor-highlighters'
 dependsOn 'terrain'
 
 i18n.addBundle 'i18n'

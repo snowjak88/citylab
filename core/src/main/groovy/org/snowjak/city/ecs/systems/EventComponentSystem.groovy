@@ -10,6 +10,9 @@ import com.badlogic.ashley.core.Family
 /**
  * An EntitySystem that handles "event-Components" -- i.e., Components that are mere markers that should
  * only persist on an entity for a single update-cycle.
+ * <p>
+ * You may override {@link #onEvent(Entity,float) onEvent()} with your own functionality, if desired.
+ * </p>
  * 
  * @author snowjak88
  *
@@ -34,7 +37,9 @@ abstract class EventComponentSystem extends EntitySystem implements EntityListen
 		// First, handle all these "entities-to-remove"
 		final removeIterator = entitiesToRemove.iterator()
 		while(removeIterator.hasNext()) {
-			removeIterator.next().remove eventType
+			final entity = removeIterator.next()
+			onEvent entity, deltaTime
+			entity.remove eventType
 			removeIterator.remove()
 		}
 		
@@ -46,6 +51,17 @@ abstract class EventComponentSystem extends EntitySystem implements EntityListen
 			addIterator.remove()
 		}
 	}
+	
+	/**
+	 * Called for any Entity holding an instance of this event-component type.
+	 * <p>
+	 * The default implementation does nothing.
+	 * </p>
+	 * 
+	 * @param entity
+	 * @param deltaTime
+	 */
+	protected void onEvent(Entity entity, float deltaTime) { }
 	
 	@Override
 	public void entityAdded(Entity entity) {

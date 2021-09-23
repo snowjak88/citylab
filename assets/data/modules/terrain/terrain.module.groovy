@@ -7,8 +7,6 @@ i18n.addBundle 'i18n/terrain'
 title = i18n.get('title')
 description = i18n.get('description')
 
-dependsOn 'cursor-highlighters'
-
 //
 // Get the configured tile-set name to use for the landscape,
 // with a pre-programmed fallback
@@ -82,3 +80,9 @@ include 'systems.groovy'
 // We define all our terain-tools in this file ...
 //
 include 'ui/tools.groovy'
+
+//
+// This defines a custom-rendering-hook that draws a highlight
+// around any terrain-tile that IsSelected
+//
+include 'highlight-renderer.groovy'

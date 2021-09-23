@@ -76,7 +76,6 @@ iteratingSystem 'pendingTerrainUpdatingSystem', Family.all(PendingTerrainTile, H
 	
 }
 
-
 //
 // Set up "event-Component" handling.
 // Event-Components should persist on any Entity for only 1 cycle.

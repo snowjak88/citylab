@@ -31,7 +31,6 @@ import java.util.function.Predicate;
 
 import org.snowjak.city.GameState;
 import org.snowjak.city.ecs.components.HasMapLayers;
-import org.snowjak.city.ecs.components.IsSelected;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
 import org.snowjak.city.map.tiles.Tile;
@@ -91,6 +90,7 @@ public class MapRenderer implements RenderingSupport, Disposable {
 	
 	private Rectangle viewBounds = new Rectangle();
 	private Rectangle worldBounds = new Rectangle();
+	private Rectangle visibleMapBounds = new Rectangle();
 	
 	private final float layerOffsetX = 0, layerOffsetY = -0;
 	private int mapVisibleMinX = 0, mapVisibleMinY = 0, mapVisibleMaxX = 0, mapVisibleMaxY = 0;
@@ -125,9 +125,6 @@ public class MapRenderer implements RenderingSupport, Disposable {
 	public final AbstractCustomRenderingHook MAP_RENDERING_HOOK = new AbstractCustomRenderingHook("map") {
 		
 		private final ComponentMapper<HasMapLayers> layerMapper = ComponentMapper.getFor(HasMapLayers.class);
-		private final ComponentMapper<IsSelected> selectedMapper = ComponentMapper.getFor(IsSelected.class);
-		
-		private final float lineWidth = 1f / WORLD_GRID_UNIT_SIZE;
 		
 		@Override
 		public void render(float delta, Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
@@ -185,16 +182,6 @@ public class MapRenderer implements RenderingSupport, Disposable {
 							final Integer altitudeOverride = hasLayers.getAltitudeOverrides().get(layerID);
 							
 							renderTile(cellX, cellY, tile, tint, (altitudeOverride == null) ? -1 : altitudeOverride);
-						}
-						
-						//
-						// Draw a selection-box around this cell?
-						if(selectedMapper.has(entity)) {
-							final Vector2[] vertices = support.getCellVertices(cellX, cellY, null);
-							shapeDrawer.line(vertices[0], vertices[1], Color.WHITE, lineWidth);
-							shapeDrawer.line(vertices[1], vertices[2], Color.WHITE, lineWidth);
-							shapeDrawer.line(vertices[2], vertices[3], Color.WHITE, lineWidth);
-							shapeDrawer.line(vertices[3], vertices[0], Color.WHITE, lineWidth);
 						}
 					}
 		}
@@ -290,6 +277,12 @@ public class MapRenderer implements RenderingSupport, Disposable {
 		return viewBounds;
 	}
 	
+	@Override
+	public Rectangle getVisibleMapCells() {
+		
+		return visibleMapBounds;
+	}
+	
 	private void updateViewportBounds() {
 		
 		// setting up the viewport bounds
@@ -316,6 +309,9 @@ public class MapRenderer implements RenderingSupport, Disposable {
 		
 		mapVisibleMinX = (int) (viewportToMap(topLeft, true).x) - overlap;
 		mapVisibleMaxX = (int) (viewportToMap(bottomRight, true).x) + overlap;
+		
+		visibleMapBounds.set(mapVisibleMinX, mapVisibleMinY, (mapVisibleMaxX - mapVisibleMinX + 1),
+				(mapVisibleMaxY - mapVisibleMinY + 1));
 	}
 	
 	public void render(float delta) {

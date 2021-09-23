@@ -11,5 +11,14 @@ import com.badlogic.gdx.utils.Pool.Poolable
  *
  */
 class IsSelected implements Component, Poolable {
-	void reset() { }
+	
+	Status status = Status.DEFAULT
+	
+	void reset() {
+		status = Status.DEFAULT
+	}
+	
+	public enum Status {
+		DEFAULT, INVALID, WARNING, INFORMATION, OTHER
+	}
 }

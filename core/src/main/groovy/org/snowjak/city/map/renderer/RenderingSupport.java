@@ -9,6 +9,8 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
 /**
+ * Provides support for custom-rendering.
+ * 
  * @author snowjak88
  *
  */
@@ -21,6 +23,14 @@ public interface RenderingSupport {
 	 * @return
 	 */
 	public Rectangle getViewportWorldBounds();
+	
+	/**
+	 * Get a Rectangle providing the extent of the visible map (in terms of cell
+	 * coordinates).
+	 * 
+	 * @return
+	 */
+	public Rectangle getVisibleMapCells();
 	
 	/**
 	 * 

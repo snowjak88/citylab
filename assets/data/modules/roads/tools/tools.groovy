@@ -112,6 +112,10 @@ planRoad = { float cellX, float cellY ->
 		planStraightRoad()
 }
 
+hoverX = -1
+hoverY = -1
+hoverEntity = null
+
 tool 'placeRoad', {
 	
 	title = i18n.get 'road-tools-place'
@@ -122,23 +126,39 @@ tool 'placeRoad', {
 		group = 'road-tools'
 	}
 	
-	modifier SHIFT, { ->
+	modifier SHIFT, {
+		->
 		roadPlan.onlyStraight = false
-	}, { ->
+	}, {
+		->
 		roadPlan.onlyStraight = true
 	}
 	
-	modifier CONTROL, { ->
+	modifier CONTROL, {
+		->
 		roadPlan.doPathfinding = true
-	}, { ->
+	}, {
+		->
 		roadPlan.doPathfinding = false
 	}
 	
 	mapHover { cellX, cellY ->
-		mapCellOutliner.active = true
-		mapCellOutliner.cellX = cellX
-		mapCellOutliner.cellY = cellY
-		mapCellOutliner.color = (isValidRoadCell( (int) cellX, (int) cellY)) ? null : Color.SCARLET
+		final int cx = cellX, cy = cellY
+		
+		if(!state.map.isValidCell(cx,cy)) {
+			hoverEntity?.remove IsSelected
+			hoverEntity = null
+		} else
+			if(hoverX != cx || hoverY != cy) {
+				hoverEntity?.remove IsSelected
+				hoverEntity = state.map.getEntity(cx,cy)
+				final select = hoverEntity.addAndReturn state.engine.createComponent(IsSelected)
+				if(!isValidRoadCell(cx,cy))
+					select.status = IsSelected.Status.INVALID
+			}
+		
+		hoverX = cx
+		hoverY = cy
 	}
 	
 	mapClick Buttons.LEFT, placeRoad
@@ -160,7 +180,8 @@ tool 'placeRoad', {
 		}
 	}
 	
-	whileActive { ->
+	whileActive {
+		->
 		if(roadPlan.doPathfinding && !roadPlan.pathDone)
 			updatePathfinder()
 	}

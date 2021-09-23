@@ -18,7 +18,7 @@ import org.snowjak.city.ecs.systems.impl.IsMapVertexManagementSystem
 import org.snowjak.city.ecs.systems.impl.MapCellBlockerRemovingSystem
 import org.snowjak.city.ecs.systems.impl.RemoveMapCellRearrangedSystem
 import org.snowjak.city.ecs.systems.impl.RemoveMapVertexRearrangedSystem
-import org.snowjak.city.ecs.systems.impl.UnselectionSystem
+import org.snowjak.city.ecs.systems.impl.UnselectAllEventSystem
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.generator.MapGenerator
 import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
@@ -115,7 +115,7 @@ class GameService {
 		state.engine.addSystem new RemoveMapCellRearrangedSystem()
 		state.engine.addSystem new RemoveMapVertexRearrangedSystem()
 		state.engine.addSystem new MapCellBlockerRemovingSystem()
-		state.engine.addSystem new UnselectionSystem()
+		state.engine.addSystem new UnselectAllEventSystem()
 		
 		progressUpdater?.accept 1.0
 	}
@@ -375,6 +375,13 @@ class GameService {
 			}
 		}
 		
+		//
+		// Add this module's entity-listeners to the entity engine
+		if (!module.entityListeners.isEmpty()) {
+			LOG.info "Adding entity-listeners ..."
+			module.entityListeners.each { l -> state.engine.addEntityListener l.family, l }
+		}
+		
 		progressReporter?.accept 0.75
 		
 		if(!module.tools.isEmpty()) {
@@ -431,6 +438,13 @@ class GameService {
 		uninitializeModuleRenderingHooks module, { p -> progressReporter?.accept p * 0.5f }
 		
 		progressReporter?.accept 0.5
+		
+		//
+		// Remove this module's entity-listeners
+		if(!module.entityListeners.isEmpty()) {
+			LOG.info "Removing entity-listeners ..."
+			module.entityListeners.each { l -> state.engine.removeEntityListener l }
+		}
 		
 		//
 		// Remove this module's entity-processing systems

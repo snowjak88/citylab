@@ -80,6 +80,28 @@ modifyVertexAltitude = { int vertexX, int vertexY, desiredAltitude ->
 
 //
 // Define a tool
+
+hoverX = -1
+hoverY = -1
+hoverEntity = null
+
+updateHover = { cellX, cellY ->
+	final int cx = cellX, cy = cellY
+	
+	if(!state.map.isValidCell(cx,cy)) {
+		hoverEntity?.remove IsSelected
+		hoverEntity = null
+	} else
+		if(hoverX != cx || hoverY != cy) {
+			hoverEntity?.remove IsSelected
+			hoverEntity = state.map.getEntity(cx,cy)
+			hoverEntity.add state.engine.createComponent(IsSelected)
+		}
+	
+	hoverX = cx
+	hoverY = cy
+}
+
 tool 'terrainRaise', {
 	
 	title = i18n.get 'terrain-tools-raise'
@@ -124,12 +146,6 @@ tool 'terrainRaise', {
 		
 		lowestCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, raiseAlt }
 		lowestCorners.each { constrainVertexDeltas cx + it.offsetX, cy + it.offsetY }
-		
-		//
-		// Ensure the map-cell-outliner recalculates the lifted-cell's vertices
-		mapCellOutliner.refresh = true
-		mapCellOutliner.cellX = cellX
-		mapCellOutliner.cellY = cellY
 	}
 	startRaise = { cellX, cellY ->
 		raiseAlt = 999
@@ -137,12 +153,7 @@ tool 'terrainRaise', {
 		raiseCell cellX, cellY
 	}
 	
-	mapHover { cellX, cellY ->
-		mapCellOutliner.active = true
-		mapCellOutliner.cellX = cellX
-		mapCellOutliner.cellY = cellY
-		mapCellOutliner.color = null
-	}
+	mapHover updateHover
 	
 	mapClick Buttons.LEFT, startRaise
 	mapDragStart Buttons.LEFT, startRaise
@@ -150,7 +161,8 @@ tool 'terrainRaise', {
 	mapDragEnd Buttons.LEFT, { cellX, cellY -> activeRaise = false }
 	
 	inactive {
-		mapCellOutliner.active = false
+		hoverEntity?.remove IsSelected
+		hoverEntity = null
 	}
 }
 
@@ -189,12 +201,6 @@ tool 'terrainLevel', {
 		
 		adjustCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, levelAlt }
 		adjustCorners.each { constrainVertexDeltas cx + it.offsetX, cy + it.offsetY }
-		
-		//
-		// Ensure the map-cell-outliner recalculates the lifted-cell's vertices
-		mapCellOutliner.refresh = true
-		mapCellOutliner.cellX = cellX
-		mapCellOutliner.cellY = cellY
 	}
 	startLevel = { cellX, cellY ->
 		levelAlt = 999
@@ -202,16 +208,16 @@ tool 'terrainLevel', {
 		levelCell cellX, cellY
 	}
 	
-	mapHover { cellX, cellY ->
-		mapCellOutliner.active = true
-		mapCellOutliner.cellX = cellX
-		mapCellOutliner.cellY = cellY
-		mapCellOutliner.color = null
-	}
+	mapHover updateHover
 	
 	mapDragStart Buttons.LEFT, startLevel
 	mapDragUpdate Buttons.LEFT, levelCell
 	mapDragEnd Buttons.LEFT, { cellX, cellY -> activeRaise = false }
+	
+	inactive {
+		hoverEntity?.remove IsSelected
+		hoverEntity = null
+	}
 }
 
 tool 'terrainLower', {
@@ -228,12 +234,7 @@ tool 'terrainLower', {
 		keys = 'Shift+F'
 	}
 	
-	mapHover { cellX, cellY ->
-		mapCellOutliner.active = true
-		mapCellOutliner.cellX = cellX
-		mapCellOutliner.cellY = cellY
-		mapCellOutliner.color = null
-	}
+	mapHover updateHover
 	
 	activeLower = false
 	lowerAlt = 0
@@ -265,12 +266,6 @@ tool 'terrainLower', {
 		
 		highestCorners.each { modifyVertexAltitude cx + it.offsetX, cy + it.offsetY, lowerAlt }
 		highestCorners.each { constrainVertexDeltas cx + it.offsetX, cy + it.offsetY }
-		
-		//
-		// Ensure the map-cell-outliner recalculates the lowered-cell's vertices
-		mapCellOutliner.refresh = true
-		mapCellOutliner.cellX = cellX
-		mapCellOutliner.cellY = cellY
 	}
 	startLower = { cellX, cellY ->
 		lowerAlt = -999
@@ -284,7 +279,8 @@ tool 'terrainLower', {
 	mapDragEnd Buttons.LEFT, { cellX, cellY -> activeLower = false }
 	
 	inactive {
-		mapCellOutliner.active = false
+		hoverEntity?.remove IsSelected
+		hoverEntity = null
 	}
 }
 

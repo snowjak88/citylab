@@ -7,7 +7,9 @@ import java.util.function.Consumer
 
 import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
+import org.snowjak.city.ecs.GatheringEntityListener
 import org.snowjak.city.map.renderer.MapLayer
+import org.snowjak.city.map.renderer.RenderingSupport
 import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook
 import org.snowjak.city.map.renderer.hooks.CustomRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
@@ -25,12 +27,16 @@ import org.snowjak.city.tools.ToolGroup
 import org.snowjak.city.util.RelativePriority
 
 import com.badlogic.ashley.core.Component
+import com.badlogic.ashley.core.EntityListener
 import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.core.Family
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.google.common.util.concurrent.ListenableFuture
+
+import space.earlygrey.shapedrawer.ShapeDrawer
 
 /**
  * A Module provides game functionality.
@@ -93,6 +99,7 @@ public class Module extends ScriptedResource {
 	boolean activated = false
 	
 	final Map<String,EntitySystem> systems = [:]
+	final Set<GatheringEntityListener> entityListeners = []
 	
 	final Set<MapLayer> mapLayers = []
 	final Set<AbstractCustomRenderingHook> customRenderingHooks = []
@@ -144,7 +151,16 @@ public class Module extends ScriptedResource {
 	
 	/**
 	 * Specify a CustomRenderHook to be included in the game's render-loop.
+	 * <p>
+	 * {@code hook} is expected to be of the form:
+	 * <pre>
+	 * { float delta, Batch batch, ShapeDrawer drawer, RenderingSupport support -> ... }
+	 * </pre>
+	 * </p>
 	 * 
+	 * @see {@link com.badlogic.gdx.graphics.g2d.Batch Batch}
+	 * @see {@link space.earlygrey.shapedrawer.ShapeDrawer ShapeDrawer}
+	 * @see {@link org.snowjak.city.map.renderer.RenderingSupport RenderingSupport}
 	 * @param id Identifies this custom-renderer. Subsequent Modules may overwrite this renderer by using the same ID.
 	 * @param hook
 	 * @return a {@link RelativePriority prioritizer}
@@ -536,11 +552,19 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 	 * Register the given Component as an "event-Component" -- i.e., a marker-Component that will only persist
 	 * on its Entity for a single update-cycle.
 	 * <p>
+	 * If provided, {@code onEventHandler} will be called whenever an entity is detected holding an instance of this event-Component-type.
+	 * {@code onEventHandler} must be of the form:
+	 * <pre>
+	 * { Entity entity, float deltaTime -> ... }
+	 * </pre>
+	 * </p>
+	 * <p>
 	 * Behind the scenes, this entails the creation of a {@link org.snowjak.city.ecs.systems.EventComponentSystem}.
 	 * </p>
 	 * @param eventType
+	 * @param onEventHandler
 	 */
-	public void eventComponent(Class<Component> eventType) {
+	public void eventComponent(Class<Component> eventType, Closure onEventHandler = null) {
 		
 		if(isDependencyCheckingMode())
 			return
@@ -549,15 +573,47 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.ListeningSystem {
 		
 		final systemClassDefinition = '''
 class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSystem {
-		public ''' + legalID + '''(Class<Component> eventType) {
-		super(eventType);
+	private final Closure handler, exceptionReporter
+	public ''' + legalID + '''(Class<Component> eventType, Closure onEventHandler, Closure exceptionReporter) {
+		super(eventType)
+		this.handler = onEventHandler
+	}
+	
+	protected void onEvent(Entity entity, float deltaTime) {
+		try {
+			handler?.call entity, deltaTime
+		} catch(Throwable t) {
+			exceptionReporter(t)
+			processing = false
+		}
 	}
 }'''
 		final systemClass = shell.classLoader.parseClass(systemClassDefinition)
-		final system = systemClass.newInstance(eventType)
+		final system = systemClass.newInstance(eventType, onEventHandler, {t -> state.moduleExceptionRegistry.reportFailure(this, FailureDomain.ENTITY_SYSTEM, t) })
 		
 		systems << ["$legalID" : system]
 	}
+	
+	/**
+	 * Construct a new "Family listener". Unlike a {@link listeningSystem(String, Family, Closure, Closure) listeningSystem},
+	 * this does not perform any processing by itself. It merely gathers all Entities matching the given Family
+	 * into a single Set, [entities], that can be referenced at any time.
+	 * <p>
+	 * Behind the scenes, this is implemented by a {@link GatheringEntityListener}.
+	 * </p>
+	 * 
+	 * @param family
+	 * @return
+	 */
+	public GatheringEntityListener familyListener(Family family) {
+		final listener = new GatheringEntityListener(family)
+		entityListeners << listener
+		listener
+	}
+	
+	//
+	//
+	//
 	
 	public void buttonGroup(String id, @DelegatesTo(value=ToolGroup, strategy=Closure.DELEGATE_FIRST) Closure groupSpec) {
 		
@@ -659,6 +715,7 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSys
 		this.onActivationActions.addAll module.onActivationActions
 		this.onDeactivationActions.addAll module.onDeactivationActions
 		this.systems.putAll module.systems
+		this.entityListeners.addAll module.entityListeners
 		this.mapLayers.addAll module.mapLayers
 		this.customRenderingHooks.addAll module.customRenderingHooks
 		this.toolGroups.putAll module.toolGroups
