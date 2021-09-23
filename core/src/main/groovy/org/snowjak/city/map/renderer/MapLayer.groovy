@@ -19,7 +19,7 @@ public class MapLayer implements RelativelyPrioritized<MapLayer,String> {
 	
 	String id
 	
-	final RelativePriority<MapLayer> relativePriority = new RelativePriority()
+	final RelativePriority<String> relativePriority = new RelativePriority()
 	
 	@Override
 	public String getRelativePriorityKey() {

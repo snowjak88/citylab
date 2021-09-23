@@ -5,13 +5,16 @@ dependencies {
 	implementation "com.google.guava:guava:$guavaVersion"
 	
 	api "com.badlogicgames.gdx:gdx:$gdxVersion"
-	api "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
 	api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
 	api "com.badlogicgames.ashley:ashley:$ashleyVersion"
 	api "com.sudoplay.joise:joise:$joiseVersion"
 	api "space.earlygrey:shapedrawer:$shapeDrawerVersion"
 	api "com.github.czyzby:gdx-kiwi:$kiwiVersion"
 	api "com.github.czyzby:gdx-autumn:$autumnVersion"
+	
+	api ("com.badlogicgames.gdx:gdx-tools:$gdxVersion") {
+		exclude group: 'com.badlogicgames.gdx', module: 'gdx-backend-lwjgl'
+	}
 	
 	implementation "com.badlogicgames.gdx:gdx-ai:$gdxAiVersion"
 	implementation 'com.kotcrab.vis:vis-usl:0.2.1'

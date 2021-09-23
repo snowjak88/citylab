@@ -10,7 +10,6 @@ dependencies {
 	implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
 	implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
 	implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
-	//implementation "de.tomgrill.gdxdialogs:gdx-dialogs-desktop:$dialogsVersion"
 	implementation "com.github.czyzby:gdx-autumn-fcs:$autumnVersion"
 }
 
@@ -38,6 +37,26 @@ jar {
 	}
 }
 
+//
+// Fix for over-long CLASSPATH environment-variable in Windows start-script
+//
+task pathingJar(type: Jar) {
+	appendix = 'pathing'
+	manifest { attributes("Class-Path": configurations.runtime.collect { it.getName() }.join(' ') + ' ' + jar.archiveName ) }
+}
+startScripts {
+	doLast {
+		def winScriptFile  = file getWindowsScript()
+		def winFileText = winScriptFile.text
+
+		// Remove too-long-classpath and use pathing jar instead
+		winFileText = winFileText.replaceAll('set CLASSPATH=.*', 'rem CLASSPATH declaration removed.')
+		winFileText = winFileText.replaceAll('("%JAVA_EXE%" .* -classpath ")%CLASSPATH%(" .*)', '$1%APP_HOME%\\\\lib\\\\' + pathingJar.archiveName + '$2')
+
+		winScriptFile.text = winFileText
+	}
+}
+
 distributions {
 	main {
 		distributionBaseName = appName
@@ -45,6 +64,7 @@ distributions {
 			from (rootProject.file('assets/data/')) {
 				into 'data'
 			}
+			from(pathingJar) { into "lib" }
 		}
 	}
 }
