@@ -20,6 +20,7 @@ import org.snowjak.city.input.ScreenDragStartEvent;
 import org.snowjak.city.input.ScreenDragUpdateEvent;
 import org.snowjak.city.input.ScrollEvent;
 import org.snowjak.city.map.CityMap;
+import org.snowjak.city.map.renderer.MapMode;
 import org.snowjak.city.map.renderer.MapRenderer;
 import org.snowjak.city.screens.loadingtasks.CompositeLoadingTask;
 import org.snowjak.city.service.GameAssetService;
@@ -43,6 +44,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
@@ -97,6 +99,7 @@ public class GameScreen extends AbstractGameScreen {
 	private final MapRenderer renderer;
 	float minWorldX, minWorldY, maxWorldX, maxWorldY;
 	
+	private SelectBox<MapMode> mapModeSelectBox;
 	private Toolbar buttonList;
 	private GameScreenInputHandler inputHandler;
 	
@@ -129,9 +132,8 @@ public class GameScreen extends AbstractGameScreen {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				
-				final TextButton b = (TextButton) actor;
-				if (b.isChecked()) {
-					b.setChecked(false);
+				if (exitConfirmCancelButton.isChecked()) {
+					exitConfirmCancelButton.setChecked(false);
 					exitConfirmWindow.setVisible(false);
 				}
 			}
@@ -143,9 +145,8 @@ public class GameScreen extends AbstractGameScreen {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				
-				final TextButton b = (TextButton) actor;
-				if (b.isChecked()) {
-					b.setChecked(false);
+				if (exitConfirmOkButton.isChecked()) {
+					exitConfirmOkButton.setChecked(false);
 					exitConfirmWindow.setVisible(false);
 					loadingScreen.setLoadingTask(
 							new CompositeLoadingTask(new GameModulesUninitializationTask(getGameService(), i18nService),
@@ -169,7 +170,36 @@ public class GameScreen extends AbstractGameScreen {
 		
 		exitConfirmWindow.pack();
 		
-		getStage().addActor(exitConfirmWindow);
+		//
+		//
+		//
+		
+		mapModeSelectBox = new SelectBox<MapMode>(skin) {
+			
+			@Override
+			protected String toString(MapMode item) {
+				
+				return item.getTitle();
+			}
+		};
+		mapModeSelectBox.addListener(new ChangeListener() {
+			
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				
+				getGameService().getState().setActiveMapMode((MapMode) mapModeSelectBox.getSelected());
+			}
+		});
+		
+		//
+		//
+		//
+		
+		buttonList = new Toolbar(i18nService, getSkinService(), getGameService(), getAssetService(),
+				() -> getStage().setScrollFocus(null));
+		
+		buttonList.setPosition(0, getStage().getHeight(), Align.topLeft);
+		
 	}
 	
 	@Override
@@ -180,17 +210,14 @@ public class GameScreen extends AbstractGameScreen {
 		renderer.dispose();
 	}
 	
+	
+	
 	@Override
 	protected Actor getRoot() {
 		
-		buttonList = new Toolbar(i18nService, getSkinService(), getGameService(), getAssetService(),
-				() -> getStage().setScrollFocus(null));
-		
-		buttonList.setPosition(0, getStage().getHeight(), Align.topLeft);
-		
-		return buttonList;
+		return null;
 	}
-	
+
 	@Override
 	public void show() {
 		
@@ -251,12 +278,31 @@ public class GameScreen extends AbstractGameScreen {
 			if (!module.getActivated())
 				module.getOnActivationActions().forEach(Runnable::run);
 		});
+		
+		//
+		//
+		//
+		
+		mapModeSelectBox.setItems(getGameService().getState().getMapModes().values().toArray(new MapMode[0]));
+		mapModeSelectBox.setSelected(getGameService().getState().getActiveMapMode());
+		
+		//
+		//
+		//
+		
+		getStage().addActor(buttonList);
+		getStage().addActor(mapModeSelectBox);
+		getStage().addActor(exitConfirmWindow);
 	}
 	
 	@Override
 	public void hide() {
 		
 		super.hide();
+		
+		buttonList.remove();
+		mapModeSelectBox.remove();
+		exitConfirmWindow.remove();
 		
 		final GameState state = getGameService().getState();
 		
@@ -328,6 +374,7 @@ public class GameScreen extends AbstractGameScreen {
 		cameraUpdated = true;
 		
 		exitConfirmWindow.setPosition(width / 2, height / 2, Align.center);
+		mapModeSelectBox.setPosition(width, 0, Align.bottomRight);
 	}
 	
 	/**

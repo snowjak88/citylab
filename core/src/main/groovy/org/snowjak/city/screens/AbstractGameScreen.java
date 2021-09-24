@@ -220,6 +220,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	 * Returns your root Actor. Generally, you will want to defer construction of
 	 * your root Actor to this method, as it may be called repeatedly (e.g., if the
 	 * interface needs to be re-built).
+	 * 
+	 * @return null if no root-actor, or if you will manage your root actor(s) manually
 	 */
 	protected abstract Actor getRoot();
 	
