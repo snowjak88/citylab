@@ -63,6 +63,8 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public class MapRenderer implements RenderingSupport, Disposable {
 	
+	public static final String DEFAULT_MAP_MODE_ID = "default";
+	
 	private static final Logger LOG = LoggerService.forClass(MapRenderer.class);
 	
 	private static final int NUM_VERTICES = 20;
@@ -218,6 +220,9 @@ public class MapRenderer implements RenderingSupport, Disposable {
 			
 			state.getRenderingHookRegistry().addRenderingHook(MAP_RENDERING_HOOK);
 			
+			if (state.getMapModes().containsKey(DEFAULT_MAP_MODE_ID))
+				state.getMapModes().get(DEFAULT_MAP_MODE_ID).getRenderingHooks().add(MAP_RENDERING_HOOK.getId());
+			
 		} catch (PrioritizationFailedException e) {
 			throw new RuntimeException("Cannot initialize main map-renderer!", e);
 		}
@@ -319,13 +324,33 @@ public class MapRenderer implements RenderingSupport, Disposable {
 		if (state == null || state.getMap() == null)
 			return;
 		
+		final MapMode currentMapMode;
+		if (state.getActiveMapMode() != null)
+			currentMapMode = state.getActiveMapMode();
+		else
+			currentMapMode = state.getMapModes().get(DEFAULT_MAP_MODE_ID);
+		if (currentMapMode == null)
+			return;
+		
 		batch.begin();
+		
+		renderMapMode(delta, currentMapMode);
+		
+		batch.end();
+	}
+	
+	private void renderMapMode(float delta, MapMode mapMode) {
+		
+		for (String includedMapModeName : mapMode.getIncludes()) {
+			final MapMode includedMapMode = state.getMapModes().get(includedMapModeName);
+			if (includedMapMode != null)
+				renderMapMode(delta, includedMapMode);
+		}
 		
 		for (AbstractRenderingHook hook : state.getRenderingHookRegistry().getPrioritizedRenderingHooks())
 			if (hook.isEnabled())
-				hook.render(delta, batch, shapeDrawer, this);
-			
-		batch.end();
+				if (mapMode.getRenderingHooks().contains(hook.getId()))
+					hook.render(delta, batch, shapeDrawer, this);
 	}
 	
 	@Override

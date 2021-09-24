@@ -11,6 +11,10 @@ import org.snowjak.city.util.RelativelyPrioritized
  * Describes a layer onto which a {@link Module} can
  * render {@link Tile}s. These layers are {@link RelativePriority relatively
  * prioritized} with each other.
+ * <p>
+ * Importantly, a MapLayer may be associated with only 1 Tile per map-cell.
+ * c.f. {@link org.snowjak.city.ecs.components.HasMapLayers}
+ * </p>
  * 
  * @author snowjak88
  *

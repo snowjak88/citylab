@@ -9,6 +9,7 @@ import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
 import org.snowjak.city.ecs.GatheringEntityListener
 import org.snowjak.city.map.renderer.MapLayer
+import org.snowjak.city.map.renderer.MapMode
 import org.snowjak.city.map.renderer.hooks.AbstractRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingRenderingHook
 import org.snowjak.city.map.renderer.hooks.RenderingHook
@@ -134,6 +135,14 @@ public class Module extends ScriptedResource {
 	 */
 	final Set<GatheringEntityListener> entityListeners = []
 	
+	/**
+	 * {@link MapMode}s, both those defined in this Module and in previously-loaded Modules
+	 */
+	final Map<String,MapMode> mapModes = [:]
+	
+	/**
+	 * All {@link MapLayer}s defined in this Module
+	 */
 	final Set<MapLayer> mapLayers = []
 	final Map<String, AbstractRenderingHook> renderingHooks = [:]
 	
@@ -175,6 +184,24 @@ public class Module extends ScriptedResource {
 	 */
 	public void onDeactivate(Runnable action) {
 		onDeactivationActions << action
+	}
+	
+	/**
+	 * Define a new {@link MapMode}, or redefine a previously-defined MapMode.
+	 * 
+	 * @param id
+	 * @param mapModeSpec
+	 * @return
+	 */
+	public MapMode mapMode(String id, @DelegatesTo(value=MapMode,strategy=Closure.DELEGATE_FIRST) Closure mapModeSpec = null) {
+		final mm = new MapMode(id)
+		if(mapModeSpec) {
+			mapModeSpec.delegate = mm
+			mapModeSpec.resolveStrategy = Closure.DELEGATE_FIRST
+			mapModeSpec()
+		}
+		mapModes["$mm.id"] = mm
+		mm
 	}
 	
 	/**
@@ -757,6 +784,7 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSys
 		module.onDeactivationActions.addAll this.onDeactivationActions
 		module.systems.putAll this.systems
 		module.entityListeners.addAll this.entityListeners
+		module.mapModes.putAll this.mapModes
 		module.mapLayers.addAll this.mapLayers
 		module.renderingHooks.putAll this.renderingHooks
 		module.toolGroups.putAll this.toolGroups
@@ -769,6 +797,7 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSys
 		this.onDeactivationActions.addAll module.onDeactivationActions
 		this.systems.putAll module.systems
 		this.entityListeners.addAll module.entityListeners
+		this.mapModes.putAll module.mapModes
 		this.mapLayers.addAll module.mapLayers
 		this.renderingHooks.putAll module.renderingHooks
 		this.toolGroups.putAll module.toolGroups

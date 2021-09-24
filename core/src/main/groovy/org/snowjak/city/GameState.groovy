@@ -8,11 +8,14 @@ import java.beans.PropertyChangeListener
 import org.snowjak.city.input.GameInputProcessor
 import org.snowjak.city.input.hotkeys.HotkeyRegistry
 import org.snowjak.city.map.CityMap
+import org.snowjak.city.map.renderer.MapMode
+import org.snowjak.city.map.renderer.MapRenderer
 import org.snowjak.city.map.renderer.RenderingHookRegistry
 import org.snowjak.city.module.Module
 import org.snowjak.city.module.ModuleExceptionRegistry
 import org.snowjak.city.screens.GameScreen.GameCameraControl
 import org.snowjak.city.service.GameAssetService
+import org.snowjak.city.service.I18NService
 import org.snowjak.city.tools.Tool
 import org.snowjak.city.tools.ui.Toolbar
 
@@ -73,6 +76,16 @@ public class GameState {
 	Tool activeTool
 	
 	/**
+	 * {@link MapMode}s declared by (initialized) {@link Module}s
+	 */
+	final Map<String, MapMode> mapModes = new LinkedHashMap<>()
+	
+	/**
+	 * The currently-active {@link MapMode}
+	 */
+	MapMode activeMapMode
+	
+	/**
 	 * Entity-processing {@link Engine}
 	 */
 	final Engine engine = new PooledEngine(64, 512, 8, 64)
@@ -99,7 +112,15 @@ public class GameState {
 	 */
 	final Set<Disposable> disposables = new LinkedHashSet<>()
 	
-	public GameState(GameAssetService assetService) {
+	public GameState(GameAssetService assetService, I18NService i18nService) {
+		
+		final defaultMapMode = new MapMode(MapRenderer.DEFAULT_MAP_MODE_ID)
+		defaultMapMode.title = i18nService.get("mapmode-default-title")
+		defaultMapMode.description = i18nService.get("mapmode-default-description")
+		mapModes["$defaultMapMode.id"] = defaultMapMode
+		
+		activeMapMode = defaultMapMode
+		
 		this.moduleExceptionRegistry = new ModuleExceptionRegistry(assetService)
 		
 		this.addPropertyChangeListener('seed', { PropertyChangeEvent e ->

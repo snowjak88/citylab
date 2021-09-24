@@ -43,3 +43,5 @@ renderHook 'terrainSelection', { deltaTime, batch, shapeDrawer, renderingSupport
 		}
 	
 } after 'map'
+
+mapModes['default'].renderingHooks << 'terrainSelection'

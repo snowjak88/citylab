@@ -3,10 +3,14 @@
  */
 package org.snowjak.city.module;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.snowjak.city.input.modifiers.ModifierKey;
 import org.snowjak.city.map.CityMap;
+import org.snowjak.city.map.renderer.MapMode;
 import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileCorner;
 import org.snowjak.city.map.tiles.TileEdge;
@@ -42,6 +46,8 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 	private final PreferencesService preferencesService;
 	private final I18NService i18nService;
 	
+	private final Map<String, MapMode> mapModes = new HashMap<>();
+	
 	public ModuleResourceLoader(GameService gameService, PreferencesService preferencesService,
 			GameAssetService assetService, I18NService i18nService) {
 		
@@ -50,6 +56,8 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		this.gameService = gameService;
 		this.preferencesService = preferencesService;
 		this.i18nService = i18nService;
+		
+		this.mapModes.putAll(gameService.getState().getMapModes());
 	}
 	
 	@Override
@@ -99,6 +107,7 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		final Module module = new Module(gameService, preferencesService, i18nService);
 		getAssetService().getAllByType(Module.class)
 				.forEach(m -> module.getModules().put(m.getId(), new ModulePublicFace(m)));
+		module.getMapModes().putAll(this.mapModes);
 		return module;
 	}
 	
@@ -107,6 +116,10 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		
 		if (isDependencyMode)
 			resource.getI18n().getBundles().forEach(b -> assetService.load(b.path(), I18NBundle.class));
+		
+		else {
+			this.mapModes.putAll(resource.getMapModes());
+		}
 	}
 	
 	@Override

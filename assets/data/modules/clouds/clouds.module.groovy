@@ -116,3 +116,5 @@ renderHook 'clouds', { delta, batch, shapeDrawer, support ->
 	}
 	
 } after 'map'
+
+mapModes['default'].renderingHooks << 'clouds'

@@ -56,17 +56,16 @@ class GameService {
 	private SkinService skinService
 	
 	@Inject
-	private I18NService i18nService
-	
-	@Inject
 	private Stage stage
 	
 	private final GameAssetService assetService
+	private final I18NService i18nService
 	private final GameState state
 	
-	public GameService(GameAssetService assetService) {
+	public GameService(GameAssetService assetService, I18NService i18nService) {
 		this.assetService = assetService
-		this.state = new GameState(assetService)
+		this.i18nService = i18nService
+		this.state = new GameState(assetService, i18nService)
 	}
 	
 	@Initiate(priority=InitPriority.HIGHEST_PRIORITY)
@@ -476,6 +475,8 @@ class GameService {
 	public void initializeModuleRenderingHooks(Module module, DoubleConsumer progressReporter = {p -> }) {
 		
 		progressReporter?.accept 0
+		
+		state.mapModes.putAll module.mapModes
 		
 		if(!module.mapLayers.isEmpty()) {
 			
