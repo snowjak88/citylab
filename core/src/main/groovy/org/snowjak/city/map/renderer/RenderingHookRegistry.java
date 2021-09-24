@@ -4,13 +4,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
-import org.snowjak.city.map.renderer.hooks.CustomRenderingHook;
+import org.snowjak.city.map.renderer.hooks.AbstractRenderingHook;
+import org.snowjak.city.map.renderer.hooks.RenderingHook;
 import org.snowjak.city.util.PrioritizationFailedException;
 import org.snowjak.city.util.RelativePriorityList;
 
 /**
- * Serves as a registry for {@link CustomRenderingHook}s and {@link MapLayer}s.
+ * Serves as a registry for {@link RenderingHook}s and {@link MapLayer}s.
  * 
  * @author snowjak88
  *
@@ -20,17 +20,17 @@ public class RenderingHookRegistry {
 	private final Map<String, MapLayer> mapLayers = new LinkedHashMap<>();
 	private final RelativePriorityList<String, MapLayer> prioritizedMapLayers = new RelativePriorityList<>();
 	
-	private final Map<String, AbstractCustomRenderingHook> customRenderingHooks = new LinkedHashMap<>();
-	private final RelativePriorityList<String, AbstractCustomRenderingHook> prioritizedCustomRenderingHooks = new RelativePriorityList<>();
+	private final Map<String, AbstractRenderingHook> renderingHooks = new LinkedHashMap<>();
+	private final RelativePriorityList<String, AbstractRenderingHook> prioritizedRenderingHooks = new RelativePriorityList<>();
 	
 	public List<MapLayer> getPrioritizedMapLayers() {
 		
 		return prioritizedMapLayers;
 	}
 	
-	public List<AbstractCustomRenderingHook> getPrioritizedCustomRenderingHooks() {
+	public List<AbstractRenderingHook> getPrioritizedRenderingHooks() {
 		
-		return prioritizedCustomRenderingHooks;
+		return prioritizedRenderingHooks;
 	}
 	
 	public MapLayer addMapLayer(MapLayer layer) throws PrioritizationFailedException {
@@ -67,17 +67,17 @@ public class RenderingHookRegistry {
 		prioritizedMapLayers.remove(layer);
 	}
 	
-	public AbstractCustomRenderingHook addCustomRenderingHook(AbstractCustomRenderingHook hook)
+	public AbstractRenderingHook addRenderingHook(AbstractRenderingHook hook)
 			throws PrioritizationFailedException {
 		
-		final AbstractCustomRenderingHook previous = customRenderingHooks.put(hook.getId(), hook);
+		final AbstractRenderingHook previous = renderingHooks.put(hook.getId(), hook);
 		
 		if (previous != null)
-			prioritizedCustomRenderingHooks.remove(previous);
+			prioritizedRenderingHooks.remove(previous);
 		
 		try {
 			
-			prioritizedCustomRenderingHooks.add(hook);
+			prioritizedRenderingHooks.add(hook);
 			
 			return previous;
 			
@@ -87,19 +87,19 @@ public class RenderingHookRegistry {
 				throw e;
 			
 			if (previous == null)
-				customRenderingHooks.remove(hook.getId());
+				renderingHooks.remove(hook.getId());
 			else {
-				customRenderingHooks.put(hook.getId(), previous);
-				prioritizedCustomRenderingHooks.add(previous);
+				renderingHooks.put(hook.getId(), previous);
+				prioritizedRenderingHooks.add(previous);
 			}
 			
 			throw (PrioritizationFailedException) e.getCause();
 		}
 	}
 	
-	public void removeCustomRenderingHook(AbstractCustomRenderingHook hook) {
+	public void removeRenderingHook(AbstractRenderingHook hook) {
 		
-		customRenderingHooks.remove(hook.getId());
-		prioritizedCustomRenderingHooks.remove(hook);
+		renderingHooks.remove(hook.getId());
+		prioritizedRenderingHooks.remove(hook);
 	}
 }

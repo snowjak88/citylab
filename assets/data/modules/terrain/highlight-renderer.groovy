@@ -2,7 +2,7 @@
 terrainTileMapper = ComponentMapper.getFor(HasTerrainTile)
 selectedMapper = ComponentMapper.getFor(IsSelected)
 
-customRenderHook 'terrainSelection', { deltaTime, batch, shapeDrawer, renderingSupport ->
+renderHook 'terrainSelection', { deltaTime, batch, shapeDrawer, renderingSupport ->
 	
 	//
 	// Iterate across visible map-cells ...

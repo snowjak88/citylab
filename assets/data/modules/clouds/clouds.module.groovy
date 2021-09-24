@@ -37,7 +37,7 @@ cloudsIndexStartY = 0
 
 cloudPosition = new Vector2()
 
-customRenderHook 'clouds', { delta, batch, shapeDrawer, support ->
+renderHook 'clouds', { delta, batch, shapeDrawer, support ->
 	
 	if(clouds == null)
 		return

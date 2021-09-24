@@ -14,7 +14,7 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 
 /**
  * {@link AbstractMapRenderingHook} that delegates to a
- * {@link CustomRenderingHook} (enabling you to delegate to a lambda-expression
+ * {@link RenderingHook} (enabling you to delegate to a lambda-expression
  * or a Closure). The screen-renderer will call all rendering-hooks in ascending
  * order of their {@code priority}.
  * <p>
@@ -26,11 +26,11 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
  * @author snowjak88
  *
  */
-public class DelegatingCustomRenderingHook extends AbstractCustomRenderingHook {
+public class DelegatingRenderingHook extends AbstractRenderingHook {
 	
 	private final ModuleExceptionRegistry exceptionRegistry;
 	private final Module module;
-	private final CustomRenderingHook implementation;
+	private final RenderingHook implementation;
 	
 	private boolean enabled = true;
 	
@@ -40,8 +40,8 @@ public class DelegatingCustomRenderingHook extends AbstractCustomRenderingHook {
 	 * @param id
 	 * @param implementation
 	 */
-	public DelegatingCustomRenderingHook(String id, ModuleExceptionRegistry exceptionRegistry, Module module,
-			CustomRenderingHook implementation) {
+	public DelegatingRenderingHook(String id, ModuleExceptionRegistry exceptionRegistry, Module module,
+			RenderingHook implementation) {
 		
 		super(id);
 		

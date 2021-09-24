@@ -9,10 +9,9 @@ import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
 import org.snowjak.city.ecs.GatheringEntityListener
 import org.snowjak.city.map.renderer.MapLayer
-import org.snowjak.city.map.renderer.RenderingSupport
-import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook
-import org.snowjak.city.map.renderer.hooks.CustomRenderingHook
-import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
+import org.snowjak.city.map.renderer.hooks.AbstractRenderingHook
+import org.snowjak.city.map.renderer.hooks.DelegatingRenderingHook
+import org.snowjak.city.map.renderer.hooks.RenderingHook
 import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain
 import org.snowjak.city.module.ui.VisualParameter
 import org.snowjak.city.resources.ScriptedResource
@@ -27,16 +26,12 @@ import org.snowjak.city.tools.ToolGroup
 import org.snowjak.city.util.RelativePriority
 
 import com.badlogic.ashley.core.Component
-import com.badlogic.ashley.core.EntityListener
 import com.badlogic.ashley.core.EntitySystem
 import com.badlogic.ashley.core.Family
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.google.common.util.concurrent.ListenableFuture
-
-import space.earlygrey.shapedrawer.ShapeDrawer
 
 /**
  * A Module provides game functionality.
@@ -62,6 +57,26 @@ public class Module extends ScriptedResource {
 	private final GameService gameService
 	private final I18NService i18nService
 	
+	/**
+	 * This Module's {@link I18NBundleContext}. Allows access to this Module's I18N (internationalization) bundles,
+	 * with automatic fallback to the application's default I18N bundles.
+	 * <p>
+	 * You must configure at least one bundle -- e.g., if your Module folder looks like
+	 * <pre>
+	 *    myFolder/
+	 *        myModule.module.groovy   <-- this file
+	 *        i18n/
+	 *            myI18n.properties
+	 *            myI18n_en.properties
+	 *            myI18n_de.properties
+	 *            ...
+	 * </pre>
+	 * You would add your I18N bundle to your module via
+	 * <pre>
+	 *    i18n.addBundle 'i18n/myI18n'
+	 * </pre>
+	 * </p>
+	 */
 	@Lazy
 	I18NBundleContext i18n = {
 		if(dependencyCheckingMode)
@@ -71,6 +86,12 @@ public class Module extends ScriptedResource {
 		i18nService.getContext(id, scriptDirectory)
 	}()
 	
+	/**
+	 * A {@link ScopedPreferences} instance. Permits access to the application preferences file.
+	 * All preference-references are automatically prefixed with "<code><em>module-ID</em>.</code>" --
+	 * for example, {@code preferences.getString('mykey')} in the Module {@code 'myModule'}
+	 * translates to a preferences-file lookup of {@code myModule.mykey}.
+	 */
 	@Lazy
 	ScopedPreferences preferences = {
 		if(!id)
@@ -98,16 +119,38 @@ public class Module extends ScriptedResource {
 	 */
 	boolean activated = false
 	
+	/**
+	 * Previously-loaded {@link Module}s, by ID.
+	 */
+	final Map<String,ModulePublicFace> modules = [:]
+	
+	/**
+	 * This Module's {@link EntitySystem}s, by ID
+	 */
 	final Map<String,EntitySystem> systems = [:]
+	
+	/**
+	 * This Module's defined {@link GatheringEntityListener entity-listeners}
+	 */
 	final Set<GatheringEntityListener> entityListeners = []
 	
 	final Set<MapLayer> mapLayers = []
-	final Set<AbstractCustomRenderingHook> customRenderingHooks = []
+	final Map<String, AbstractRenderingHook> renderingHooks = [:]
 	
+	/**
+	 * This Module's defined {@link ToolGroup}s, by ID
+	 */
 	final Map<String,ToolGroup> toolGroups = [:]
+	
+	/**
+	 * This Module's defined {@link Tool}s, by ID
+	 */
 	final Map<String,Tool> tools = [:]
 	
-	final List<VisualParameter> visualParameters = []
+	/**
+	 * Set of all this Module's defined {@link VisualParameter}s.
+	 */
+	final Set<VisualParameter> visualParameters = []
 	
 	Module(GameService gameService, PreferencesService preferencesService, I18NService i18nService, Binding binding = new Binding()) {
 		super(binding)
@@ -150,7 +193,7 @@ public class Module extends ScriptedResource {
 	}
 	
 	/**
-	 * Specify a CustomRenderHook to be included in the game's render-loop.
+	 * Specify a RenderHook to be included in the game's render-loop.
 	 * <p>
 	 * {@code hook} is expected to be of the form:
 	 * <pre>
@@ -161,20 +204,20 @@ public class Module extends ScriptedResource {
 	 * @see {@link com.badlogic.gdx.graphics.g2d.Batch Batch}
 	 * @see {@link space.earlygrey.shapedrawer.ShapeDrawer ShapeDrawer}
 	 * @see {@link org.snowjak.city.map.renderer.RenderingSupport RenderingSupport}
-	 * @param id Identifies this custom-renderer. Subsequent Modules may overwrite this renderer by using the same ID.
+	 * @param id Identifies this renderer. Subsequent Modules may overwrite this renderer by using the same ID.
 	 * @param hook
 	 * @return a {@link RelativePriority prioritizer}
 	 */
-	public RelativePriority customRenderHook(id, Closure hook) {
+	public RelativePriority renderHook(id, Closure hook) {
 		if(isDependencyCheckingMode())
 			return new RelativePriority()
 		
 		hook.resolveStrategy = Closure.DELEGATE_FIRST
 		hook.delegate = this
 		
-		def newHook = new DelegatingCustomRenderingHook(id, state.moduleExceptionRegistry, this, hook as CustomRenderingHook)
+		def newHook = new DelegatingRenderingHook(id, state.moduleExceptionRegistry, this, hook as RenderingHook)
 		hook.owner = newHook
-		customRenderingHooks << newHook
+		renderingHooks["$newHook.id"] = newHook
 		newHook.relativePriority
 	}
 	
@@ -708,6 +751,16 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSys
 		
 		module.id = this.id
 		this.i18n.bundles.each { module.i18n.addBundle it }
+		module.modules.putAll this.modules
+		
+		module.onActivationActions.addAll this.onActivationActions
+		module.onDeactivationActions.addAll this.onDeactivationActions
+		module.systems.putAll this.systems
+		module.entityListeners.addAll this.entityListeners
+		module.mapLayers.addAll this.mapLayers
+		module.renderingHooks.putAll this.renderingHooks
+		module.toolGroups.putAll this.toolGroups
+		module.tools.putAll this.tools
 		
 		script.run()
 		
@@ -717,10 +770,9 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSys
 		this.systems.putAll module.systems
 		this.entityListeners.addAll module.entityListeners
 		this.mapLayers.addAll module.mapLayers
-		this.customRenderingHooks.addAll module.customRenderingHooks
+		this.renderingHooks.putAll module.renderingHooks
 		this.toolGroups.putAll module.toolGroups
 		this.tools.putAll module.tools
-		this.providedObjects.putAll module.providedObjects
 		
 		module
 	}

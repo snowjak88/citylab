@@ -96,7 +96,10 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 	@Override
 	protected Module newInstance() {
 		
-		return new Module(gameService, preferencesService, i18nService);
+		final Module module = new Module(gameService, preferencesService, i18nService);
+		getAssetService().getAllByType(Module.class)
+				.forEach(m -> module.getModules().put(m.getId(), new ModulePublicFace(m)));
+		return module;
 	}
 	
 	@Override

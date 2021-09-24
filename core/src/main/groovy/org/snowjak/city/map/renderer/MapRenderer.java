@@ -32,7 +32,7 @@ import java.util.function.Predicate;
 import org.snowjak.city.GameState;
 import org.snowjak.city.ecs.components.HasMapLayers;
 import org.snowjak.city.map.CityMap;
-import org.snowjak.city.map.renderer.hooks.AbstractCustomRenderingHook;
+import org.snowjak.city.map.renderer.hooks.AbstractRenderingHook;
 import org.snowjak.city.map.tiles.Tile;
 import org.snowjak.city.map.tiles.TileCorner;
 import org.snowjak.city.service.LoggerService;
@@ -122,7 +122,7 @@ public class MapRenderer implements RenderingSupport, Disposable {
 	 * MapRenderer hooks into itself, with id = "map". This enables the MapRenderer
 	 * to allow other rendering-hooks to execute prior to the map being rendered.
 	 */
-	public final AbstractCustomRenderingHook MAP_RENDERING_HOOK = new AbstractCustomRenderingHook("map") {
+	public final AbstractRenderingHook MAP_RENDERING_HOOK = new AbstractRenderingHook("map") {
 		
 		private final ComponentMapper<HasMapLayers> layerMapper = ComponentMapper.getFor(HasMapLayers.class);
 		
@@ -216,7 +216,7 @@ public class MapRenderer implements RenderingSupport, Disposable {
 		
 		try {
 			
-			state.getRenderingHookRegistry().addCustomRenderingHook(MAP_RENDERING_HOOK);
+			state.getRenderingHookRegistry().addRenderingHook(MAP_RENDERING_HOOK);
 			
 		} catch (PrioritizationFailedException e) {
 			throw new RuntimeException("Cannot initialize main map-renderer!", e);
@@ -321,7 +321,7 @@ public class MapRenderer implements RenderingSupport, Disposable {
 		
 		batch.begin();
 		
-		for (AbstractCustomRenderingHook hook : state.getRenderingHookRegistry().getPrioritizedCustomRenderingHooks())
+		for (AbstractRenderingHook hook : state.getRenderingHookRegistry().getPrioritizedRenderingHooks())
 			if (hook.isEnabled())
 				hook.render(delta, batch, shapeDrawer, this);
 			

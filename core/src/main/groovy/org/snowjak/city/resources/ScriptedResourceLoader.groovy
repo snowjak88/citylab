@@ -34,13 +34,11 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 	
 	private static final Logger LOG = LoggerService.forClass(ScriptedResourceLoader.class);
 	
-	private final GameAssetService assetService
+	final GameAssetService assetService
 	
 	private final Map<FileHandle, CompilerConfiguration> resourceCompilerConfigs = [:]
 	private final Map<FileHandle, R> dependencyChecks = [:]
 	private final BiMap<FileHandle,String> filesToIDs = HashBiMap.create()
-	
-	private final Map<String,Object> providedObjects = [:]
 	
 	private final Map<FileHandle, R> loaded = [:]
 	
@@ -210,7 +208,6 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		r.setScriptDirectory file.parent()
 		r.setScriptFile file
 		r.setShell shell
-		r.binding.variables.putAll providedObjects
 		
 		r.setAssets new ScriptedResourceAssetProvider(r, assetService)
 		
@@ -229,11 +226,6 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 					importCustomizer.addImport(alias, importDefinition.getKey())
 			
 			addCompilationCustomizer(file, importCustomizer)
-		}
-		
-		if(!dependencyMode) {
-			r.binding.variables.putAll r.providedObjects
-			providedObjects.putAll r.providedObjects
 		}
 		
 		afterLoad r, assetService, dependencyMode

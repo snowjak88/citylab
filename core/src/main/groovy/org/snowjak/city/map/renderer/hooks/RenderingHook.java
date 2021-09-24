@@ -14,7 +14,7 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
  *
  */
 @FunctionalInterface
-public interface CustomRenderingHook {
+public interface RenderingHook {
 	
 	public void render(float delta, Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support);
 	

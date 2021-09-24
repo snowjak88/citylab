@@ -21,7 +21,7 @@ import org.snowjak.city.ecs.systems.impl.RemoveMapVertexRearrangedSystem
 import org.snowjak.city.ecs.systems.impl.UnselectAllEventSystem
 import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.generator.MapGenerator
-import org.snowjak.city.map.renderer.hooks.DelegatingCustomRenderingHook
+import org.snowjak.city.map.renderer.hooks.DelegatingRenderingHook
 import org.snowjak.city.module.Module
 import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain
 import org.snowjak.city.screens.loadingtasks.CompositeLoadingTask
@@ -503,21 +503,21 @@ class GameService {
 		
 		progressReporter?.accept 0.5
 		
-		if (!module.customRenderingHooks.isEmpty()) {
-			LOG.info "Adding custom rendering hooks ..."
-			final progressStep = 2f / (float)module.customRenderingHooks.size()
+		if (!module.renderingHooks.isEmpty()) {
+			LOG.info "Adding rendering hooks ..."
+			final progressStep = 2f / (float)module.renderingHooks.size()
 			def progress = 0
 			
-			for (def hook : module.customRenderingHooks)
+			for (def hook : module.renderingHooks)
 				try {
-					final previousHook = state.renderingHookRegistry.addCustomRenderingHook hook
+					final previousHook = state.renderingHookRegistry.addRenderingHook hook.value
 					
 					if(previousHook)
-						if(previousHook instanceof DelegatingCustomRenderingHook)
-							LOG.info "\"$hook.id\" overrides render-hook from \"${(previousHook as DelegatingCustomRenderingHook).module.id}\" [${(previousHook as DelegatingCustomRenderingHook).module.scriptFile.path()}]"
+						if(previousHook instanceof DelegatingRenderingHook)
+							LOG.info "\"$hook.value.id\" overrides render-hook from \"${(previousHook as DelegatingRenderingHook).module.id}\" [${(previousHook as DelegatingRenderingHook).module.scriptFile.path()}]"
 				} catch (PrioritizationFailedException e) {
-					LOG.error "Cannot initialize custom-rendering hook [{0}] for module [{1}] -- too many conflicting priorities!",
-							hook.id, module.id
+					LOG.error "Cannot initialize rendering hook [{0}] for module [{1}] -- too many conflicting priorities!",
+							hook.value.id, module.id
 				} finally {
 					progress += progressStep
 					progressReporter?.accept progress + 0.5f
@@ -543,14 +543,14 @@ class GameService {
 		
 		progressReporter?.accept 0.5
 		
-		if(!module.customRenderingHooks.isEmpty()) {
-			LOG.info "Removing custom-rendering hooks ..."
+		if(!module.renderingHooks.isEmpty()) {
+			LOG.info "Removing rendering hooks ..."
 			
-			final progressStep = 2f / (float)module.customRenderingHooks.size()
+			final progressStep = 2f / (float)module.renderingHooks.size()
 			def progress = 0
 			
-			for(def hook : module.customRenderingHooks) {
-				state.renderingHookRegistry.removeCustomRenderingHook hook
+			for(def hook : module.renderingHooks) {
+				state.renderingHookRegistry.removeRenderingHook hook.value
 				
 				progress += progressStep
 				progressReporter?.accept progress + 0.5f

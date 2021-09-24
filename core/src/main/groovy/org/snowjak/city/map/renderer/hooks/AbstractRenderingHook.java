@@ -10,13 +10,13 @@ import org.snowjak.city.util.RelativelyPrioritized;
  * @author snowjak88
  *
  */
-public abstract class AbstractCustomRenderingHook
-		implements CustomRenderingHook, RelativelyPrioritized<AbstractCustomRenderingHook, String> {
+public abstract class AbstractRenderingHook
+		implements RenderingHook, RelativelyPrioritized<AbstractRenderingHook, String> {
 	
 	private final String id;
 	private final RelativePriority<String> relativePriority = new RelativePriority<>();
 	
-	public AbstractCustomRenderingHook(String id) {
+	public AbstractRenderingHook(String id) {
 		
 		this.id = id;
 	}
