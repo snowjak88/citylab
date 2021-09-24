@@ -9,6 +9,14 @@ buttonGroup 'terrain-tools', {
 	title = i18n.get 'terrain-tools'
 }
 
+//
+// Ensure that the tools we're about to define are available
+// in the default map-mode
+//
+mapModes['default'].tools << 'terrainRaise'
+mapModes['default'].tools << 'terrainLevel'
+mapModes['default'].tools << 'terrainLower'
+
 
 minTerrainHeight = preferences.getInteger('min-terrain-height', 0)
 maxTerrainHeight = preferences.getInteger('max-terrain-height', 10)

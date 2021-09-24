@@ -62,7 +62,7 @@ class Tool {
 	final String id
 	
 	String title
-	boolean enabled = true
+	boolean enabled = false
 	
 	FileHandle atlas
 	

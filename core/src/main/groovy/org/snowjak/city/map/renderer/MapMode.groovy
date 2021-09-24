@@ -29,6 +29,11 @@ class MapMode {
 	 */
 	final Set<String> renderingHooks = []
 	
+	/**
+	 * The set of {@link Tool#getId() tool IDs} available in this map-mode
+	 */
+	final Set<String> tools = []
+	
 	public MapMode(String id) {
 		this.id = id
 	}

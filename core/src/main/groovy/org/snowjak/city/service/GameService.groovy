@@ -398,7 +398,7 @@ class GameService {
 					state.hotkeys.register hotkey.value, { -> tool.toggle() }
 				}
 				
-				state.tools << ["$toolEntry.key" : toolEntry.value]
+				state.tools["$toolEntry.key"] = toolEntry.value
 			}
 			
 			initializeToolbar()

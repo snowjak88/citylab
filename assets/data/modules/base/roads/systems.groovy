@@ -53,10 +53,30 @@ iteratingSystem 'roadTileProcessingSystem', Family.all(HasRoad, HasPendingRoadTi
 //
 // There are all sorts of reasons why a road might get destroyed.
 //
-listeningSystem 'roadCellDestroyedListener', Family.all(HasRoad, HasMapLayers).one(CellHeightChanged, TerrainTileChanged, IsNonBuildableCell).get(), { entity, deltaTime ->
+listeningSystem 'roadCellDestroyedListener', Family.all(HasRoad).one(CellHeightChanged, TerrainTileChanged, IsNonBuildableCell).get(), { entity, deltaTime ->
 	
 	final layers = hasLayersMapper.get(entity)
 	layers?.removeAll 'road'
+	
+	//
+	// Any roads that point to this cell should no longer point to it
+	// 
+	if(hasRoadMapper.has(entity) && isCellMapper.has(entity)) {
+		final road = hasRoadMapper.get(entity)
+		final thisCell = isCellMapper.get(entity)
+		final int cx = thisCell.cellX
+		final int cy = thisCell.cellY
+		for(def edge : road.edges) {
+			final int nx = cx + edge.dx
+			final int ny = cy + edge.dy
+			if(!state.map.isValidCell(nx,ny))
+				continue
+			final neighbor = state.map.getEntity(nx,ny)
+			if(!hasRoadMapper.has(neighbor))
+				continue
+			hasRoadMapper.get(neighbor).edges.remove edge.opposite
+		}
+	}
 	
 	entity.remove HasRoad
 	entity.remove HasPendingRoadTile

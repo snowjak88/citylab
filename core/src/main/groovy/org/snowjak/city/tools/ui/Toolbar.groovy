@@ -126,12 +126,14 @@ class Toolbar extends Window {
 				b.checked = false
 				
 				final expandAll = ( groupExpanded.isEmpty() )
-				groups.keySet().each { groupID -> setToolGroupExpanded(groupID, expandAll) }
+				groups.keySet().each { groupID ->
+					setToolGroupExpanded(groupID, expandAll)
+				}
 			}
 		] as ChangeListener)
 		
 		this.addListener([
-			exit: {event, x, y, pointer, toActor ->
+			exit: { event, x, y, pointer, toActor ->
 				scrollFocusCanceller.run()
 			}
 		] as InputListener)
@@ -364,7 +366,11 @@ class Toolbar extends Window {
 					buttonDef.tool.deactivate()
 			} ] as ChangeListener )
 		
-		buttonDef.tool.enabledListeners << ( { Tool t -> setToolButtonEnabled(buttonDef.id, t.enabled) } as Consumer<Tool> )
+		buttonDef.tool.enabledListeners << ( { Tool t ->
+			setToolButtonEnabled(buttonDef.id, t.enabled)
+			if(!t.enabled)
+				t.deactivate()
+		} as Consumer<Tool> )
 		buttonDef.tool.activateListeners << ( { Tool t -> setToolButtonActive(buttonDef.id, true) } as Consumer<Tool> )
 		buttonDef.tool.deactivateListeners << ( { Tool t -> setToolButtonActive(buttonDef.id, false) } as Consumer<Tool> )
 		
@@ -417,8 +423,8 @@ class Toolbar extends Window {
 				b.addAction Actions.sequence(
 						Actions.visible(true),
 						Actions.parallel(
-							Actions.sizeTo(BUTTON_SIZE,BUTTON_SIZE, BUTTON_FOLD_DURATION),
-							Actions.fadeIn(BUTTON_FOLD_DURATION)
+						Actions.sizeTo(BUTTON_SIZE,BUTTON_SIZE, BUTTON_FOLD_DURATION),
+						Actions.fadeIn(BUTTON_FOLD_DURATION)
 						))
 			}
 			groupExpanded << groupID
@@ -428,8 +434,8 @@ class Toolbar extends Window {
 			groupToolButtons[groupID]?.each { b ->
 				b.addAction Actions.sequence(
 						Actions.parallel(
-							Actions.sizeTo(BUTTON_SIZE, 0, BUTTON_FOLD_DURATION),
-							Actions.fadeOut(BUTTON_FOLD_DURATION)),
+						Actions.sizeTo(BUTTON_SIZE, 0, BUTTON_FOLD_DURATION),
+						Actions.fadeOut(BUTTON_FOLD_DURATION)),
 						Actions.visible(false),
 						Actions.removeActor())
 			}

@@ -110,6 +110,8 @@ public class GameScreen extends AbstractGameScreen {
 	@Initiate(priority = InitPriority.LOWEST_PRIORITY)
 	public void init() {
 		
+		final GameState state = getGameService().getState();
+		
 		//
 		// Set up the base map-control input-receivers.
 		//
@@ -189,9 +191,26 @@ public class GameScreen extends AbstractGameScreen {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				
-				getGameService().getState().setActiveMapMode((MapMode) mapModeSelectBox.getSelected());
+				final MapMode previousActiveMode = state.getActiveMapMode();
+				if (previousActiveMode != null)
+					previousActiveMode.getTools().forEach(tid -> {
+						final Tool t = state.getTools().get(tid);
+						if (t != null)
+							t.setEnabled(false);
+					});
+				
+				final MapMode newActiveMode = (MapMode) mapModeSelectBox.getSelected();
+				if (newActiveMode != null)
+					newActiveMode.getTools().forEach(tid -> {
+						final Tool t = state.getTools().get(tid);
+						if (t != null)
+							t.setEnabled(true);
+					});
+				
+				state.setActiveMapMode(newActiveMode);
 			}
 		});
+		mapModeSelectBox.setSelected(null);
 		
 		//
 		//
@@ -297,9 +316,9 @@ public class GameScreen extends AbstractGameScreen {
 		
 		mapModeSelectBox.setItems(alphabetizedMapModes.toArray(new MapMode[0]));
 		final MapMode activeMapMode = getGameService().getState().getActiveMapMode();
-		if(activeMapMode != null)
-		mapModeSelectBox.setSelectedIndex(alphabetizedMapModes.indexOf(activeMapMode));
-		
+		if (activeMapMode != null)
+			mapModeSelectBox.setSelectedIndex(alphabetizedMapModes.indexOf(activeMapMode));
+			
 		//
 		//
 		//

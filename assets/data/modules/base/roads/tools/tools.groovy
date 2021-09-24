@@ -3,6 +3,8 @@ buttonGroup 'road-tools', {
 	title = i18n.get 'road-tools-group'
 }
 
+mapModes['default'].tools << 'placeRoad'
+
 placeRoad = { float cellX, float cellY ->
 	final int cx = cellX
 	final int cy = cellY
