@@ -550,8 +550,6 @@ public class MapRenderer implements RenderingSupport, Disposable {
 	 *            ignore the stored altitude and use this value instead; if
 	 *            {@code <0}, then do not override
 	 * @return
-	 * @throw {@link IndexOutOfBoundsException} if {@code col} or {@code row} fall
-	 *        outside of the map
 	 */
 	private void getCellVertices(int col, int row, Vector2[] vertices, TileCorner base, int altitudeOverride) {
 		
@@ -563,9 +561,12 @@ public class MapRenderer implements RenderingSupport, Disposable {
 		int index = 0;
 		for (TileCorner corner : Arrays.asList(TileCorner.LEFT, TileCorner.TOP, TileCorner.RIGHT, TileCorner.BOTTOM)) {
 			
+			final boolean isValidCell = map.isValidCell(col, row);
 			final int altitude;
 			if (altitudeOverride >= 0)
 				altitude = altitudeOverride;
+			else if (!isValidCell)
+				altitude = 0;
 			else if (base == null || base == corner)
 				altitude = map.getCellAltitude(col, row, corner);
 			else

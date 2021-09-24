@@ -137,3 +137,4 @@ mapLayer 'road' after 'terrain' before 'water'
 
 include 'systems.groovy'
 include 'tools/tools.groovy'
+include 'renderers/network-renderer.groovy'

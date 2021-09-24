@@ -7,7 +7,9 @@ import static org.snowjak.city.util.Util.max;
 import static org.snowjak.city.util.Util.min;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.snowjak.city.GameState;
 import org.snowjak.city.configuration.InitPriority;
@@ -210,14 +212,12 @@ public class GameScreen extends AbstractGameScreen {
 		renderer.dispose();
 	}
 	
-	
-	
 	@Override
 	protected Actor getRoot() {
 		
 		return null;
 	}
-
+	
 	@Override
 	public void show() {
 		
@@ -283,8 +283,22 @@ public class GameScreen extends AbstractGameScreen {
 		//
 		//
 		
-		mapModeSelectBox.setItems(getGameService().getState().getMapModes().values().toArray(new MapMode[0]));
-		mapModeSelectBox.setSelected(getGameService().getState().getActiveMapMode());
+		//
+		// Alphabetize the list of map-modes, but ensure that the "default" map-mode
+		// always gets to the top of the list.
+		final List<MapMode> alphabetizedMapModes = getGameService().getState().getMapModes().values().stream()
+				.sorted((m1, m2) -> {
+					if (m1.getId().equals(MapRenderer.DEFAULT_MAP_MODE_ID))
+						return -1;
+					if (m2.getId().equals(MapRenderer.DEFAULT_MAP_MODE_ID))
+						return +1;
+					return m1.getTitle().compareTo(m2.getTitle());
+				}).collect(Collectors.toList());
+		
+		mapModeSelectBox.setItems(alphabetizedMapModes.toArray(new MapMode[0]));
+		final MapMode activeMapMode = getGameService().getState().getActiveMapMode();
+		if(activeMapMode != null)
+		mapModeSelectBox.setSelectedIndex(alphabetizedMapModes.indexOf(activeMapMode));
 		
 		//
 		//
