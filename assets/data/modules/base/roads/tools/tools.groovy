@@ -17,6 +17,7 @@ placeRoad = { float cellX, float cellY ->
 		entity.remove HasRoad
 	
 	final hasRoad = entity.addAndReturn( state.engine.createComponent( HasRoad) )
+	final networkNode = entity.addAndReturn( state.engine.createComponent( IsNetworkNode ) )
 	
 	//
 	// Scan neighboring cells for roads.
@@ -32,7 +33,10 @@ placeRoad = { float cellX, float cellY ->
 		if(hasRoadMapper.has(neighbor) && isValidRoadConnection(cx, cy, nx, ny)) {
 			
 			hasRoad.edges << edge
-			hasRoadMapper.get(neighbor).edges << edge.opposite
+			networkNode.edges << edge
+			
+			hasRoadMapper.get(neighbor)?.edges?.add edge.opposite
+			isNetworkNodeMapper.get(neighbor)?.edges?.add edge.opposite
 			
 			//
 			// Ensure that the neighboring cell has its road-tile re-fitted
@@ -186,5 +190,10 @@ tool 'placeRoad', {
 		->
 		if(roadPlan.doPathfinding && !roadPlan.pathDone)
 			updatePathfinder()
+	}
+	
+	inactive { ->
+		if(hoverEntity)
+			hoverEntity.remove IsSelected
 	}
 }

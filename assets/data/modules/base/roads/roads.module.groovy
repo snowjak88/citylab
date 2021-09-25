@@ -1,6 +1,7 @@
 id = 'roads'
 
 dependsOn 'terrain'
+dependsOn 'network'
 
 i18n.addBundle 'i18n'
 
@@ -57,6 +58,7 @@ isCellMapper = ComponentMapper.getFor(IsMapCell)
 isCellNonBuildableMapper = ComponentMapper.getFor(IsNonBuildableCell)
 hasLayersMapper = ComponentMapper.getFor(HasMapLayers)
 
+isNetworkNodeMapper = ComponentMapper.getFor(IsNetworkNode)
 hasRoadMapper = ComponentMapper.getFor(HasRoad)
 hasPendingRoadMapper = ComponentMapper.getFor(HasPendingRoadTile)
 
