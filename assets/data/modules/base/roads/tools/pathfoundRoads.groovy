@@ -2,7 +2,7 @@
 // Attempts to plan a road connecting two or more points using pathfinding.
 //
 
-include 'gdx-ai-1.8.2.jar'
+include '../../gdx-ai-1.8.2.jar'
 
 import com.badlogic.gdx.ai.pfa.Connection
 import com.badlogic.gdx.ai.pfa.DefaultConnection

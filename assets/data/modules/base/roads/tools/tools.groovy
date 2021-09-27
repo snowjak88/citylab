@@ -33,10 +33,10 @@ placeRoad = { float cellX, float cellY ->
 		if(hasRoadMapper.has(neighbor) && isValidRoadConnection(cx, cy, nx, ny)) {
 			
 			hasRoad.edges << edge
-			networkNode.edges << edge
+			networkNode.connections << neighbor
 			
 			hasRoadMapper.get(neighbor)?.edges?.add edge.opposite
-			isNetworkNodeMapper.get(neighbor)?.edges?.add edge.opposite
+			isNetworkNodeMapper.get(neighbor)?.connections?.add entity
 			
 			//
 			// Ensure that the neighboring cell has its road-tile re-fitted

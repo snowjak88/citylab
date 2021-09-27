@@ -54,7 +54,7 @@ abstract class TimeSliceIteratingSystem extends EntitySystem implements EntityLi
 		def n = 0
 		def currentDelta = 0l
 		while(currentDelta < delta && n < entities.size()) {
-			def startTime = System.nanoTime()
+			def startTime = TimeUtils.nanoTime()
 			
 			final e = entities.poll()
 			if(e) {
@@ -63,7 +63,7 @@ abstract class TimeSliceIteratingSystem extends EntitySystem implements EntityLi
 			}
 			
 			n++
-			currentDelta += (System.nanoTime() - startTime)
+			currentDelta += TimeUtils.timeSinceNanos(startTime)
 		}
 	}
 	
