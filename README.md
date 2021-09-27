@@ -1,6 +1,6 @@
-# jCity
+# city-lab
 
-A [libGDX](https://libgdx.com/) tech-demo. Eventually intended to implement a city-building game with an emphasis on logistics.
+At present, it's little more than a [libGDX](https://libgdx.com/)-based isometric tech-demo. Eventually intended to implement a city-building game with an emphasis on logistics and minimizing transportation-costs.
 
 At present, this gives you:
 
@@ -28,75 +28,57 @@ A Module is, at its most basic, a Groovy script that leverages a [Domain-Specifi
 
  * Entity-processing systems (see [the documentation](https://github.com/libgdx/ashley/wiki/Built-in-Entity-Systems) for the Ashley framework)
  * Rendering-hooks
- * *Input-handlers -- planned*
+ * Tools
+ * Map-Modes
+ * "Visual parameters"
  * *GUI elements (menus, buttons, windows, map-overlays) -- planned*
+
+### Map Modes
+
+A map-mode is a collection of rendering-hooks and tools. The `default` map-mode contains, at a minimum, the terrain-renderer and its associated tools. Map-modes are intended to be used to implement overlays and displays for supplemental information. Only one map-mode may be active at any time.
 
 ### Rendering-Hooks
 
-A rendering-hook is a piece of code that can be inserted into the rendering-loop, and which is called at a certain time each frame.
+A rendering-hook is a piece of code that can be inserted into the rendering-loop, and which may be called once per frame. A rendering-hook is always associated with at least one map-mode.
 
-There are 2 kinds of rendering-hooks:
+The first idea was to have *all* Module-based rendering be performed via discrete render-hooks. The `terrain` module, for instance, would register a cell-rendering hook that would handle drawing terrain-tiles (ordered relative to other such hooks).
 
- 1) Cell-rendering hooks -- called for every single visible map-cell.
- 1) "Custom" rendering-hooks -- these are given the ability to render to the whole screen. The map-renderer -- that calls all those cell-rendering hooks -- is implemented as a custom rendering-hook.
+*However*, this was eventually abandoned in favor of a different system: Modules may register their tiles with a certain entity-system Component. This resulted in a significant boost in rendering efficiency, because:
 
-Both kinds of rendering-hooks can be given an ID, and both can be prioritized relative to other such IDs.
+* the rendering-system can "see" all required tiles up-front, and so ignore any bottom tiles that would be completely occluded by covering tiles
+* Modules need only define their tiles when changes are required, instead of every single frame
 
-For example: the map-renderer that calls all your cell-rendering hooks has the ID `map`. Knowing that, it's easy to define a custom-renderer that needs to be drawn **after** the map is rendered with:
+### Visual Parameters
 
-```
-customRenderer 'myRenderer', { deltaTime, batch, shapeDrawer, renderingSupport ->
-	// ... render here ...
-} after 'map
-```
- 
-### Example Module
+A "visual parameter" defines a field that should be included in the game-setup screen. For example, the `water` module registers one such field to allow the "sea-level" to be configured.
 
-The following is part of the definition for the [terrain-fitting Module](https://github.com/snowjak88/jCity/blob/master/assets/data/modules/terrain/terrain.module.groovy). It handles:
+### Tools
 
- * fitting terrain-tiles to map-cells that require them (via an [IteratingSystem](https://github.com/libgdx/ashley/wiki/Built-in-Entity-Systems)
- * rendering those terrain-tiles when required (via a "cell rendering-hook")
+A tool is a bundle of functionality focused on acting upon the game-state.
 
-```
-import java.lang.Math
+A tool may have one or more activation-methods:
 
-id = 'terrain'
-description = 'Handles fitting terrain-tiles to the map.'
+* a tool-bar button (with an associated button-group)
+* a hotkey
 
-//
-// This module's systems need this Component-class.
-class IsTerrainTile implements Component {
-	List<Tile> tiles = []
-}
+Tools may listen for modifier-keys -- Shift, Control, Alt -- while activated.
 
-// ComponentMappers make us faster at querying and retrieving Components from entities
-terrainMapper = ComponentMapper.getFor(IsTerrainTile)
+Triggering any activation-state activates a tool's functionality, which may be implemented in one or more handlers:
 
-//
-// This module declares its entity-processing systems in another file.
-// That file is loaded and processed now.
-include 'systems.groovy'
-
-//
-// Declare a cell-rendering hook into the map-rendering loop.
-// This will be called every frame for every on-screen map-cell.
-cellRenderHook 'terrainRender', { deltaTime, cellX, cellY, renderingSupport ->
-	//
-	// Each map-cell should be associated with its own Entity.
-	// While each such Entity should be tagged with an IsMapCell component,
-	// and such tagged Entities should already be registered in the map-object,
-	// we may not have completed all that yet.
-	def entity = state.map.getEntity(cellX, cellY)
-	if(entity)
-		//
-		// If this entity is tagged with IsTerrainTile, draw those terrain-tiles now.
-		if(terrainMapper.has(entity))
-			for(def tile in terrainMapper.get(entity).tiles)
-				renderingSupport.renderTile cellX, cellY, tile
-}
-```
+* map-hover (called when the mouse is moved over a different map-cell with no buttons pressed)
+* map-click (a mouse-button is depressed and released without changing its position)
+* map-drag (divided into drag-start, -update, and -end events)
+* simple update (called on every frame)
  
 ## Recent Changes
+
+### 2021-09-27
+
+**Visual parameters**. A Module may register a "visual parameter" that is automatically included in the game-setup screen.
+
+We have (basic) road-tiles now. The `roads` module provides basic road-planning functionality. Roads may be laid out in one of three modes (straight, L-bend, or A*-pathfound).
+
+The `water` module is the barest of bare-bones. It only marks sea-level map-vertices as "watery", and only when the map is first loaded. It doesn't do any "flow" at present.
 
 ### 2021-08-29
 
