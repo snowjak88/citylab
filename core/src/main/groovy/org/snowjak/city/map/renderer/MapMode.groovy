@@ -1,5 +1,7 @@
 package org.snowjak.city.map.renderer
 
+import org.snowjak.city.module.ui.ModuleWindow
+import org.snowjak.city.tools.Tool
 import org.snowjak.city.map.renderer.hooks.AbstractRenderingHook
 import org.snowjak.city.util.RelativePriorityList
 
@@ -30,9 +32,24 @@ class MapMode {
 	final Set<String> renderingHooks = []
 	
 	/**
-	 * The set of {@link Tool#getId() tool IDs} available in this map-mode
+	 * The set of {@link Tool#id tool IDs} available in this map-mode
 	 */
 	final Set<String> tools = []
+	
+	/**
+	 * The set of {@link ModuleWindow#id window IDs} to be shown when in this map-mode
+	 */
+	final Set<String> windows = []
+	
+	/**
+	 * The set of {@link Runnable}s that will be executed when this map-mode is activated
+	 */
+	final Set<Runnable> onActivate = []
+	
+	/**
+	 * The set of {@link Runnable}s that will be executed when this map-mode is deactivated
+	 */
+	final Set<Runnable> onDeactivate = []
 	
 	public MapMode(String id) {
 		this.id = id

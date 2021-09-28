@@ -13,6 +13,7 @@ import org.snowjak.city.map.renderer.MapRenderer
 import org.snowjak.city.map.renderer.RenderingHookRegistry
 import org.snowjak.city.module.Module
 import org.snowjak.city.module.ModuleExceptionRegistry
+import org.snowjak.city.module.ui.ModuleWindow
 import org.snowjak.city.screens.GameScreen.GameCameraControl
 import org.snowjak.city.service.GameAssetService
 import org.snowjak.city.service.I18NService
@@ -69,6 +70,11 @@ public class GameState {
 	 * {@link Tool}s declared by (initialized) {@link Module}s
 	 */
 	final Map<String, Tool> tools = new LinkedHashMap<>()
+	
+	/**
+	 * {@link ModuleWindow}s declared by (initialized) {@link Module}s
+	 */
+	final Map<String,ModuleWindow> windows = new LinkedHashMap<>()
 	
 	/**
 	 * The currently-active {@link Tool} (may be {@code null})

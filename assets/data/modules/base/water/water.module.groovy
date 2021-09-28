@@ -10,7 +10,7 @@ dependsOn tilesetName, TileSet
 
 tileset = assets.getByID tilesetName, TileSet
 
-visualParameter {
+visualParameter 'water-tileset', {
 	title = i18n.get('parameter-tileset')
 	type = select {
 		values = { assets.getAllByType(TileSet) }
@@ -24,7 +24,7 @@ visualParameter {
 }
 
 sealevel = preferences.getInteger('sealevel', 0)
-visualParameter {
+visualParameter 'water-sealevel', {
 	title = i18n.get('parameter-sealevel')
 	type = intSpinner {
 		min = 0

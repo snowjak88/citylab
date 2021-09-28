@@ -216,7 +216,10 @@ public class GameSetupMenuPage implements MainMenuPage {
 			formTable.row().spaceBottom(5).spaceRight(5);
 			formTable.add(m.getTitle(), "title").colspan(3).center();
 			
-			for (VisualParameter p : m.getVisualParameters()) {
+			for (VisualParameter p : m.getVisualParameters().values()) {
+				if (p == null)
+					continue;
+				
 				formTable.row().spaceBottom(15).spaceRight(5);
 				formTable.add(p.getTitle()).right();
 				formTable.add(p.getType().getActor(skin)).colspan(2);

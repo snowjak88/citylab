@@ -24,6 +24,7 @@ import org.snowjak.city.input.ScrollEvent;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.renderer.MapMode;
 import org.snowjak.city.map.renderer.MapRenderer;
+import org.snowjak.city.module.ui.ModuleWindow;
 import org.snowjak.city.screens.loadingtasks.CompositeLoadingTask;
 import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.GameService;
@@ -42,6 +43,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -100,6 +102,8 @@ public class GameScreen extends AbstractGameScreen {
 	
 	private final MapRenderer renderer;
 	float minWorldX, minWorldY, maxWorldX, maxWorldY;
+	
+	private Rectangle moduleWindowBounds = new Rectangle(0, 0, 0, 0);
 	
 	private SelectBox<MapMode> mapModeSelectBox;
 	private Toolbar buttonList;
@@ -192,20 +196,41 @@ public class GameScreen extends AbstractGameScreen {
 			public void changed(ChangeEvent event, Actor actor) {
 				
 				final MapMode previousActiveMode = state.getActiveMapMode();
-				if (previousActiveMode != null)
+				if (previousActiveMode != null) {
 					previousActiveMode.getTools().forEach(tid -> {
 						final Tool t = state.getTools().get(tid);
 						if (t != null)
 							t.setEnabled(false);
 					});
+					previousActiveMode.getWindows().forEach(wid -> {
+						final ModuleWindow window = state.getWindows().get(wid);
+						if (window != null)
+							window.removeFromParent();
+					});
+					
+					previousActiveMode.getOnDeactivate().forEach(Runnable::run);
+				}
 				
 				final MapMode newActiveMode = (MapMode) mapModeSelectBox.getSelected();
-				if (newActiveMode != null)
+				if (newActiveMode != null) {
 					newActiveMode.getTools().forEach(tid -> {
 						final Tool t = state.getTools().get(tid);
 						if (t != null)
 							t.setEnabled(true);
 					});
+					
+					newActiveMode.getWindows().forEach(wid -> {
+						final ModuleWindow window = state.getWindows().get(wid);
+						if (window == null)
+							return;
+						
+						window.addTo(getStage());
+						window.show();
+						window.realign(moduleWindowBounds);
+					});
+					
+					newActiveMode.getOnActivate().forEach(Runnable::run);
+				}
 				
 				state.setActiveMapMode(newActiveMode);
 			}
@@ -408,6 +433,12 @@ public class GameScreen extends AbstractGameScreen {
 		
 		exitConfirmWindow.setPosition(width / 2, height / 2, Align.center);
 		mapModeSelectBox.setPosition(width, 0, Align.bottomRight);
+		
+		moduleWindowBounds = new Rectangle(0, mapModeSelectBox.getHeight(), width,
+				height - mapModeSelectBox.getHeight());
+		
+		final GameState state = getGameService().getState();
+		state.getActiveMapMode().getWindows().forEach(wid -> state.getWindows().get(wid).realign(moduleWindowBounds));
 	}
 	
 	/**

@@ -14,11 +14,13 @@ import org.snowjak.city.map.renderer.hooks.AbstractRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingRenderingHook
 import org.snowjak.city.map.renderer.hooks.RenderingHook
 import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain
+import org.snowjak.city.module.ui.ModuleWindow
 import org.snowjak.city.module.ui.VisualParameter
 import org.snowjak.city.resources.ScriptedResource
 import org.snowjak.city.service.GameService
 import org.snowjak.city.service.I18NService
 import org.snowjak.city.service.PreferencesService
+import org.snowjak.city.service.SkinService
 import org.snowjak.city.service.I18NService.I18NBundleContext
 import org.snowjak.city.service.I18NService.ProxiedI18NBundleContext
 import org.snowjak.city.service.PreferencesService.ScopedPreferences
@@ -32,6 +34,7 @@ import com.badlogic.ashley.core.Family
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
+import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.google.common.util.concurrent.ListenableFuture
 
 /**
@@ -55,8 +58,15 @@ public class Module extends ScriptedResource {
 	boolean enabled = true
 	
 	private final PreferencesService preferencesService
+	private final SkinService skinService
 	private final GameService gameService
 	private final I18NService i18nService
+	
+	/**
+	 * The currently-active {@link Skin} that should be applied to all LibGDX Scene2d widgets.
+	 */
+	@Lazy
+	Skin skin = skinService.getCurrent()
 	
 	/**
 	 * This Module's {@link I18NBundleContext}. Allows access to this Module's I18N (internationalization) bundles,
@@ -157,14 +167,20 @@ public class Module extends ScriptedResource {
 	final Map<String,Tool> tools = [:]
 	
 	/**
-	 * Set of all this Module's defined {@link VisualParameter}s.
+	 * This Module's defined {@link ModuleWindow}s, by ID
 	 */
-	final Set<VisualParameter> visualParameters = []
+	final Map<String,ModuleWindow> windows = [:]
 	
-	Module(GameService gameService, PreferencesService preferencesService, I18NService i18nService, Binding binding = new Binding()) {
+	/**
+	 * Set of all this Module's defined {@link VisualParameter}s, by ID
+	 */
+	final Map<String, VisualParameter> visualParameters = [:]
+	
+	Module(GameService gameService, PreferencesService preferencesService, SkinService skinService, I18NService i18nService, Binding binding = new Binding()) {
 		super(binding)
 		this.preferencesService = preferencesService
 		this.gameService = gameService
+		this.skinService = skinService
 		this.i18nService = i18nService
 		
 		this.state = gameService.state
@@ -251,16 +267,16 @@ public class Module extends ScriptedResource {
 	/**
 	 * Define a new VisualParameter.
 	 */
-	public void visualParameter(@DelegatesTo(VisualParameter) Closure parameterSpec) {
+	public void visualParameter(String id, @DelegatesTo(VisualParameter) Closure parameterSpec) {
 		if(isDependencyCheckingMode())
 			return
 		
-		final parameter = new VisualParameter(this)
+		final parameter = new VisualParameter(id, this)
 		parameterSpec.delegate = parameter
 		parameterSpec.resolveStrategy = Closure.DELEGATE_FIRST
 		parameterSpec()
 		
-		visualParameters << parameter
+		visualParameters["$id"] = parameter
 	}
 	
 	private String legalizeID(String id) {
@@ -770,10 +786,33 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSys
 		} as Runnable)
 	}
 	
+	//
+	//
+	//
+	
+	/**
+	 * Define a new {@link ModuleWindow} under the given {@code id}.
+	 * <p>
+	 * The new ModuleWindow is returned. It is also available under <code>windows['<em>id</em>']</code>
+	 * </p>
+	 * @param id
+	 * @param windowSpec
+	 * @return the new ModuleWindow, for further manipulation
+	 */
+	public ModuleWindow window(String id, @DelegatesTo(value=ModuleWindow,strategy=Closure.DELEGATE_FIRST) Closure windowSpec) {
+		final newWindow = new ModuleWindow(id, skin, this)
+		windowSpec.delegate = newWindow
+		windowSpec.resolveStrategy = Closure.DELEGATE_FIRST
+		windowSpec()
+		
+		windows["$id"] = newWindow
+		newWindow
+	}
+	
 	@Override
 	protected ScriptedResource executeInclude(FileHandle includeHandle, Consumer<ScriptedResource> configurer, DelegatingScript script) {
 		
-		final module = new Module(gameService, preferencesService, i18nService, binding)
+		final module = new Module(gameService, preferencesService, skinService, i18nService, binding)
 		configurer.accept module
 		
 		module.id = this.id
@@ -789,6 +828,7 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSys
 		module.renderingHooks.putAll this.renderingHooks
 		module.toolGroups.putAll this.toolGroups
 		module.tools.putAll this.tools
+		module.windows.putAll this.windows
 		
 		script.run()
 		
@@ -802,6 +842,7 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSys
 		this.renderingHooks.putAll module.renderingHooks
 		this.toolGroups.putAll module.toolGroups
 		this.tools.putAll module.tools
+		this.windows.putAll module.windows
 		
 		module
 	}

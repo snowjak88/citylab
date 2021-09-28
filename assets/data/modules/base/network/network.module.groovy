@@ -183,3 +183,4 @@ listeningSystem 'trimOngoingNetworkPathfinderRequestSystem', Family.all(NetworkP
 	entity.remove OngoingPathfinderRequest
 }
 
+include 'networkMapMode.groovy'

@@ -404,6 +404,22 @@ class GameService {
 			initializeToolbar()
 		}
 		
+		if(!module.windows.isEmpty()) {
+			LOG.info "Adding windows ..."
+			for(def windowEntry : module.windows) {
+				if(!windowEntry.value)
+					continue
+				
+				LOG.info "Adding window \"{0}\" ...", windowEntry.key
+				
+				final overriddenWindow = state.windows[windowEntry.key]
+				if(overriddenWindow)
+					LOG.info "Overrode window from \"${overriddenWindow.module.id}\" [${overriddenWindow.module.scriptFile.path()}]"
+				
+				state.windows["$windowEntry.key"] = windowEntry.value
+			}
+		}
+		
 		progressReporter?.accept 1
 		
 		LOG.info "Finished initialized module \"{0}\".", module.id
@@ -463,6 +479,12 @@ class GameService {
 			}
 			
 			initializeToolbar()
+		}
+		
+		if(!module.windows.isEmpty()) {
+			LOG.info "Removing windows ..."
+			for(def window : module.windows)
+				state.windows.remove window.key
 		}
 		
 		state.modules.remove module.id

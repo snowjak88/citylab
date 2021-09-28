@@ -24,7 +24,7 @@ tileset = assets.getByID tilesetName, TileSet
 // Define a "visual parameter" -- i.e., a GUI element that can be
 // displayed by the game-setup screen.
 //
-visualParameter {
+visualParameter 'terrain-tileset', {
 	title = i18n.get('terrain-tileset')
 	type = select {
 		values = { assets.getAllByType(TileSet) }

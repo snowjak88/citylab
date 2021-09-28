@@ -13,6 +13,7 @@ import org.snowjak.city.module.ui.parametertypes.VisualParameterType
  */
 class VisualParameter {
 	
+	final String id
 	final Module module
 	
 	/**
@@ -35,8 +36,9 @@ class VisualParameter {
 	 */
 	Consumer<?> onSet
 	
-	public VisualParameter(Module module) {
+	public VisualParameter(String id, Module module) {
 		
+		this.id = id
 		this.module = module
 		
 		VisualParameter.metaClass.methodMissing = { name, args ->

@@ -16,11 +16,13 @@ import org.snowjak.city.map.tiles.TileCorner;
 import org.snowjak.city.map.tiles.TileEdge;
 import org.snowjak.city.map.tiles.TileSet;
 import org.snowjak.city.module.ModuleResourceLoader.ModuleResourceLoaderParameters;
+import org.snowjak.city.module.ui.ModuleWindow;
 import org.snowjak.city.resources.ScriptedResourceLoader;
 import org.snowjak.city.service.GameAssetService;
 import org.snowjak.city.service.GameService;
 import org.snowjak.city.service.I18NService;
 import org.snowjak.city.service.PreferencesService;
+import org.snowjak.city.service.SkinService;
 
 import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Entity;
@@ -44,17 +46,19 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 	
 	private final GameService gameService;
 	private final PreferencesService preferencesService;
+	private final SkinService skinService;
 	private final I18NService i18nService;
 	
 	private final Map<String, MapMode> mapModes = new HashMap<>();
 	
 	public ModuleResourceLoader(GameService gameService, PreferencesService preferencesService,
-			GameAssetService assetService, I18NService i18nService) {
+			GameAssetService assetService, SkinService skinService, I18NService i18nService) {
 		
 		super(assetService);
 		
 		this.gameService = gameService;
 		this.preferencesService = preferencesService;
+		this.skinService = skinService;
 		this.i18nService = i18nService;
 		
 		this.mapModes.putAll(gameService.getState().getMapModes());
@@ -95,6 +99,7 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		customizer.addStarImports("com.badlogic.gdx.utils");
 		customizer.addImport("Buttons", Input.Buttons.class.getName());
 		customizer.addImport("Poolable", Poolable.class.getName());
+		customizer.addImport("WindowPin", ModuleWindow.WindowPin.class.getName());
 		
 		customizer.addStaticStars(ModifierKey.class.getName());
 		
@@ -104,7 +109,7 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 	@Override
 	protected Module newInstance() {
 		
-		final Module module = new Module(gameService, preferencesService, i18nService);
+		final Module module = new Module(gameService, preferencesService, skinService, i18nService);
 		getAssetService().getAllByType(Module.class)
 				.forEach(m -> module.getModules().put(m.getId(), new ModulePublicFace(m)));
 		module.getMapModes().putAll(this.mapModes);

@@ -13,7 +13,7 @@ dependsOn tilesetName, TileSet
 
 tileset = assets.getByID tilesetName, TileSet
 
-visualParameter {
+visualParameter 'road-tileset', {
 	title = i18n.get('parameter-tileset')
 	type = select {
 		values = { assets.getAllByType(TileSet) }
@@ -139,4 +139,4 @@ mapLayer 'road' after 'terrain' before 'water'
 
 include 'systems.groovy'
 include 'tools/tools.groovy'
-include 'renderers/network-renderer.groovy'
+//include 'renderers/network-renderer.groovy'
