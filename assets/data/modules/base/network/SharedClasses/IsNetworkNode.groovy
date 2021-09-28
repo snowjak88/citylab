@@ -10,12 +10,7 @@ class IsNetworkNode implements Component, Poolable {
 	
 	final Set<Entity> connections = []
 	
-	String networkName
-	Color networkColor
-	
 	void reset() {
 		connections.clear()
-		networkName = null
-		networkColor = null
 	}
 }

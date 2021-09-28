@@ -3,6 +3,10 @@ buttonGroup 'road-tools', {
 	title = i18n.get 'road-tools-group'
 }
 
+onActivate { ->
+	modules['network'].networkLegend.register HasRoad, i18n.get('network-name')
+}
+
 mapModes['default'].tools << 'placeRoad'
 
 placeRoad = { float cellX, float cellY ->
@@ -18,9 +22,6 @@ placeRoad = { float cellX, float cellY ->
 	
 	final hasRoad = entity.addAndReturn( state.engine.createComponent( HasRoad) )
 	final networkNode = entity.addAndReturn( state.engine.createComponent( IsNetworkNode ) )
-	
-	networkNode.networkName = i18n.get('network-name')
-	networkNode.networkColor = Color.YELLOW
 	
 	//
 	// Scan neighboring cells for roads.
