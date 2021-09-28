@@ -23,7 +23,7 @@ provides networkLegend named 'networkLegend'
 //
 //
 
-networkLegend.register Module, 'none'
+networkLegend.register null, i18n.get('network-legend-none')
 
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
@@ -49,13 +49,17 @@ updateNetworkLegendWindow = { ->
 					networkLegendCheckboxes.each { c -> c.checked = false }
 					actor.checked = true
 					activeNetworkHighlight = t
-				}
+				} else
+					actor.checked = true
 			} ] as ChangeListener )
 		checkbox.programmaticChangeEvents = false
 		
+		if(n == i18n.get('network-legend-none'))
+			checkbox.checked = true
+		
 		networkLegendCheckboxes << checkbox
 		windows['network-legend'].newRow()
-		windows['network-legend'] << checkbox
+		windows['network-legend'].add( checkbox ).left()
 	}
 	
 	networkLegend.newNetworkLegend = false
