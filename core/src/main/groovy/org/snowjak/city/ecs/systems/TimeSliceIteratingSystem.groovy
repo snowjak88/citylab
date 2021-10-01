@@ -18,10 +18,13 @@ import com.badlogic.gdx.utils.TimeUtils
  */
 abstract class TimeSliceIteratingSystem extends EntitySystem implements EntityListener {
 	
+	private static final float NANOS_TO_SECONDS = 1f / ( 1000000f * 1000f )
+	
 	private final Family family
 	private final long delta
 	
 	private final LinkedList<Entity> entities = new LinkedList<>()
+	private final Map<Entity,Long> entityProcessedTime = new HashMap<>()
 	
 	/**
 	 * Construct a new TimeLimitedIteratingSystem, operating on the given {@link Family},
@@ -58,7 +61,10 @@ abstract class TimeSliceIteratingSystem extends EntitySystem implements EntityLi
 			
 			final e = entities.poll()
 			if(e) {
-				processEntity e, deltaTime
+				final lastEntityTime = entityProcessedTime.put( e, startTime )
+				
+				final entityDeltaTime = (lastEntityTime) ? ( (float)(startTime - lastEntityTime) * NANOS_TO_SECONDS ) : deltaTime
+				processEntity e, entityDeltaTime
 				entities.addLast e
 			}
 			
