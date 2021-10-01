@@ -74,7 +74,7 @@ public class CityGame extends Game {
 	 * Shared {@link ListeningExecutorService}.
 	 */
 	public static final ListeningExecutorService EXECUTOR = MoreExecutors.listeningDecorator(MoreExecutors
-			.getExitingExecutorService((ThreadPoolExecutor) Executors.newFixedThreadPool(1), Duration.ofSeconds(5)));
+			.getExitingExecutorService((ThreadPoolExecutor) Executors.newCachedThreadPool(), Duration.ofSeconds(5)));
 	
 	//
 	//
