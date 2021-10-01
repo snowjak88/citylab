@@ -3,55 +3,73 @@ buttonGroup 'road-tools', {
 	title = i18n.get 'road-tools-group'
 }
 
-onActivate { ->
+onActivate {
+	->
 	modules['network'].networkLegend.register HasRoad, i18n.get('network-name')
 }
 
 mapModes['default'].tools << 'placeRoad'
 
-placeRoad = { float cellX, float cellY ->
-	final int cx = cellX
-	final int cy = cellY
+placeRoad = { Entity from, Entity to ->
 	
-	if(!isValidRoadCell(cx,cy))
+	if(!isCellMapper.has(from))
+		return
+	if(!isCellMapper.has(to))
 		return
 	
-	final entity = state.map.getEntity(cx, cy)
-	if(hasRoadMapper.has(entity))
-		entity.remove HasRoad
+	final fromCell = isCellMapper.get(from)
+	final toCell = isCellMapper.get(to)
 	
-	final hasRoad = entity.addAndReturn( state.engine.createComponent( HasRoad) )
-	final networkNode = entity.addAndReturn( state.engine.createComponent( IsNetworkNode ) )
+	if(!fromCell)
+		return
+	if(!toCell)
+		return
+	
+	final int fromX = fromCell.cellX
+	final int fromY = fromCell.cellY
+	final int toX = toCell.cellX
+	final int toY = toCell.cellY
+	
+	if(!isValidRoadCell(fromX,fromY))
+		return
+	if(!isValidRoadCell(toX,toY))
+		return
+	
+	if(!isValidRoadConnection(fromX, fromY, toX, toY))
+		return
+	
+	def fromRoad = hasRoadMapper.get(from)
+	if(!fromRoad)
+		fromRoad = from.addAndReturn( state.engine.createComponent(HasRoad) )
+	def fromNetwork = isNetworkNodeMapper.get(from)
+	if(!fromNetwork)
+		fromNetwork = from.addAndReturn( state.engine.createComponent(IsNetworkNode) )
+	
+	def toRoad = hasRoadMapper.get(to)
+	if(!toRoad)
+		toRoad = to.addAndReturn( state.engine.createComponent(HasRoad) )
+	def toNetwork = isNetworkNodeMapper.get(to)
+	if(!toNetwork)
+		toNetwork = to.addAndReturn( state.engine.createComponent(IsNetworkNode) )
 	
 	//
-	// Scan neighboring cells for roads.
-	for(def edge : TileEdge) {
-		
-		// neighbor-cell coordinates
-		final int nx = cx + edge.dx
-		final int ny = cy + edge.dy
-		if(!state.map.isValidCell(nx,ny))
-			continue
-		
-		final neighbor = state.map.getEntity(nx,ny)
-		if(hasRoadMapper.has(neighbor) && isValidRoadConnection(cx, cy, nx, ny)) {
-			
-			hasRoad.edges << edge
-			networkNode.connections << neighbor
-			
-			hasRoadMapper.get(neighbor)?.edges?.add edge.opposite
-			isNetworkNodeMapper.get(neighbor)?.connections?.add entity
-			
-			//
-			// Ensure that the neighboring cell has its road-tile re-fitted
-			neighbor.add state.engine.createComponent(NeedsReplacementRoadTile)
-			neighbor.add state.engine.createComponent(RoadCellUpdated)
-		}
-	}
+	// Mark the two cells as connected
+	final int dx = toX - fromX
+	final int dy = toY - fromY
+	final fromToEdge = TileEdge.fromDelta(dx,dy)
+	if(!fromToEdge)
+		return
+	fromRoad.edges << fromToEdge
+	fromNetwork.connections << to
 	
-	entity.add state.engine.createComponent(RoadCellUpdated)
+	toRoad.edges << fromToEdge.opposite
+	toNetwork.connections << from
 	
-	entity.add state.engine.createComponent(NeedsReplacementRoadTile)
+	from.add state.engine.createComponent(RoadCellUpdated)
+	from.add state.engine.createComponent(NeedsReplacementRoadTile)
+	
+	to.add state.engine.createComponent(RoadCellUpdated)
+	to.add state.engine.createComponent(NeedsReplacementRoadTile)
 }
 
 roadPlan = [
@@ -171,7 +189,6 @@ tool 'placeRoad', {
 		hoverY = cy
 	}
 	
-	mapClick Buttons.LEFT, placeRoad
 	mapDragStart Buttons.LEFT, { cellX, cellY ->
 		roadPlan.startX = -1
 		roadPlan.startY = -1
@@ -182,10 +199,17 @@ tool 'placeRoad', {
 	mapDragUpdate Buttons.LEFT, planRoad
 	mapDragEnd Buttons.LEFT, { float cellX, float cellY ->
 		if(roadPlan.pathSuccess) {
-			for(def entity : roadPlan.pathEntities) {
-				final mapCell = isCellMapper.get(entity)
-				placeRoad mapCell.cellX, mapCell.cellY
-				entity.remove IsSelected
+			if(roadPlan.pathEntities.size() > 1) {
+				def fromEntity = roadPlan.pathEntities[0]
+				for(def entity : roadPlan.pathEntities) {
+					if(entity === fromEntity)
+						continue
+					
+					placeRoad fromEntity, entity
+					fromEntity = entity
+					
+					entity.remove IsSelected
+				}
 			}
 		}
 	}
@@ -196,7 +220,8 @@ tool 'placeRoad', {
 			updatePathfinder()
 	}
 	
-	inactive { ->
+	inactive {
+		->
 		if(hoverEntity)
 			hoverEntity.remove IsSelected
 	}
