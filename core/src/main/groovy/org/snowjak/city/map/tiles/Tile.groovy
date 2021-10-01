@@ -28,9 +28,8 @@ class Tile implements Disposable {
 	int surfaceOffset, altitudeOffset
 	TileCorner base = TileCorner.TOP
 	
-	boolean redrawFront = false, redrawBack = false
-	
-	boolean decoration = false, transparent = false
+	int zOrder = 0
+	boolean transparent = false
 	
 	Map<String,Closure> ruleHelpers = new LinkedHashMap<>()
 	final Expando ext = new Expando()
@@ -76,12 +75,12 @@ class Tile implements Disposable {
 	 * @param localFlavors
 	 * @return
 	 */
-	public boolean isAcceptable(int[][] localHeight) {
+	public boolean isAcceptable(int[][] localHeight, Expando ext) {
 		
 		//
 		// A tile doesn't fit if any of its rules fail.
 		//
-		return !rules.any { !it.isAcceptable(localHeight) }
+		return !rules.any { !it.isAcceptable(localHeight, ext) }
 	}
 	
 	
@@ -93,7 +92,8 @@ class Tile implements Disposable {
 		int result = 1
 		result = prime * result + altitudeOffset
 		result = prime * result + ((base == null) ? 0 : base.hashCode())
-		result = prime * result + (decoration ? 1231 : 1237)
+		result = prime * result + (transparent ? 1231 : 1237)
+		result = prime * result + zOrder
 		result = prime * result + ((filename == null) ? 0 : filename.hashCode())
 		result = prime * result + ((atlas == null) ? 0 : atlas.hashCode())
 		result = prime * result + ((folder == null) ? 0 : folder.path().hashCode())

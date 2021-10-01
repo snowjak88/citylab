@@ -10,7 +10,7 @@ import java.util.function.DoubleConsumer
 import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
 import org.snowjak.city.configuration.InitPriority
-import org.snowjak.city.ecs.components.HasMapLayers
+import org.snowjak.city.ecs.components.HasMapCellTiles
 import org.snowjak.city.ecs.components.IsMapCell
 import org.snowjak.city.ecs.components.IsMapVertex
 import org.snowjak.city.ecs.systems.impl.IsMapCellManagementSystem
@@ -172,7 +172,7 @@ class GameService {
 					map.setEntity x, y, entity
 					state.engine.addEntity entity
 					
-					entity.add state.engine.createComponent(HasMapLayers)
+					entity.add state.engine.createComponent(HasMapCellTiles)
 					
 					progress += progressStep
 					progressReporter?.accept progress
@@ -500,35 +500,9 @@ class GameService {
 		
 		state.mapModes.putAll module.mapModes
 		
-		if(!module.mapLayers.isEmpty()) {
-			
-			LOG.info "Setting up map-layers ..."
-			final progressStep = 2f / (float)module.mapLayers.size()
-			def progress = 0
-			
-			for (def layer : module.mapLayers)
-				try {
-					
-					final previousLayer = state.renderingHookRegistry.addMapLayer layer
-					
-				} catch (PrioritizationFailedException e) {
-					
-					LOG.error "Cannot initialize map-layer [{0}] for module [{1}] -- too many conflicting priorities!", layer.id, module.id
-					
-				} finally {
-					
-					progress += progressStep
-					progressReporter?.accept progress
-					
-				}
-			
-		}
-		
-		progressReporter?.accept 0.5
-		
 		if (!module.renderingHooks.isEmpty()) {
 			LOG.info "Adding rendering hooks ..."
-			final progressStep = 2f / (float)module.renderingHooks.size()
+			final progressStep = 1f / (float)module.renderingHooks.size()
 			def progress = 0
 			
 			for (def hook : module.renderingHooks)
@@ -543,40 +517,24 @@ class GameService {
 							hook.value.id, module.id
 				} finally {
 					progress += progressStep
-					progressReporter?.accept progress + 0.5f
+					progressReporter?.accept progress
 				}
 		}
 	}
 	
 	public void uninitializeModuleRenderingHooks(Module module, DoubleConsumer progressReporter = {p -> }) {
 		
-		if(!module.mapLayers.isEmpty()) {
-			LOG.info "Removing map-layers ..."
-			
-			final progressStep = 2f / (float)module.mapLayers.size()
-			def progress = 0
-			
-			for(def layer : module.mapLayers) {
-				state.renderingHookRegistry.removeMapLayer layer
-				
-				progress += progressStep
-				progressReporter?.accept progress
-			}
-		}
-		
-		progressReporter?.accept 0.5
-		
 		if(!module.renderingHooks.isEmpty()) {
 			LOG.info "Removing rendering hooks ..."
 			
-			final progressStep = 2f / (float)module.renderingHooks.size()
+			final progressStep = 1f / (float)module.renderingHooks.size()
 			def progress = 0
 			
 			for(def hook : module.renderingHooks) {
 				state.renderingHookRegistry.removeRenderingHook hook.value
 				
 				progress += progressStep
-				progressReporter?.accept progress + 0.5f
+				progressReporter?.accept progress
 			}
 		}
 		

@@ -1,0 +1,531 @@
+
+KennyIsometric.png
+size: 2048, 1024
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+cityTiles_000
+  rotate: false
+  xy: 404, 847
+  size: 132, 104
+  orig: 132, 104
+  offset: 0, 0
+  index: -1
+cityTiles_002
+  rotate: false
+  xy: 672, 747
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_003
+  rotate: false
+  xy: 2, 208
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_006
+  rotate: false
+  xy: 2, 311
+  size: 132, 104
+  orig: 132, 104
+  offset: 0, 0
+  index: -1
+cityTiles_036
+  rotate: false
+  xy: 270, 695
+  size: 132, 123
+  orig: 132, 123
+  offset: 0, 0
+  index: -1
+cityTiles_044
+  rotate: false
+  xy: 136, 562
+  size: 132, 123
+  orig: 132, 123
+  offset: 0, 0
+  index: -1
+cityTiles_056
+  rotate: false
+  xy: 673, 850
+  size: 133, 101
+  orig: 133, 101
+  offset: 0, 0
+  index: -1
+cityTiles_064
+  rotate: false
+  xy: 270, 386
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_073
+  rotate: false
+  xy: 136, 356
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_081
+  rotate: false
+  xy: 538, 747
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_082
+  rotate: false
+  xy: 538, 541
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_088
+  rotate: false
+  xy: 538, 644
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_089
+  rotate: false
+  xy: 404, 744
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_095
+  rotate: false
+  xy: 672, 644
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_096
+  rotate: false
+  xy: 404, 641
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_102
+  rotate: false
+  xy: 2, 105
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_103
+  rotate: false
+  xy: 136, 459
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_104
+  rotate: false
+  xy: 136, 253
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_106
+  rotate: false
+  xy: 808, 850
+  size: 133, 101
+  orig: 133, 101
+  offset: 0, 0
+  index: -1
+cityTiles_108
+  rotate: false
+  xy: 2, 818
+  size: 132, 133
+  orig: 132, 133
+  offset: 0, 0
+  index: -1
+cityTiles_109
+  rotate: false
+  xy: 2, 2
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_110
+  rotate: false
+  xy: 270, 489
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_111
+  rotate: false
+  xy: 806, 747
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_112
+  rotate: false
+  xy: 538, 850
+  size: 133, 101
+  orig: 133, 101
+  offset: 0, 0
+  index: -1
+cityTiles_114
+  rotate: false
+  xy: 2, 683
+  size: 132, 133
+  orig: 132, 133
+  offset: 0, 0
+  index: -1
+cityTiles_116
+  rotate: false
+  xy: 270, 592
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_122
+  rotate: false
+  xy: 404, 538
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_124
+  rotate: false
+  xy: 1211, 850
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_125
+  rotate: false
+  xy: 1077, 850
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+cityTiles_126
+  rotate: false
+  xy: 943, 850
+  size: 132, 101
+  orig: 132, 101
+  offset: 0, 0
+  index: -1
+landscapeTiles_021
+  rotate: false
+  xy: 136, 51
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_028
+  rotate: false
+  xy: 270, 83
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_029
+  rotate: false
+  xy: 1480, 852
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_036
+  rotate: false
+  xy: 136, 687
+  size: 132, 131
+  orig: 132, 131
+  offset: 0, 0
+  index: -1
+landscapeTiles_043
+  rotate: false
+  xy: 1208, 648
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_046
+  rotate: false
+  xy: 672, 242
+  size: 132, 97
+  orig: 132, 97
+  offset: 0, 0
+  index: -1
+landscapeTiles_050
+  rotate: false
+  xy: 806, 646
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_051
+  rotate: false
+  xy: 1882, 868
+  size: 132, 83
+  orig: 132, 83
+  offset: 0, 0
+  index: -1
+landscapeTiles_054
+  rotate: false
+  xy: 538, 139
+  size: 132, 97
+  orig: 132, 97
+  offset: 0, 0
+  index: -1
+landscapeTiles_055
+  rotate: false
+  xy: 1210, 749
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_058
+  rotate: false
+  xy: 940, 361
+  size: 132, 83
+  orig: 132, 83
+  offset: 0, 0
+  index: -1
+landscapeTiles_062
+  rotate: false
+  xy: 1614, 852
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_063
+  rotate: false
+  xy: 940, 749
+  size: 133, 99
+  orig: 133, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_066
+  rotate: false
+  xy: 806, 359
+  size: 132, 83
+  orig: 132, 83
+  offset: 0, 0
+  index: -1
+landscapeTiles_067
+  rotate: false
+  xy: 404, 235
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_069
+  rotate: false
+  xy: 806, 274
+  size: 132, 83
+  orig: 132, 83
+  offset: 0, 0
+  index: -1
+landscapeTiles_070
+  rotate: false
+  xy: 1208, 563
+  size: 132, 83
+  orig: 132, 83
+  offset: 0, 0
+  index: -1
+landscapeTiles_074
+  rotate: false
+  xy: 136, 152
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_076
+  rotate: false
+  xy: 1074, 462
+  size: 132, 83
+  orig: 132, 83
+  offset: 0, 0
+  index: -1
+landscapeTiles_077
+  rotate: false
+  xy: 672, 157
+  size: 132, 83
+  orig: 132, 83
+  offset: 0, 0
+  index: -1
+landscapeTiles_082
+  rotate: false
+  xy: 1748, 852
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_084
+  rotate: false
+  xy: 404, 437
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_089
+  rotate: false
+  xy: 940, 648
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_090
+  rotate: false
+  xy: 1074, 547
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_091
+  rotate: false
+  xy: 672, 442
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_096
+  rotate: false
+  xy: 1074, 648
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_097
+  rotate: false
+  xy: 538, 440
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_098
+  rotate: false
+  xy: 270, 820
+  size: 132, 131
+  orig: 132, 131
+  offset: 0, 0
+  index: -1
+landscapeTiles_099
+  rotate: false
+  xy: 404, 336
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_103
+  rotate: false
+  xy: 672, 543
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_104
+  rotate: false
+  xy: 806, 444
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_105
+  rotate: false
+  xy: 538, 339
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_106
+  rotate: false
+  xy: 136, 820
+  size: 132, 131
+  orig: 132, 131
+  offset: 0, 0
+  index: -1
+landscapeTiles_107
+  rotate: false
+  xy: 1075, 749
+  size: 133, 99
+  orig: 133, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_109
+  rotate: false
+  xy: 2, 417
+  size: 132, 131
+  orig: 132, 131
+  offset: 0, 0
+  index: -1
+landscapeTiles_110
+  rotate: false
+  xy: 806, 545
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_111
+  rotate: false
+  xy: 270, 285
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_112
+  rotate: false
+  xy: 538, 238
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_113
+  rotate: false
+  xy: 1345, 852
+  size: 133, 99
+  orig: 133, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_115
+  rotate: false
+  xy: 2, 550
+  size: 132, 131
+  orig: 132, 131
+  offset: 0, 0
+  index: -1
+landscapeTiles_117
+  rotate: false
+  xy: 940, 446
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_123
+  rotate: false
+  xy: 940, 547
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_125
+  rotate: false
+  xy: 672, 341
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_126
+  rotate: false
+  xy: 270, 184
+  size: 132, 99
+  orig: 132, 99
+  offset: 0, 0
+  index: -1
+landscapeTiles_127
+  rotate: false
+  xy: 404, 135
+  size: 132, 98
+  orig: 132, 98
+  offset: 0, 0
+  index: -1

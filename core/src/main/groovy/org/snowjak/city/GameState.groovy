@@ -11,6 +11,7 @@ import org.snowjak.city.map.CityMap
 import org.snowjak.city.map.renderer.MapMode
 import org.snowjak.city.map.renderer.MapRenderer
 import org.snowjak.city.map.renderer.RenderingHookRegistry
+import org.snowjak.city.map.renderer.MapRenderer.MapRendererSettings
 import org.snowjak.city.module.Module
 import org.snowjak.city.module.ModuleExceptionRegistry
 import org.snowjak.city.module.ui.ModuleWindow
@@ -34,7 +35,7 @@ public class GameState {
 	 */
 	String seed = Long.toString(System.currentTimeMillis())
 	
-	final Random rnd = new Random()
+	static final Random RND = new Random()
 	
 	/**
 	 * Should the game display its current frames-per-second?
@@ -45,6 +46,11 @@ public class GameState {
 	 * Active {@link CityMap} (may be {@code null})
 	 */
 	CityMap map
+	
+	/**
+	 * Settings controlling map-rendering. (only referenced during map-renderer initialization)
+	 */
+	final MapRendererSettings mapRendererSettings = MapRenderer.SETTINGS;
 	
 	/**
 	 * Active camera-controller (may be {@code null})
@@ -130,7 +136,7 @@ public class GameState {
 		this.moduleExceptionRegistry = new ModuleExceptionRegistry(assetService)
 		
 		this.addPropertyChangeListener('seed', { PropertyChangeEvent e ->
-			rnd.setSeed(seed.hashCode())
+			RND.setSeed(seed.hashCode())
 		} as PropertyChangeListener)
 	}
 }

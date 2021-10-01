@@ -27,7 +27,7 @@ onActivate {
 	clouds = new boolean[Util.max(3, state.map.width / 12)][Util.max(state.map.height / 12, 3)]
 	for(def x=0; x<clouds.length; x++)
 		for(def y=0; y<clouds[x].length; y++)
-			clouds[x][y] = state.rnd.nextInt(10) <= 3
+			clouds[x][y] = state.RND.nextInt(10) <= 3
 }
 
 cloudOffsetX = 0f

@@ -1,15 +1,15 @@
-id = "default"
+id = "kenny"
 
-title = "Default tileset"
-description = "Default tileset, being the developer's first Blender project."
+title = "Kenny's Isometric"
+description = "A bundle of several tileset-projects, created by Kenny Vleugels (www.kenney.nl)."
 
 //
-// The grid-dimensions for which this tileset was designed
+// The grid-dimensions for which this tileset was designed (in screen pixels)
 //
 //
 // (Default: 32 / 16)
-gridWidth = 128
-gridHeight = 64
+gridWidth = 132
+gridHeight = 83
 
 //
 // Default width/height for all tiles. (Visible width/height, as distinct from grid width/height.)
@@ -86,11 +86,11 @@ padding = 0
 //
 // Texture-atlas to use
 //
-// If you supply an atlas here, then all filenames are assumed to refer to regions within
+// If you supply an atlas here, then all filenames (minus extensions) are assumed to refer to regions within
 // that atlas.
 // If atlas is <null>, then "filename" is assumed to be a discrete image-file.
 //
-atlas = 'default/default.atlas'
+atlas = 'KennyIsometric.atlas'
 
 //
 // Default file-name for all tiles
@@ -122,6 +122,39 @@ atlas = 'default/default.atlas'
 // In fact: the set of rule-helpers is shared both ways. You can
 // define rule-helpers in an included script and use them in the includer.
 //
-include 'default/landscape.groovy'
-include 'default/water.groovy'
-include 'default/road.groovy'
+
+//
+// Here we define a rule-helper that we don't intend to use, but serves to illustrate the syntax.
+// This rule-helper will be available in subsequent Tile rules as:
+//   ...
+//   rule { myListsMatch( [1, 2, 3], [ 2, 3, 4 ] ) }
+//   ...
+//
+// (this replicates the functionality provided by the normal rule-function [listsMatch])
+//
+ruleHelper 'myListsMatch', { Collection list1, Collection list2 ->
+	if(list1 == list2)
+		return true
+	if(list1 == null || list2 == null)
+		return false
+	if( list1?.any { !(list2?.contains it) } )
+		return false
+	if( list2?.any { !(list1?.contains it) } )
+		return false
+	true
+}
+
+//
+// Different modules may require a tileset to provide various attribues
+// for their own specific purposes. The [ext] namespace provdes the location
+// where such attributes may be specified.
+// As with other TileSet attributes, the current value of [ext] will be
+// inherited by al subsequently-defined Tiles.
+//
+//
+ext.water = [:]
+ext.water.shoresOnFlatGround = true
+
+include 'landscape.groovy'
+include 'water.groovy'
+include 'road.groovy'

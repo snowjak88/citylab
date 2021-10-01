@@ -14,6 +14,30 @@ class TileSupport {
 	int[][] localHeight = new int[2][2]
 	
 	/**
+	 * Holds "extra" properties which can be examined by a tile-rule
+	 */
+	Expando ext = new Expando()
+	
+	/**
+	 * returns {@code true} if the two Collections match -- i.e., if, for each element in one collection, it
+	 * <a href="http://www.groovy-lang.org/operators.html#_identity_operator">equals</a> an element in the other.
+	 * @param c1
+	 * @param c2
+	 * @return
+	 */
+	public boolean listsMatch(Collection<?> c1, Collection<?> c2) {
+		if(c1 == c2)
+			return true
+		if(c1 == null || c2 == null)
+			return false
+		if( c1?.any { !(c2?.contains( it )) } )
+			return false
+		if( c2?.any { !(c1?.contains( it )) } )
+			return false
+		true
+	}
+	
+	/**
 	 * @return {@code true} if all this tile's corners need to be at the same altitude
 	 */
 	public boolean isFlat() {

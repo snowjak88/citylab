@@ -33,9 +33,10 @@ class TileRule<S extends TileSupport> {
 	 * @param cy
 	 * @return
 	 */
-	public boolean isAcceptable(int[][] heights) {
+	public boolean isAcceptable(int[][] heights, Expando ext) {
 		synchronized(this) {
 			support.localHeight = heights
+			support.ext = ext
 			
 			spec()
 		}

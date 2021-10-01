@@ -8,7 +8,6 @@ import java.util.function.Consumer
 import org.snowjak.city.CityGame
 import org.snowjak.city.GameState
 import org.snowjak.city.ecs.GatheringEntityListener
-import org.snowjak.city.map.renderer.MapLayer
 import org.snowjak.city.map.renderer.MapMode
 import org.snowjak.city.map.renderer.hooks.AbstractRenderingHook
 import org.snowjak.city.map.renderer.hooks.DelegatingRenderingHook
@@ -150,10 +149,6 @@ public class Module extends ScriptedResource {
 	 */
 	final Map<String,MapMode> mapModes = [:]
 	
-	/**
-	 * All {@link MapLayer}s defined in this Module
-	 */
-	final Set<MapLayer> mapLayers = []
 	final Map<String, AbstractRenderingHook> renderingHooks = [:]
 	
 	/**
@@ -218,21 +213,6 @@ public class Module extends ScriptedResource {
 		}
 		mapModes["$mm.id"] = mm
 		mm
-	}
-	
-	/**
-	 * Define a MapLayer with the given ID. Once you have specified this layer's priority using
-	 * the returned RelativePriority, you may render to this layer by updating a map-cell entity's
-	 * {@link HasMapLayers}.
-	 * 
-	 * @param id
-	 * @return
-	 */
-	public RelativePriority mapLayer(String id) {
-		
-		final newLayer = [ id: id ] as MapLayer
-		mapLayers << newLayer
-		newLayer.relativePriority
 	}
 	
 	/**
@@ -824,7 +804,6 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSys
 		module.systems.putAll this.systems
 		module.entityListeners.addAll this.entityListeners
 		module.mapModes.putAll this.mapModes
-		module.mapLayers.addAll this.mapLayers
 		module.renderingHooks.putAll this.renderingHooks
 		module.toolGroups.putAll this.toolGroups
 		module.tools.putAll this.tools
@@ -838,7 +817,6 @@ class ''' + legalID + ''' extends org.snowjak.city.ecs.systems.EventComponentSys
 		this.systems.putAll module.systems
 		this.entityListeners.addAll module.entityListeners
 		this.mapModes.putAll module.mapModes
-		this.mapLayers.addAll module.mapLayers
 		this.renderingHooks.putAll module.renderingHooks
 		this.toolGroups.putAll module.toolGroups
 		this.tools.putAll module.tools

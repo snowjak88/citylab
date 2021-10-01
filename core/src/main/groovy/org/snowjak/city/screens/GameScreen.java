@@ -24,6 +24,7 @@ import org.snowjak.city.input.ScrollEvent;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.renderer.MapMode;
 import org.snowjak.city.map.renderer.MapRenderer;
+import org.snowjak.city.module.ModuleExceptionRegistry.FailureDomain;
 import org.snowjak.city.module.ui.ModuleWindow;
 import org.snowjak.city.screens.loadingtasks.CompositeLoadingTask;
 import org.snowjak.city.service.GameAssetService;
@@ -93,9 +94,6 @@ public class GameScreen extends AbstractGameScreen {
 	
 	private GameInputProcessor inputProcessor;
 	private final ScreenViewport viewport = new ScreenViewport();
-	{
-		viewport.setUnitsPerPixel(1f / MapRenderer.WORLD_GRID_UNIT_SIZE);
-	}
 	
 	private float cameraOffsetX, cameraOffsetY;
 	private boolean cameraUpdated = true;
@@ -271,6 +269,8 @@ public class GameScreen extends AbstractGameScreen {
 		//
 		//
 		
+		viewport.setUnitsPerPixel(1f / MapRenderer.SETTINGS.worldGridUnitSize);
+		
 		inputHandler = new GameScreenInputHandler();
 		
 		final GameState state = getGameService().getState();
@@ -320,7 +320,14 @@ public class GameScreen extends AbstractGameScreen {
 		
 		state.getModules().forEach((id, module) -> {
 			if (!module.getActivated())
-				module.getOnActivationActions().forEach(Runnable::run);
+				for (Runnable action : module.getOnActivationActions())
+					try {
+						action.run();
+					} catch (Throwable t) {
+						state.getModuleExceptionRegistry().reportFailure(module, FailureDomain.OTHER, t);
+						module.setEnabled(false);
+						break;
+					}
 		});
 		
 		//

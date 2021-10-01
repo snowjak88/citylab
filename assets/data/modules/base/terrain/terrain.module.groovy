@@ -1,5 +1,7 @@
 id = 'terrain'
 
+dependsOn 'tile-fitting'
+
 //
 // Ensure our I18N bundle is properly registered.
 i18n.addBundle 'i18n/terrain'
@@ -37,6 +39,11 @@ visualParameter 'terrain-tileset', {
 	}
 }
 
+onActivate { ->
+	state.mapRendererSettings.tileHeightWidthRatio = (float) tileset.gridHeight / (float) tileset.gridWidth
+	state.mapRendererSettings.altitudeMultiplier = (float) tileset.altitudeOffset / (float) tileset.gridHeight
+}
+
 //
 // NeedsReplacementTerrainTile: marks an entity as requiring its terrain-tile
 // to be recomputed (because the map has changed somehow at that location).
@@ -45,30 +52,6 @@ visualParameter 'terrain-tileset', {
 class NeedsReplacementTerrainTile implements Component, Poolable {
 	void reset() { }
 }
-
-//
-// PendingTerrainTile: marks an entity as waiting on its terrain-tile to
-// be (re-)computed. Has a Future, giving us an endpoint for the background-task
-// that's busy doing that terrain-tile-fitting.
-//
-class PendingTerrainTile implements Component, Poolable {
-	ListenableFuture<?> future
-	final int[][] heights = new int[2][2]
-	void reset() {
-		future = null
-		heights[0][0] = 0
-		heights[1][0] = 0
-		heights[0][1] = 0
-		heights[1][1] = 0
-	}
-}
-
-// HasTerrainTile: marks an entity as having had its terrain-tile computed.
-class HasTerrainTile implements Component, Poolable {
-	void reset() { }
-}
-
-mapLayer 'terrain'
 
 //
 // This module declares its entity-processing systems in another file.

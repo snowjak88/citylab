@@ -25,12 +25,12 @@ import static com.badlogic.gdx.graphics.g2d.Batch.Y3;
 import static com.badlogic.gdx.graphics.g2d.Batch.Y4;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.ListIterator;
 import java.util.function.Predicate;
 
 import org.snowjak.city.GameState;
-import org.snowjak.city.ecs.components.HasMapLayers;
+import org.snowjak.city.ecs.components.HasMapCellTiles;
+import org.snowjak.city.ecs.components.HasMapCellTiles.MapCellTile;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.renderer.hooks.AbstractRenderingHook;
 import org.snowjak.city.map.tiles.Tile;
@@ -63,23 +63,46 @@ import space.earlygrey.shapedrawer.ShapeDrawer;
 
 public class MapRenderer implements RenderingSupport, Disposable {
 	
+	/**
+	 * Configuration for the map-renderer.
+	 * 
+	 * @author snowjak88
+	 *
+	 */
+	public static class MapRendererSettings {
+		
+		/**
+		 * The ratio between the map-grid's height and width (as rendered on-screen).
+		 */
+		public float tileHeightWidthRatio = 0.5f;
+		
+		/**
+		 * When a tile's vertex increases in altitude by 1 step, its on-screen height
+		 * should be increased by the grid-height
+		 */
+		public float altitudeMultiplier = 0.5f;
+		
+		/**
+		 * 1 "tile-width unit" works out to being this many pixels on-screen
+		 */
+		public final float worldGridUnitSize = 64f;
+	}
+	
 	public static final String DEFAULT_MAP_MODE_ID = "default";
 	
 	private static final Logger LOG = LoggerService.forClass(MapRenderer.class);
 	
 	private static final int NUM_VERTICES = 20;
 	
-	private static final float LOGICAL_TILE_WIDTH = 1f;
-	private static final float LOGICAL_TILE_HEIGHT = 0.5f;
-	private static final float LOGICAL_ALTITUDE_MUTIPLIER = 0.25f;
+	public static final MapRendererSettings SETTINGS = new MapRendererSettings();
 	
-	private static final float HALF_TILE_WIDTH = LOGICAL_TILE_WIDTH * 0.5f;
-	private static final float HALF_TILE_HEIGHT = LOGICAL_TILE_HEIGHT * 0.5f;
+	private final float halfTileWidth = 0.5f;
+	private final float halfTileHeight = SETTINGS.tileHeightWidthRatio * 0.5f;
 	
-	public static final float WORLD_GRID_UNIT_SIZE = 64f;
-	private static final float WORLD_GRID_WIDTH = WORLD_GRID_UNIT_SIZE * LOGICAL_TILE_WIDTH;
-	private static final float WORLD_GRID_HEIGHT = WORLD_GRID_UNIT_SIZE * LOGICAL_TILE_HEIGHT;
-	private static final float WORLD_ALTITUDE_MULTIPLIER = WORLD_GRID_UNIT_SIZE * LOGICAL_ALTITUDE_MUTIPLIER;
+	private final float worldGridWidth = SETTINGS.worldGridUnitSize * 1.0f;
+	private final float worldGridHeight = SETTINGS.worldGridUnitSize * SETTINGS.tileHeightWidthRatio;
+	private final float worldAltitudeMultiplier = SETTINGS.worldGridUnitSize * SETTINGS.tileHeightWidthRatio
+			* SETTINGS.altitudeMultiplier;
 	
 	private Matrix4 isoTransform;
 	private Matrix4 invIsotransform;
@@ -126,7 +149,7 @@ public class MapRenderer implements RenderingSupport, Disposable {
 	 */
 	public final AbstractRenderingHook MAP_RENDERING_HOOK = new AbstractRenderingHook("map") {
 		
-		private final ComponentMapper<HasMapLayers> layerMapper = ComponentMapper.getFor(HasMapLayers.class);
+		private final ComponentMapper<HasMapCellTiles> hasTilesMapper = ComponentMapper.getFor(HasMapCellTiles.class);
 		
 		@Override
 		public void render(float delta, Batch batch, ShapeDrawer shapeDrawer, RenderingSupport support) {
@@ -138,11 +161,6 @@ public class MapRenderer implements RenderingSupport, Disposable {
 				return;
 			
 			final CityMap map = state.getMap();
-			final List<MapLayer> prioritizedMapLayers = state.getRenderingHookRegistry().getPrioritizedMapLayers();
-			if (prioritizedMapLayers.isEmpty())
-				return;
-			
-			final ListIterator<MapLayer> listerator = prioritizedMapLayers.listIterator(prioritizedMapLayers.size());
 			
 			for (int cellY = mapVisibleMaxY; cellY >= mapVisibleMinY; cellY--)
 				for (int cellX = mapVisibleMinX; cellX <= mapVisibleMaxX; cellX++)
@@ -151,39 +169,37 @@ public class MapRenderer implements RenderingSupport, Disposable {
 						final Entity entity = map.getEntity(cellX, cellY);
 						if (entity == null)
 							continue;
-						if (!layerMapper.has(entity))
+						if (!hasTilesMapper.has(entity))
 							continue;
-							
+						
+						final HasMapCellTiles hasTiles = hasTilesMapper.get(entity);
+						final ListIterator<MapCellTile> listerator = hasTiles.getTiles().listIterator();
 						//
-						// Reset the MapLayer iterator back to the top
+						// Reset the MapCellTile iterator back to the top
 						//
 						while (listerator.hasNext())
 							listerator.next();
-						
-						final HasMapLayers hasLayers = layerMapper.get(entity);
-						
+							
 						//
 						// Scan downward until previous() yields a non-transparent Tile
 						// (or we get to the beginning of the list)
 						//
 						while (listerator.hasPrevious()) {
-							final String layerID = listerator.previous().getId();
-							final Tile tile = hasLayers.getTiles().get(layerID);
+							final MapCellTile tile = listerator.previous();
 							if (tile == null)
 								continue;
-							if (!tile.isTransparent())
+							if (!tile.getTile().isTransparent())
 								break;
 						}
 						
 						//
 						// Now render all these tiles in order.
 						while (listerator.hasNext()) {
-							final String layerID = listerator.next().getId();
-							final Tile tile = hasLayers.getTiles().get(layerID);
-							final Color tint = hasLayers.getTints().get(layerID);
-							final Integer altitudeOverride = hasLayers.getAltitudeOverrides().get(layerID);
+							final MapCellTile cellTile = listerator.next();
+							final Tile tile = cellTile.getTile();
+							final Integer altitudeOverride = cellTile.getAltitudeOverride();
 							
-							renderTile(cellX, cellY, tile, tint, (altitudeOverride == null) ? -1 : altitudeOverride);
+							renderTile(cellX, cellY, tile, null, (altitudeOverride == null) ? -1 : altitudeOverride);
 						}
 					}
 		}
@@ -242,7 +258,7 @@ public class MapRenderer implements RenderingSupport, Disposable {
 		final TextureRegion shapeDrawerRegion = new TextureRegion(shapeDrawerTexture);
 		
 		this.shapeDrawer = new ShapeDrawer(this.batch, shapeDrawerRegion);
-		this.shapeDrawer.setDefaultLineWidth(1f / WORLD_GRID_WIDTH);
+		this.shapeDrawer.setDefaultLineWidth(1f / worldGridWidth);
 	}
 	
 	/**
@@ -591,13 +607,13 @@ public class MapRenderer implements RenderingSupport, Disposable {
 	
 	private float computeCellVertexX(int vertexX, int vertexY) {
 		
-		return (vertexX * HALF_TILE_WIDTH) + (vertexY * HALF_TILE_WIDTH);
+		return (vertexX * halfTileWidth) + (vertexY * halfTileWidth);
 	}
 	
 	private float computeCellVertexY(int vertexX, int vertexY, int altitude) {
 		
-		return (vertexY * HALF_TILE_HEIGHT) - (vertexX * HALF_TILE_HEIGHT)
-				+ ((float) altitude * LOGICAL_ALTITUDE_MUTIPLIER);
+		return (vertexY * halfTileHeight) - (vertexX * halfTileHeight)
+				+ ((float) altitude * SETTINGS.tileHeightWidthRatio * SETTINGS.altitudeMultiplier);
 	}
 	
 	@Override

@@ -1,79 +1,38 @@
 
 isCellMapper = ComponentMapper.getFor(IsMapCell)
-hasLayersMapper = ComponentMapper.getFor(HasMapLayers)
+hasTerrainTypeMapper = ComponentMapper.getFor(HasTerrainType)
 
-pendingTerrainTileMapper = ComponentMapper.getFor(PendingTerrainTile)
-
-//
-// Any map-cell that doesn't already have a terrain-tile should get one!
-//
-iteratingSystem 'newTerrainFittingSystem', Family.all(IsMapCell).exclude(PendingTerrainTile, HasTerrainTile).get(), { entity, deltaTime ->
-	final mapCell = isCellMapper.get(entity)
-	final int cellX = mapCell.cellX
-	final int cellY = mapCell.cellY
-	
-	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
-	
-	
-	for(def corner : TileCorner)
-		pendingTerrain.heights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
-	
-	pendingTerrain.future = submitResultTask {
-		->
-		tileset.getTileFor pendingTerrain.heights, [
-			{ t ->
-				t.ext.terrain == 'grass' }
-		]
-	}
-	entity.add pendingTerrain
-	
+onActivate { ->
+	for(int x=0; x<state.map.width; x++)
+		for(int y=0; y<state.map.height; y++) {
+			final entity = state.map.getEntity(x,y)
+			if(!entity)
+				continue
+			entity.add state.engine.createComponent(NeedsReplacementTerrainTile)
+		}
 }
 
-iteratingSystem 'existingTerrainUpdatingSystem', Family.all(IsMapCell, NeedsReplacementTerrainTile).exclude(PendingTerrainTile).get(), { entity, deltaTime ->
+iteratingSystem 'terrainCharacteristicsUpdatingSystem', Family.all(IsMapCell, NeedsReplacementTerrainTile).exclude(UpdatedCellCharacteristics).get(), { entity, deltaTime ->
 	
 	final mapCell = isCellMapper.get(entity)
 	final int cellX = mapCell.cellX
 	final int cellY = mapCell.cellY
 	
-	final pendingTerrain = state.engine.createComponent(PendingTerrainTile)
+	def terrainType = 'grass'
+	if(hasTerrainTypeMapper.has(entity))
+		terrainType = hasTerrainTypeMapper.get(entity).type ?: terrainType
 	
+	final updated = entity.addAndReturn( state.engine.createComponent(UpdatedCellCharacteristics) )
+	
+	updated.layerID = 'terrain'
+	updated.tileset = tileset
+	updated.ext.terrain = terrainType
 	for(def corner : TileCorner)
-		pendingTerrain.heights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
-	
-	pendingTerrain.future = submitResultTask {
-		->
-		tileset.getTileFor pendingTerrain.heights, [
-			{ t ->
-				t.ext.terrain == 'grass' }
-		]
-	}
-	entity.add pendingTerrain
+		updated.heights[corner.offsetX][corner.offsetY] = state.map.getCellAltitude(cellX, cellY, corner)
 	
 	entity.remove NeedsReplacementTerrainTile
-	entity.remove HasTerrainTile
-}
-
-iteratingSystem 'pendingTerrainUpdatingSystem', Family.all(PendingTerrainTile, HasMapLayers).get(), { entity, deltaTime ->
-	
-	final pendingTerrain = pendingTerrainTileMapper.get(entity)
-	if(!pendingTerrain.future.isDone())
-		return
-	
-	final layer = hasLayersMapper.get(entity)
-	final newTile = pendingTerrain.future.get()
-	
-	layer.tiles['terrain'] = newTile
-	layer.tints['terrain'] = null
-	layer.altitudeOverrides['terrain'] = null
-	
-	if(newTile)
-		entity.add state.engine.createComponent(HasTerrainTile)
-	else
-		entity.remove HasTerrainTile
 	
 	entity.add state.engine.createComponent(TerrainTileChanged)
-	entity.remove PendingTerrainTile
-	
 }
 
 //

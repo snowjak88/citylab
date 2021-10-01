@@ -41,26 +41,13 @@ class NeedsReplacementRoadTile implements Component, Poolable {
 	void reset() { }
 }
 
-class HasPendingRoadTile implements Component, Poolable {
-	ListenableFuture<Tile> future
-	void reset() {
-		future = null
-	}
-}
-
-class HasRoadTile implements Component, Poolable {
-	void reset() { }
-}
-
 eventComponent RoadCellUpdated
 
 isCellMapper = ComponentMapper.getFor(IsMapCell)
 isCellNonBuildableMapper = ComponentMapper.getFor(IsNonBuildableCell)
-hasLayersMapper = ComponentMapper.getFor(HasMapLayers)
 
 isNetworkNodeMapper = ComponentMapper.getFor(IsNetworkNode)
 hasRoadMapper = ComponentMapper.getFor(HasRoad)
-hasPendingRoadMapper = ComponentMapper.getFor(HasPendingRoadTile)
 
 //
 //
@@ -135,8 +122,5 @@ isValidRoadConnection = { int fromX, int fromY, int toX, int toY ->
 //
 //
 
-mapLayer 'road' after 'terrain' before 'water'
-
 include 'systems.groovy'
 include 'tools/tools.groovy'
-//include 'renderers/network-renderer.groovy'

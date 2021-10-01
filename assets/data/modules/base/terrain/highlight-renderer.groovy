@@ -1,5 +1,4 @@
 
-terrainTileMapper = ComponentMapper.getFor(HasTerrainTile)
 selectedMapper = ComponentMapper.getFor(IsSelected)
 
 renderHook 'terrainSelection', { deltaTime, batch, shapeDrawer, renderingSupport ->
@@ -18,7 +17,7 @@ renderHook 'terrainSelection', { deltaTime, batch, shapeDrawer, renderingSupport
 				continue
 			
 			final entity = state.map.getEntity(x,y)
-			if(!terrainTileMapper.has(entity))
+			if(!entity)
 				continue
 			if(!selectedMapper.has(entity))
 				continue
