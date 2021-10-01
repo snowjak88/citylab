@@ -1,5 +1,7 @@
 id = 'water'
 
+dependsOn 'tile-fitting'
+
 i18n.addBundle 'i18n'
 
 title = i18n.get 'title'

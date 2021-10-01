@@ -1,5 +1,6 @@
 id = 'roads'
 
+dependsOn 'tile-fitting'
 dependsOn 'terrain'
 dependsOn 'network'
 
