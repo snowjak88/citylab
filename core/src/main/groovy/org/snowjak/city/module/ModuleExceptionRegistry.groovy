@@ -61,7 +61,15 @@ class ModuleExceptionRegistry {
 	}
 	
 	/**
-	 * @return the next unreported {@link Failure}, or {@code null} if no un-reported Failures
+	 * @return the current unreported {@link Failure}, or {@code null} if no un-reported Failures
+	 */
+	public Failure peekCurrentFailure() {
+		failures.first()
+	}
+	
+	/**
+	 * Marks the current unreported {@link Failure} as reported, and gets the next
+	 * unreported Failure, or {@code null} if no remaining un-reported Failures.
 	 */
 	public Failure nextFailure() {
 		final f = failures.first()

@@ -180,6 +180,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		}
 		
 		this.exceptionReportingWindow = new ModuleExceptionReportingWindow(i18nService, skinService);
+		this.exceptionReportingWindow
+				.addDismissAction(() -> gameService.getState().getModuleExceptionRegistry().nextFailure());
 		stage.addActor(exceptionReportingWindow);
 		
 		while (!postShowActions.isEmpty())
@@ -221,7 +223,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 	 * your root Actor to this method, as it may be called repeatedly (e.g., if the
 	 * interface needs to be re-built).
 	 * 
-	 * @return null if no root-actor, or if you will manage your root actor(s) manually
+	 * @return null if no root-actor, or if you will manage your root actor(s)
+	 *         manually
 	 */
 	protected abstract Actor getRoot();
 	
@@ -245,7 +248,8 @@ public abstract class AbstractGameScreen extends ScreenAdapter {
 		
 		if (gameService.getState().getModuleExceptionRegistry().hasUnreportedFailure()
 				&& !exceptionReportingWindow.isVisible()) {
-			exceptionReportingWindow.setFailure(gameService.getState().getModuleExceptionRegistry().nextFailure());
+			exceptionReportingWindow
+					.setFailure(gameService.getState().getModuleExceptionRegistry().peekCurrentFailure());
 			exceptionReportingWindow.setVisible(true);
 		}
 		

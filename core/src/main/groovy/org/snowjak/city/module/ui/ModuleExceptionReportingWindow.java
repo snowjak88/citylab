@@ -1,5 +1,8 @@
 package org.snowjak.city.module.ui;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import org.snowjak.city.module.ModuleExceptionRegistry;
 import org.snowjak.city.module.ModuleExceptionRegistry.Failure;
 import org.snowjak.city.service.I18NService;
@@ -26,6 +29,8 @@ public class ModuleExceptionReportingWindow extends Window {
 	private final SkinService skinService;
 	
 	private Failure failure = null;
+	
+	private Set<Runnable> onDismissActions = new LinkedHashSet<>();
 	
 	private final Label moduleId, moduleFilename, failureDomain, failureMessage;
 	private final TextTooltip moduleFullFilename;
@@ -85,6 +90,7 @@ public class ModuleExceptionReportingWindow extends Window {
 				final TextButton b = (TextButton) actor;
 				if (!b.isChecked())
 					return;
+				onDismissActions.forEach(Runnable::run);
 				thisWindow.setVisible(false);
 				b.setChecked(false);
 			}
@@ -112,6 +118,11 @@ public class ModuleExceptionReportingWindow extends Window {
 		add(dismissButton).left();
 		
 		pack();
+	}
+	
+	public void addDismissAction(Runnable action) {
+		
+		onDismissActions.add(action);
 	}
 	
 	public void setFailure(Failure failure) {
