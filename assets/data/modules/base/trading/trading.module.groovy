@@ -25,35 +25,16 @@ pendingOrdersMapper = ComponentMapper.getFor( HasPendingMarketOrders )
 //
 //
 
-//onActivate { ->
-//	final e1 = state.engine.createEntity()
-//	def inventory = e1.addAndReturn( state.engine.createComponent( HasCommodityInventory ) )
-//	inventory.inventory['water'] = 50
-//	inventory.inventory['corn'] = 0
-//	def balance = e1.addAndReturn( state.engine.createComponent( HasBankBalance ) )
-//	balance.balance = 1000
-//	def transmutations = e1.addAndReturn( state.engine.createComponent( IsCommodityTransmutator ) )
-//	def transmutation = new IsCommodityTransmutator.Transmutation()
-//	transmutation.reagents['water'] = 1
-//	transmutation.products['corn'] = 1
-//	transmutations.transmutations['e1'] = transmutation
-//	e1.add state.engine.createComponent( CanTradeCommodities )
-//	state.engine.addEntity e1
-//	
-//	final e2 = state.engine.createEntity()
-//	inventory = e2.addAndReturn( state.engine.createComponent( HasCommodityInventory ) )
-//	inventory.inventory['water'] = 0
-//	inventory.inventory['corn'] = 50
-//	balance = e2.addAndReturn( state.engine.createComponent( HasBankBalance ) )
-//	balance.balance = 1000
-//	transmutations = e2.addAndReturn( state.engine.createComponent( IsCommodityTransmutator ) )
-//	transmutation = new IsCommodityTransmutator.Transmutation()
-//	transmutation.reagents['corn'] = 1
-//	transmutation.products['water'] = 1
-//	transmutations.transmutations['e2'] = transmutation
-//	e2.add state.engine.createComponent( CanTradeCommodities )
-//	state.engine.addEntity e2
-//}
+intervalIteratingSystem 'traderBankruptcyIdentifyingSystem', Family.all( HasBankBalance ).exclude( HasPendingMarketOrders ).get(), tradeInterval, { entity, deltaTime ->
+	entity.add state.engine.createComponent( Bankruptcy )
+}
+
+eventComponent Bankruptcy, { entity, deltaTime ->
+	
+	entity.remove CanTradeCommodities
+	entity.remove HasPendingMarketOrders
+	
+}
 
 intervalIteratingSystem 'traderCommodityOrderCreationSystem', Family.all( HasCommodityInventory, HasBankBalance, IsCommodityTransmutator, CanTradeCommodities ).exclude( HasPendingMarketOrders ).get(), tradeInterval, { entity, deltaTime ->
 	
