@@ -25,35 +25,35 @@ pendingOrdersMapper = ComponentMapper.getFor( HasPendingMarketOrders )
 //
 //
 
-onActivate { ->
-	final e1 = state.engine.createEntity()
-	def inventory = e1.addAndReturn( state.engine.createComponent( HasCommodityInventory ) )
-	inventory.inventory['water'] = 50
-	inventory.inventory['corn'] = 0
-	def balance = e1.addAndReturn( state.engine.createComponent( HasBankBalance ) )
-	balance.balance = 1000
-	def transmutations = e1.addAndReturn( state.engine.createComponent( IsCommodityTransmutator ) )
-	def transmutation = new IsCommodityTransmutator.Transmutation()
-	transmutation.reagents['water'] = 1
-	transmutation.products['corn'] = 1
-	transmutations.transmutations['e1'] = transmutation
-	e1.add state.engine.createComponent( CanTradeCommodities )
-	state.engine.addEntity e1
-	
-	final e2 = state.engine.createEntity()
-	inventory = e2.addAndReturn( state.engine.createComponent( HasCommodityInventory ) )
-	inventory.inventory['water'] = 0
-	inventory.inventory['corn'] = 50
-	balance = e2.addAndReturn( state.engine.createComponent( HasBankBalance ) )
-	balance.balance = 1000
-	transmutations = e2.addAndReturn( state.engine.createComponent( IsCommodityTransmutator ) )
-	transmutation = new IsCommodityTransmutator.Transmutation()
-	transmutation.reagents['corn'] = 1
-	transmutation.products['water'] = 1
-	transmutations.transmutations['e2'] = transmutation
-	e2.add state.engine.createComponent( CanTradeCommodities )
-	state.engine.addEntity e2
-}
+//onActivate { ->
+//	final e1 = state.engine.createEntity()
+//	def inventory = e1.addAndReturn( state.engine.createComponent( HasCommodityInventory ) )
+//	inventory.inventory['water'] = 50
+//	inventory.inventory['corn'] = 0
+//	def balance = e1.addAndReturn( state.engine.createComponent( HasBankBalance ) )
+//	balance.balance = 1000
+//	def transmutations = e1.addAndReturn( state.engine.createComponent( IsCommodityTransmutator ) )
+//	def transmutation = new IsCommodityTransmutator.Transmutation()
+//	transmutation.reagents['water'] = 1
+//	transmutation.products['corn'] = 1
+//	transmutations.transmutations['e1'] = transmutation
+//	e1.add state.engine.createComponent( CanTradeCommodities )
+//	state.engine.addEntity e1
+//	
+//	final e2 = state.engine.createEntity()
+//	inventory = e2.addAndReturn( state.engine.createComponent( HasCommodityInventory ) )
+//	inventory.inventory['water'] = 0
+//	inventory.inventory['corn'] = 50
+//	balance = e2.addAndReturn( state.engine.createComponent( HasBankBalance ) )
+//	balance.balance = 1000
+//	transmutations = e2.addAndReturn( state.engine.createComponent( IsCommodityTransmutator ) )
+//	transmutation = new IsCommodityTransmutator.Transmutation()
+//	transmutation.reagents['corn'] = 1
+//	transmutation.products['water'] = 1
+//	transmutations.transmutations['e2'] = transmutation
+//	e2.add state.engine.createComponent( CanTradeCommodities )
+//	state.engine.addEntity e2
+//}
 
 intervalIteratingSystem 'traderCommodityOrderCreationSystem', Family.all( HasCommodityInventory, HasBankBalance, IsCommodityTransmutator, CanTradeCommodities ).exclude( HasPendingMarketOrders ).get(), tradeInterval, { entity, deltaTime ->
 	
@@ -105,7 +105,9 @@ intervalIteratingSystem 'traderCommodityOrderCreationSystem', Family.all( HasCom
 		
 		//
 		// How much would we like to buy
-		final desiredQuantity = canTrade.timeHorizon * ( (onHandQuantity >= 1) ? (requiredQuantity*requiredQuantity / onHandQuantity) : requiredQuantity )
+		final desiredQuantity = Util.max( 0, canTrade.timeHorizon * requiredQuantity - onHandQuantity )
+		if(desiredQuantity <= 0)
+			return
 		
 		//
 		// Given our price-beliefs about this commodity, pick a price.
@@ -148,7 +150,7 @@ intervalIteratingSystem 'traderCommodityOrderCreationSystem', Family.all( HasCom
 		//
 		// The *actual* produced quantity equals the explicitly-given produced-quantity,
 		// minus the amount we consume "at home".
-		final producedQuantity = Util.max( 0f, explicitProducedQuantity - ( requiredQuantities[commodityID] ?: 0f ) )
+		final producedQuantity = Util.max( 0f, explicitProducedQuantity - canTrade.timeHorizon * ( requiredQuantities[commodityID] ?: 0f ) )
 		
 		def marketOrders = pendingOrdersMapper.get(entity)
 		final existingAsk = marketOrders?.asks?.get(commodityID)
