@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
+import org.snowjak.city.CityGame;
 import org.snowjak.city.input.modifiers.ModifierKey;
 import org.snowjak.city.map.CityMap;
 import org.snowjak.city.map.renderer.MapMode;
@@ -62,6 +63,9 @@ public class ModuleResourceLoader extends ScriptedResourceLoader<Module, ModuleR
 		this.i18nService = i18nService;
 		
 		this.mapModes.putAll(gameService.getState().getMapModes());
+		
+		this.addSharedClasses(
+				resolve(CityGame.EXTERNAL_ROOT_MODULES).child(CityGame.RESOURCE_SHARED_CLASSES_DIRECTORY_NAME));
 	}
 	
 	@Override

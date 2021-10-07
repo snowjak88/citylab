@@ -17,32 +17,6 @@ import com.badlogic.gdx.ai.pfa.PathFinderRequest
 import com.badlogic.gdx.ai.pfa.indexed.IndexedAStarPathFinder
 import com.badlogic.gdx.ai.pfa.indexed.IndexedGraph
 
-//
-// Pathfinder heuristic.
-// Really only works if both Entities have IsMapCell components (thus assigning
-// them "physical" locations in the world).
-pathfindingHeuristic = new Heuristic<Entity>() {
-			public float estimate(Entity from, Entity to) {
-				
-				final fromCell = isCellMapper.get(from)
-				final toCell = isCellMapper.get(to)
-				
-				if(fromCell && toCell)
-					return Math.abs(fromCell.cellX - toCell.cellX) + Math.abs(fromCell.cellY - toCell.cellY)
-					
-				return 1
-			}
-		}
-
-//
-// Pathfinder instances by Graph
-pathfindersByGraph = [:]
-
-isCellMapper = ComponentMapper.getFor(IsMapCell)
-isNetworkNodeMapper = ComponentMapper.getFor(IsNetworkNode)
-pathfinderRequestMapper = ComponentMapper.getFor(NetworkPathfinderRequest)
-ongoingRequestMapper = ComponentMapper.getFor(OngoingPathfinderRequest)
-
 import com.badlogic.gdx.utils.TimeUtils
 final float pathfindTimeSliceSeconds = 1f / 60f
 final long pathfindTimeSliceMillis = 1000l * pathfindTimeSliceSeconds
@@ -105,6 +79,32 @@ class OngoingPathfinderRequest implements Component, Poolable {
 		graph = null
 	}
 }
+
+//
+// Pathfinder heuristic.
+// Really only works if both Entities have IsMapCell components (thus assigning
+// them "physical" locations in the world).
+pathfindingHeuristic = new Heuristic<Entity>() {
+			public float estimate(Entity from, Entity to) {
+				
+				final fromCell = isCellMapper.get(from)
+				final toCell = isCellMapper.get(to)
+				
+				if(fromCell && toCell)
+					return Math.abs(fromCell.cellX - toCell.cellX) + Math.abs(fromCell.cellY - toCell.cellY)
+					
+				return 1
+			}
+		}
+
+//
+// Pathfinder instances by Graph
+pathfindersByGraph = [:]
+
+isCellMapper = ComponentMapper.getFor(IsMapCell)
+isNetworkNodeMapper = ComponentMapper.getFor(IsNetworkNode)
+pathfinderRequestMapper = ComponentMapper.getFor(NetworkPathfinderRequest)
+ongoingRequestMapper = ComponentMapper.getFor(OngoingPathfinderRequest)
 
 //
 // When we have a NetworkPathfinderRequest without a corresponding OngoingPathfinderRequest,

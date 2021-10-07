@@ -114,6 +114,10 @@ onActivate {
 			}
 }
 
+//
+//
+//
+
 isCellMapper = ComponentMapper.getFor(IsMapCell)
 isCellRearrangedMapper = ComponentMapper.getFor(IsMapCellRearranged)
 isCellNonBuildableMapper = ComponentMapper.getFor(IsNonBuildableCell)

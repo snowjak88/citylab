@@ -1,3 +1,5 @@
+package market
+
 import org.snowjak.city.util.Util
 
 class CommodityStatistics {

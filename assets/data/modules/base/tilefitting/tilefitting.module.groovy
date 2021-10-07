@@ -188,9 +188,11 @@ iteratingSystem 'mapCellFittingTaskSubmissionSystem', Family.all(NeedsMapCellTil
 		->
 		final result = []
 		pendingCells.each { p ->
-			final tile = p.tileset.getTileFor p.heights, p.characteristics
-			if(tile)
-				result << ( [ tile: tile, altitudeOverride: p.altitudeOverride ] as HasMapCellTiles.MapCellTile )
+			final tiles = p.tileset.getTilesFor p.heights, p.characteristics
+			if(tiles)
+				tiles.each { tile ->
+					result << ( [ tile: tile, altitudeOverride: p.altitudeOverride ] as HasMapCellTiles.MapCellTile )
+				}
 		}
 		
 		result.sort { t1,t2 -> Integer.compare(t1.tile.zOrder, t2.tile.zOrder) }

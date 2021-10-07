@@ -11,7 +11,6 @@ import org.codehaus.groovy.control.customizers.CompilationCustomizer
 import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.codehaus.groovy.control.customizers.SecureASTCustomizer
 import org.codehaus.groovy.syntax.Types
-import org.snowjak.city.CityGame
 import org.snowjak.city.service.GameAssetService
 import org.snowjak.city.service.LoggerService
 import org.snowjak.city.util.Util
@@ -36,13 +35,12 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 	
 	final GameAssetService assetService
 	
+	private final Map<FileHandle,Class> sharedClasses = [:]
 	private final Map<FileHandle, CompilerConfiguration> resourceCompilerConfigs = [:]
 	private final Map<FileHandle, R> dependencyChecks = [:]
 	private final BiMap<FileHandle,String> filesToIDs = HashBiMap.create()
 	
 	private final Map<FileHandle, R> loaded = [:]
-	
-	private final Set<FileHandle> loadedSharedClassesFor = []
 	
 	private final GroovyClassLoader superClassLoader = new GroovyClassLoader(ScriptedResourceLoader.classLoader)
 	
@@ -182,14 +180,6 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 	 */
 	protected R loadResource(FileHandle file, boolean dependencyMode) throws IOException, CompilationFailedException {
 		
-		if(!loadedSharedClassesFor.contains(file)) {
-			loadedSharedClassesFor << file
-			
-			final sharedClassesDirectory = file.parent().child(CityGame.RESOURCE_SHARED_CLASSES_DIRECTORY_NAME)
-			if(sharedClassesDirectory.exists() && sharedClassesDirectory.isDirectory())
-				scanSharedClasses sharedClassesDirectory
-		}
-		
 		
 		final config = resourceCompilerConfigs.computeIfAbsent(file, { f ->
 			getDefaultCompilerConfiguration()
@@ -233,22 +223,24 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		r
 	}
 	
-	private void scanSharedClasses(FileHandle directory) {
+	public void addSharedClasses(FileHandle directory) {
+		if(directory.exists() && directory.isDirectory()) {
+			superClassLoader.addClasspath directory.path()
+			addSharedClassesAsImports directory
+		}
+	}
+	
+	private void addSharedClassesAsImports(FileHandle directory) {
 		
-		if(!directory.exists())
-			return
-		
-		for(def child : directory.list()) {
-			if(child.directory)
-				scanSharedClasses(child)
-			else if(child.extension().equalsIgnoreCase("groovy")) {
+		for(def c : directory.list()) {
+			if(c.isDirectory())
+				addSharedClassesAsImports c
+			else if(c.name().endsWithIgnoreCase('.groovy')) {
 				
-				LOG.info "Loading shared-class [{0}] ...", child.path()
 				try {
-					
-					superClassLoader.parseClass child.file()
-				} catch(IOException | CompilationFailedException e) {
-					LOG.error e, "Could not load shared-class [{0}]!", child.path()
+					sharedClasses[c] = superClassLoader.parseClass(c.file())
+				} catch(CompilationFailedException | IOException e) {
+					LOG.error e, 'Cannot load shared-class $c.path().'
 				}
 			}
 		}
@@ -283,6 +275,7 @@ abstract class ScriptedResourceLoader<R extends ScriptedResource, P extends Asse
 		
 		final importCustomizer = new ImportCustomizer()
 		importCustomizer.addImport "Util", Util.name
+		importCustomizer.addImports sharedClasses.values().collect { c -> c.name }.toArray(new String[0])
 		
 		config.addCompilationCustomizers secureCustomizer, importCustomizer
 		config

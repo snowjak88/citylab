@@ -24,7 +24,13 @@ class TileSet extends ScriptedResource implements Disposable {
 	String title = "(untitled)"
 	String description = "(no description)"
 	
+	/**
+	 * Width (in pixels) of the grid-cells that this tile-set is designed for. Default = 32.
+	 */
 	int gridWidth = 32
+	/**
+	 * Height (in pixels) of the grid-cells that this tile-set is designed for. Default = 16.
+	 */
 	int gridHeight = 16
 	
 	int x, y
@@ -33,10 +39,25 @@ class TileSet extends ScriptedResource implements Disposable {
 	FileHandle folder
 	FileHandle atlas
 	String filename = ""
+	
+	/**
+	 * Order in which this tile should be drawn. Higher = draw later = draw on top
+	 */
 	int zOrder = 0
+	/**
+	 * Is this tile "transparent" -- i.e., if it is on top of other tiles, does it <em>not</em> totally occlude them?
+	 */
 	boolean transparent = false
+	
+	/**
+	 * When computing this tile's vertical displacement to account for altitude, we need to select 1 of this cell's vertices
+	 * as our altitude-reference.
+	 */
 	TileCorner base = TileCorner.TOP
 	
+	/**
+	 * Named tile-rule-helpers -- functions that can streamline rule-definition.
+	 */
 	Map<String,Closure> ruleHelpers = [:]
 	
 	Expando ext = new Expando()
@@ -44,6 +65,63 @@ class TileSet extends ScriptedResource implements Disposable {
 	private boolean autoAdvance = false
 	
 	Set<Tile> tiles = []
+	
+	/**
+	 * Return one or more tiles in this tile-set that match the given contraints.
+	 * <p>
+	 * Must be of the form:
+	 * <pre>
+	 * { int[][] heights, Expando ext -> ... }
+	 * </pre>
+	 * </p>
+	 * <p>
+	 * {@code heights[][]} is an {@code int[2][2]}, giving the heights of each of the cell's 4 corners.
+	 * </p>
+	 * <p>
+	 * {@code ext} is an {@link Expando} giving the "characteristics" that the returned Tile(s) must fit within.
+	 * </p>
+	 * <p>
+	 * The default implementation inspects every tile in {@link #tiles}. Every tile that fits these criteria
+	 * (i.e., {@link Tile#isAcceptable(int,Expando) isAcceptable()}) is added to a list-of-results. Finally, we select 1 Tile
+	 * from that list-of-results at random.
+	 * </p>
+	 * <pre>
+	 * { int[][] heights, Expando ext ->
+	 *     final result = []
+	 *     for (Tile tile : tiles) {
+	 *         if (!tile.isAcceptable(heights, ext))
+	 *             continue
+	 *         result << tile
+	 *     }
+	 *     if(result.isEmpty())
+	 *         return null
+	 *     [ result[GameState.RND.nextInt(result.size())] ]
+	 * }
+	 * </pre>
+	 */
+	Closure tileMatcher = { int[][] heights, Expando ext ->
+		final result = []
+		
+		//
+		// Consider each tile in order.
+		//
+		for (Tile tile : tiles) {
+			
+			//
+			// If the tile's rules don't allow it to fit here -- skip it.
+			if (!tile.isAcceptable(heights, ext))
+				continue
+			
+			result << tile
+		}
+		
+		if(result.isEmpty())
+			return null
+		
+		[
+			result[GameState.RND.nextInt(result.size())]
+		]
+	}
 	
 	/**
 	 * A {@link Validator} configured for TileSetDsl instances
@@ -200,33 +278,15 @@ class TileSet extends ScriptedResource implements Disposable {
 	}
 	
 	/**
-	 * Get the Tile that can best fit the given constraints:
+	 * Get the Tile(s) that can best fit the given constraints:
 	 * <ul>
 	 * <li>{@code heights} -- a 2x2 {@code int} array (addressed using {@link TileCorner#offsetX},{@link TileCorner#offsetY})</li>
 	 * <li>{@code ext} -- a set of properties that the returned Tile must match</li>
 	 * </ul>
 	 */
-	public Tile getTileFor(int[][] heights, Expando ext) {
+	public List<Tile> getTilesFor(int[][] heights, Expando ext) {
 		
-		final result = []
-		
-		//
-		// Consider each tile in order.
-		//
-		for (Tile tile : tiles) {
-			
-			//
-			// If the tile's rules don't allow it to fit here -- skip it.
-			if (!tile.isAcceptable(heights, ext))
-				continue
-			
-			result << tile
-		}
-		
-		if(result.isEmpty())
-			return null
-		
-		result[GameState.RND.nextInt(result.size())]
+		this.tileMatcher heights, ext
 	}
 	
 	@Override
