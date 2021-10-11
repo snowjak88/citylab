@@ -23,7 +23,7 @@ class ModulePublicFace {
 		this.module = module
 		
 		ModulePublicFace.metaClass.methodMissing = { name, args ->
-			getProperty(name).call(*args)
+			delegate.module.providedObjects[name].call(*args)
 		}
 	}
 	

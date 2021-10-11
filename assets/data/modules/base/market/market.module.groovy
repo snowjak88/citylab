@@ -33,3 +33,4 @@ inventoryMapper = ComponentMapper.getFor(HasCommodityInventory)
 balanceMapper = ComponentMapper.getFor(HasBankBalance)
 pendingOrdersMapper = ComponentMapper.getFor(HasPendingMarketOrders)
 
+include 'orderProcessing.groovy'
