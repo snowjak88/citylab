@@ -34,7 +34,8 @@ window 'network-legend', {
 }
 
 networkLegendCheckboxes = []
-updateNetworkLegendWindow = { ->
+updateNetworkLegendWindow = {
+	->
 	windows['network-legend'].clear()
 	activeNetworkHighlight = null
 	
@@ -69,12 +70,14 @@ updateNetworkLegendWindow = { ->
 //
 //
 
-isNetworkNodeMapper = ComponentMapper.getFor(IsNetworkNode)
-
 renderHook 'network-renderer', { delta, batch, shapeDrawer, renderingSupport ->
 	
 	if(networkLegend.newNetworkLegend)
 		updateNetworkLegendWindow()
+	
+	if(!activeNetworkHighlight)
+		return
+	final componentType = ComponentType.getFor( activeNetworkHighlight )
 	
 	//
 	// Iterate across visible map-cells ...
@@ -83,6 +86,7 @@ renderHook 'network-renderer', { delta, batch, shapeDrawer, renderingSupport ->
 	final int minX = (int) visibleCells.x, minY = (int) visibleCells.y
 	final int maxX = (int)( visibleCells.x + visibleCells.width )
 	final int maxY = (int)( visibleCells.y + visibleCells.height )
+	
 	for(int x=minX; x<maxX; x++)
 		for(int y=minY; y<maxY; y++) {
 			
@@ -90,22 +94,20 @@ renderHook 'network-renderer', { delta, batch, shapeDrawer, renderingSupport ->
 				continue
 			
 			final entity = state.map.getEntity(x,y)
-			if(!isNetworkNodeMapper.has(entity))
+			
+			final networkNode = entity.getComponent( componentType )
+			if(!networkNode)
 				continue
-			final networkNode = isNetworkNodeMapper.get(entity)
-				
+			
 			def vertices = renderingSupport.getCellVertices( x, y, null )
 			def color = Color.YELLOW
-			
-			if(!activeNetworkHighlight)
-				continue
 			
 			final float middleX0 = ( vertices[0].x + vertices[1].x + vertices[2].x + vertices[3].x ) / 4.0
 			final float middleY0 = ( vertices[0].y + vertices[1].y + vertices[2].y + vertices[3].y ) / 4.0
 			
 			for(def connection : networkNode.connections) {
 				
-				if(!connection.hasComponent(ComponentType.getFor(activeNetworkHighlight)))
+				if(!connection.hasComponent( componentType ))
 					continue
 				
 				final connectionCell = isCellMapper.get(connection)

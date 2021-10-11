@@ -9,11 +9,13 @@ class CommodityStatistics {
 	
 	String commodityID
 	
-	transient float low, high, mean
+	transient float sellerLow, sellerHigh, sellerMean
+	transient float buyerLow, buyerHigh, buyerMean
 	transient float recentTotalVolume, averageVolume
 	transient float demand, supply
 	
-	final prices = new LinkedList()
+	final sellerPrices = new LinkedList()
+	final buyerPrices = new LinkedList()
 	final volumes = new LinkedList()
 	
 	void reset() {
@@ -22,19 +24,36 @@ class CommodityStatistics {
 		supply = 0
 	}
 	
-	void addPrice(float price) {
-		prices << price
-		while(prices.size() > HISTORY_LENGTH)
-			prices.pop()
+	void addPrice(float sellerPrice, buyerPrice) {
+		sellerPrices << sellerPrice
+		while(sellerPrices.size() > HISTORY_LENGTH)
+			sellerPrices.pop()
 		
-		low = Float.MAX_VALUE
-		high = -Float.MAX_VALUE
-		mean = 0
+		sellerLow = Float.MAX_VALUE
+		sellerHigh = -Float.MAX_VALUE
+		sellerMean = 0
 		def first = true
-		prices.each { p ->
-			low = Util.min( low, p )
-			high = Util.max( high, p )
-			mean = (first) ? p : p * alpha + (1f - alpha) * mean
+		sellerPrices.each { p ->
+			sellerLow = Util.min( sellerLow, p )
+			sellerHigh = Util.max( sellerHigh, p )
+			sellerMean = (first) ? p : p * alpha + (1f - alpha) * sellerMean
+			first = false
+		}
+		
+		//
+		
+		buyerPrices << buyerPrice
+		while(buyerPrices.size() > HISTORY_LENGTH)
+			buyerPrices.pop()
+		
+		buyerLow = Float.MAX_VALUE
+		buyerHigh = -Float.MAX_VALUE
+		buyerMean = 0
+		first = true
+		buyerPrices.each { p ->
+			buyerLow = Util.min( buyerLow, p )
+			buyerHigh = Util.max( buyerHigh, p )
+			buyerMean = (first) ? p : p * alpha + (1f - alpha) * buyerMean
 			first = false
 		}
 	}

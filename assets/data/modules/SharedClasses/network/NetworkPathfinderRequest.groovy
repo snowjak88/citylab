@@ -21,10 +21,16 @@ class NetworkPathfinderRequest implements Component, Poolable {
 	Entity start, end
 	
 	//
+	// The set of allowed network-types over which to search.
+	final Set<Class<? extends IsNetworkNode>> networkTypes = []
+	
+	//
 	// A Closure that determines whether a given connection between two Entities
 	// is "valid" for the purposes of this pathfinding-search.
 	//
-	// Must be of the form { Entity from, Entity to -> ... }
+	// This is optional, and superadded on top of the [networkTypes] parameter.
+	//
+	// If provided, must be of the form { Entity from, Entity to -> ... }
 	Closure filter
 	
 	//
@@ -37,6 +43,7 @@ class NetworkPathfinderRequest implements Component, Poolable {
 		success = false
 		start = null
 		end = null
+		networkTypes.clear
 		filter = null
 		path.clear()
 	}

@@ -31,13 +31,6 @@ visualParameter 'road-tileset', {
 //
 //
 
-class HasRoad implements Component, Poolable {
-	Set<TileEdge> edges = []
-	void reset() {
-		edges.clear()
-	}
-}
-
 class NeedsReplacementRoadTile implements Component, Poolable {
 	void reset() { }
 }
@@ -47,8 +40,7 @@ eventComponent RoadCellUpdated
 isCellMapper = ComponentMapper.getFor(IsMapCell)
 isCellNonBuildableMapper = ComponentMapper.getFor(IsNonBuildableCell)
 
-isNetworkNodeMapper = ComponentMapper.getFor(IsNetworkNode)
-hasRoadMapper = ComponentMapper.getFor(HasRoad)
+isRoadMapper = ComponentMapper.getFor(IsRoadNetworkNode)
 
 //
 //

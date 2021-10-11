@@ -29,26 +29,41 @@ class FilteringIndexedEntityGraph implements IndexedGraph<Entity> {
 	final isCellMapper = ComponentMapper.getFor(IsMapCell)
 	final isNetworkNodeMapper = ComponentMapper.getFor(IsNetworkNode)
 	
+	final Set<Class<? extends IsNetworkNode>> networkTypes = []
 	final GameState state
 	final Closure filter
 	
-	FilteringIndexedEntityGraph(Closure filter, GameState state) {
+	FilteringIndexedEntityGraph(Set<Class<? extends IsNetworkNode>> networkTypes, Closure filter, GameState state) {
+		this.networkTypes.addAll networkTypes
 		this.filter = filter
 		this.state = state
 	}
 	
 	public Array<Connection<Entity>> getConnections(Entity fromEntity) {
-		if(!isNetworkNodeMapper.has(fromEntity))
-			return new Array(1)
 		
-		final networkNode = isNetworkNodeMapper.get(fromEntity)
+		final Set<Entity> connections = []
 		
-		final result = new Array(networkNode.connections.size())
-		
-		for(def connection : networkNode.connections) {
-			
-			if(!isNetworkNodeMapper.has(connection))
+		for(def type : networkTypes) {
+			if(!(type instanceof Component))
 				continue
+			
+			final componentType = ComponentType.getFor(type)
+			final networkNode = entity.getComponent( componentType )
+			
+			if(!networkNode.connections)
+				continue
+				
+			for(def connection : networkNode.connections) {
+				final neighborNode = connection.getComponent( componentType )
+				if(!neighborNode)
+					continue
+				connections << connection
+			}
+		}
+		
+		final result = new Array(connections.size())
+		
+		for(def connection : connections) {
 			
 			if(filter(fromEntity, connection))
 				result.add new DefaultConnection( fromEntity, connection )
@@ -119,7 +134,7 @@ iteratingSystem 'incomingNetworkPathfinderSystem', Family.all(IsNetworkNode, Net
 	final ongoing = entity.addAndReturn( state.engine.createComponent(OngoingPathfinderRequest) )
 	
 	ongoing.pfr = new PathFinderRequest(request.start, request.end, pathfindingHeuristic, new DefaultGraphPath() )
-	ongoing.graph = new FilteringIndexedEntityGraph(request.filter ?: { _ -> true }, state )
+	ongoing.graph = new FilteringIndexedEntityGraph(request.networkTypes, request.filter ?: { _ -> true }, state )
 	
 	ongoing.changeStatus( PathFinderRequest.SEARCH_INITIALIZED )
 	

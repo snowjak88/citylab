@@ -5,7 +5,7 @@ buttonGroup 'road-tools', {
 
 onActivate {
 	->
-	modules['network'].networkLegend.register HasRoad, i18n.get('network-name')
+	modules['network'].networkLegend.register IsRoadNetworkNode, i18n.get('network-name')
 }
 
 mapModes['default'].tools << 'placeRoad'
@@ -38,19 +38,13 @@ placeRoad = { Entity from, Entity to ->
 	if(!isValidRoadConnection(fromX, fromY, toX, toY))
 		return
 	
-	def fromRoad = hasRoadMapper.get(from)
+	def fromRoad = isRoadMapper.get(from)
 	if(!fromRoad)
-		fromRoad = from.addAndReturn( state.engine.createComponent(HasRoad) )
-	def fromNetwork = isNetworkNodeMapper.get(from)
-	if(!fromNetwork)
-		fromNetwork = from.addAndReturn( state.engine.createComponent(IsNetworkNode) )
+		fromRoad = from.addAndReturn( state.engine.createComponent(IsRoadNetworkNode) )
 	
-	def toRoad = hasRoadMapper.get(to)
+	def toRoad = isRoadMapper.get(to)
 	if(!toRoad)
-		toRoad = to.addAndReturn( state.engine.createComponent(HasRoad) )
-	def toNetwork = isNetworkNodeMapper.get(to)
-	if(!toNetwork)
-		toNetwork = to.addAndReturn( state.engine.createComponent(IsNetworkNode) )
+		toRoad = to.addAndReturn( state.engine.createComponent(IsRoadNetworkNode) )
 	
 	//
 	// Mark the two cells as connected
@@ -59,11 +53,9 @@ placeRoad = { Entity from, Entity to ->
 	final fromToEdge = TileEdge.fromDelta(dx,dy)
 	if(!fromToEdge)
 		return
-	fromRoad.edges << fromToEdge
-	fromNetwork.connections << to
+	fromRoad.connections << to
 	
-	toRoad.edges << fromToEdge.opposite
-	toNetwork.connections << from
+	toRoad.connections << from
 	
 	from.add state.engine.createComponent(RoadCellUpdated)
 	from.add state.engine.createComponent(NeedsReplacementRoadTile)
