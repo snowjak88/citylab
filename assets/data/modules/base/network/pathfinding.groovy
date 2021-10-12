@@ -24,6 +24,11 @@ final long pathfindTimeSliceNanos = TimeUtils.millisToNanos(pathfindTimeSliceMil
 
 import org.snowjak.city.GameState
 
+class NetworkConnection implements Connection<Entity> {
+	float cost = 1f
+	Entity fromNode, toNode
+}
+
 class FilteringIndexedEntityGraph implements IndexedGraph<Entity> {
 	
 	final isCellMapper = ComponentMapper.getFor(IsMapCell)
@@ -41,23 +46,50 @@ class FilteringIndexedEntityGraph implements IndexedGraph<Entity> {
 	
 	public Array<Connection<Entity>> getConnections(Entity fromEntity) {
 		
-		final Set<Entity> connections = []
+		final Map<Entity, Float> connections = [:]
 		
 		for(def type : networkTypes) {
-			if(!(type instanceof Component))
+			if(type != null && !(type instanceof Component))
 				continue
 			
-			final componentType = ComponentType.getFor(type)
-			final networkNode = entity.getComponent( componentType )
-			
-			if(!networkNode.connections)
-				continue
+			if(type) {
 				
-			for(def connection : networkNode.connections) {
-				final neighborNode = connection.getComponent( componentType )
-				if(!neighborNode)
+				//
+				// We're getting connections contributed by an IsNetworkNode subtype.
+				//
+				final componentType = ComponentType.getFor(type)
+				final networkNode = entity.getComponent( componentType )
+				
+				if(!networkNode.connections)
 					continue
-				connections << connection
+				
+				for(def connectionEntry : networkNode.connections) {
+					final neighborNode = connection.getComponent( componentType )
+					if(!neighborNode)
+						continue
+					
+					connections[connection] = Util.min( networkNode.cost, ( connections[connection] ?: Float.MAX_VALUE ) )
+					
+				} else {
+					
+					//
+					// We're getting connections based simply on physical adjacency
+					//
+					final thisCell = isCellMapper(fromEntity)
+					if(!thisCell)
+						continue
+					final int cx = thisCell.cellX
+					final int cy = thisCell.cellY
+					
+					for(def edge : TileEdge) {
+						final int nx = cx + edge.dx
+						final int ny = cy + edge.dy
+						if( !state.map.isValidCell(nx,ny) )
+							continue
+						final neighbor = state.map.getEntity(nx,ny)
+						connections[neighbor] = 1f
+					}
+				}
 			}
 		}
 		
@@ -65,8 +97,8 @@ class FilteringIndexedEntityGraph implements IndexedGraph<Entity> {
 		
 		for(def connection : connections) {
 			
-			if(filter(fromEntity, connection))
-				result.add new DefaultConnection( fromEntity, connection )
+			if(filter(fromEntity, connection.key))
+				result.add( [ fromNode: fromEntity, toNode: connection.key, cost: connection.value ] as NetworkConnection )
 			
 		}
 		
@@ -107,7 +139,7 @@ pathfindingHeuristic = new Heuristic<Entity>() {
 				
 				if(fromCell && toCell)
 					return Math.abs(fromCell.cellX - toCell.cellX) + Math.abs(fromCell.cellY - toCell.cellY)
-					
+				
 				return 1
 			}
 		}
@@ -115,6 +147,10 @@ pathfindingHeuristic = new Heuristic<Entity>() {
 //
 // Pathfinder instances by Graph
 pathfindersByGraph = [:]
+
+//
+//
+//
 
 isCellMapper = ComponentMapper.getFor(IsMapCell)
 isNetworkNodeMapper = ComponentMapper.getFor(IsNetworkNode)

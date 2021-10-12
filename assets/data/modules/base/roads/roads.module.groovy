@@ -9,6 +9,16 @@ i18n.addBundle 'i18n'
 title = i18n.get('title')
 description = i18n.get('description')
 
+//
+//
+//
+
+modules['network'].registerNetworkType IsRoadNetworkNode
+
+//
+//
+//
+
 tilesetName = preferences.getString('tileset-name', 'default')
 dependsOn tilesetName, TileSet
 

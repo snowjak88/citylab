@@ -11,12 +11,18 @@ transmutateUpdateInterval = preferences.getFloat( 'transmutate-interval', 1f )
 //
 //
 
-hasCommodityInventoryMapper = ComponentMapper.getFor( HasCommodityInventory )
-isCommodityTransmutatorMapper = ComponentMapper.getFor( IsCommodityTransmutator )
+//
+// Commodities registry. Defines commodity properties.
+//
+registry = new LinkedHashMap<String,CommodityDefinition>()
+provides registry named 'registry'
 
 //
 //
 //
+
+hasCommodityInventoryMapper = ComponentMapper.getFor( HasCommodityInventory )
+isCommodityTransmutatorMapper = ComponentMapper.getFor( IsCommodityTransmutator )
 
 intervalIteratingSystem 'commodityTransmutationSystem', Family.all(IsCommodityTransmutator, HasCommodityInventory).get(), transmutateUpdateInterval, { entity, deltaTime ->
 	

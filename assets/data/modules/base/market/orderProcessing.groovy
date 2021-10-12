@@ -19,6 +19,9 @@ intervalIteratingSystem 'markedOrderGatheringSystem', Family.all(HasPendingMarke
 //
 // Market-processing system.
 // Matches bid and ask orders.
+// For successful matches:
+//  1) Creates an IsPendingTrade entity
+//  2) Transfers currency from buyer to seller
 // Updates published statistics.
 //
 intervalSystem 'marketProcessingSystem', marketInterval, { deltaTime ->
@@ -125,12 +128,16 @@ intervalSystem 'marketProcessingSystem', marketInterval, { deltaTime ->
 			// and affects the price the buyer ultimately pays. (The buyer always
 			// pays for shipping, in this model.)
 			//
-			final float transferCost = 0f
+			// (Not too sure about this; estimating transfer-costs is something I'm not
+			// sure how to do. I'll leave this in for now, but it might have to get edited
+			// out if I don't end up using it.)
+			//
+			final float transferUnitCost = 0f
 			
 			final float quantityExchanged = Util.min( cheapestAsk.quantity, biggestBid.quantity )
 			final float averagePrice = ( cheapestAsk.price + biggestBid.price ) / 2f
 			
-			final float buyerPrice = averagePrice + transferCost
+			final float buyerPrice = averagePrice + transferUnitCost
 			final float sellerPrice = averagePrice
 			
 			final float totalBuyerPrice = buyerPrice * quantityExchanged
@@ -156,31 +163,20 @@ intervalSystem 'marketProcessingSystem', marketInterval, { deltaTime ->
 			//
 			// OK -- everything seems to check out so far --
 			//
-			// Update the bid and ask orders
-			cheapestAsk.quantity -= quantityExchanged
-			cheapestAsk.addFulfilled sellerPrice, quantityExchanged
-			
-			if(cheapestAsk.quantity <= 0) {
-				cheapestAsk.complete = true
-				asks[commodityID].remove cheapestAsk
-			}
-			
-			biggestBid.quantity -= quantityExchanged
-			biggestBid.addFulfilled buyerPrice, quantityExchanged
-			
-			if(biggestBid.quantity <= 0) {
-				biggestBid.complete = true
-				bids[commodityID].remove biggestBid
-			}
-			
+			// Create a new Trade that needs to be executed.
 			//
-			// Transfer inventory from asker to bidder
-			askerInventory.inventory[commodityID] -= quantityExchanged
 			
-			def bidderInventory = inventoryMapper.get( biggestBid.owner )
-			if(!bidderInventory)
-				bidderInventory = biggestBid.owner.addAndReturn( state.engine.createComponent( HasCommodityInventory ) )
-			bidderInventory.inventory[commodityID] = quantityExchanged + ( bidderInventory.inventory[commodityID] ?: 0f )
+			final tradeEntity = state.engine.createEntity()
+			final trade = tradeEntity.addAndReturn state.engine.createComponent( IsPendingTrade )
+			
+			trade.created = Instant.now()
+			trade.from = cheapestAsk.owner
+			trade.to = biggestBid.owner
+			trade.commodityID = commodityID
+			trade.quantity = quantityExchanged
+			trade.instant = true
+			
+			state.engine.addEntity tradeEntity
 			
 			//
 			// Transfer currency from bidder to asker
