@@ -13,7 +13,7 @@ description = i18n.get('description')
 //
 //
 
-modules['network'].registerNetworkType IsRoadNetworkNode
+modules['network']?.registerNetworkType IsRoadNetworkNode
 
 //
 //

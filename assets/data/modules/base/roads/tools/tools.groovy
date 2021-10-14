@@ -62,6 +62,8 @@ placeRoad = { Entity from, Entity to ->
 	
 	to.add state.engine.createComponent(RoadCellUpdated)
 	to.add state.engine.createComponent(NeedsReplacementRoadTile)
+	
+	modules['network'].checkNetworkID to, IsRoadNetworkNode
 }
 
 roadPlan = [

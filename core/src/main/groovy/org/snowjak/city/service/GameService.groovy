@@ -136,7 +136,7 @@ class GameService {
 			if(mapCell && map)
 				map.setEntity( (int) mapCell.cellX, (int) mapCell.cellY, null )
 			
-			entity.remove HasMapLayers
+			entity.remove HasMapCellTiles
 			
 			final mapVertex = (IsMapVertex) entity.remove(IsMapVertex)
 			if(mapVertex && map)

@@ -68,7 +68,7 @@ intervalSystem 'marketProcessingSystem', marketInterval, { deltaTime ->
 		statistics[incomingBid.commodityID].addSupply incomingBid.quantity
 	}
 	
-	println "-=-=-=-=-=-=- MARKET OPEN -=-=-=-=-=-=-"
+//	println "-=-=-=-=-=-=- MARKET OPEN -=-=-=-=-=-=-"
 	
 	//
 	// Process each commodity in turn.
@@ -214,12 +214,12 @@ intervalSystem 'marketProcessingSystem', marketInterval, { deltaTime ->
 			}
 	}
 	
-	println "-=-=-=-=-=-=- MARKET CLOSE -=-=-=-=-=-=-"
-	
-	for(String commodityID : commodities) {
-		final stat = statistics[commodityID]
-		println "    $commodityID: ${stat?.sellerMean}\t[ ${stat?.sellerLow}, ${stat?.sellerHigh} ]\t${stat.recentTotalVolume} / ${stat.averageVolume}"
-	}
-	
-	println "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+//	println "-=-=-=-=-=-=- MARKET CLOSE -=-=-=-=-=-=-"
+//	
+//	for(String commodityID : commodities) {
+//		final stat = statistics[commodityID]
+//		println "    $commodityID: ${stat?.sellerMean}\t[ ${stat?.sellerLow}, ${stat?.sellerHigh} ]\t${stat.recentTotalVolume} / ${stat.averageVolume}"
+//	}
+//	
+//	println "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
 }

@@ -69,26 +69,26 @@ class FilteringIndexedEntityGraph implements IndexedGraph<Entity> {
 						continue
 					
 					connections[connection] = Util.min( networkNode.cost, ( connections[connection] ?: Float.MAX_VALUE ) )
-					
-				} else {
-					
-					//
-					// We're getting connections based simply on physical adjacency
-					//
-					final thisCell = isCellMapper(fromEntity)
-					if(!thisCell)
+				}
+				
+			} else {
+				
+				//
+				// We're getting connections based simply on physical adjacency
+				//
+				final thisCell = isCellMapper(fromEntity)
+				if(!thisCell)
+					continue
+				final int cx = thisCell.cellX
+				final int cy = thisCell.cellY
+				
+				for(def edge : TileEdge) {
+					final int nx = cx + edge.dx
+					final int ny = cy + edge.dy
+					if( !state.map.isValidCell(nx,ny) )
 						continue
-					final int cx = thisCell.cellX
-					final int cy = thisCell.cellY
-					
-					for(def edge : TileEdge) {
-						final int nx = cx + edge.dx
-						final int ny = cy + edge.dy
-						if( !state.map.isValidCell(nx,ny) )
-							continue
-						final neighbor = state.map.getEntity(nx,ny)
-						connections[neighbor] = 1f
-					}
+					final neighbor = state.map.getEntity(nx,ny)
+					connections[neighbor] = 1f
 				}
 			}
 		}
@@ -97,7 +97,7 @@ class FilteringIndexedEntityGraph implements IndexedGraph<Entity> {
 		
 		for(def connection : connections) {
 			
-			if(filter(fromEntity, connection.key))
+			if( filter(fromEntity, connection.key) )
 				result.add( [ fromNode: fromEntity, toNode: connection.key, cost: connection.value ] as NetworkConnection )
 			
 		}

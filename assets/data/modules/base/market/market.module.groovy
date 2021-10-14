@@ -16,8 +16,8 @@ marketInterval = preferences.getFloat( 'market-interval', 5f )
 //
 // Incoming MarketOrders, ready to be picked up by the Market.
 //
-incomingAsks = new LinkedList<HasPendingMarketOrders.MarketOrder>()
-incomingBids = new LinkedList<HasPendingMarketOrders.MarketOrder>()
+incomingAsks = new LinkedList<MarketOrder>()
+incomingBids = new LinkedList<MarketOrder>()
 
 //
 // Statistics by commodity-ID

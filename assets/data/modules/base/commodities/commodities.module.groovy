@@ -14,7 +14,7 @@ transmutateUpdateInterval = preferences.getFloat( 'transmutate-interval', 1f )
 //
 // Commodities registry. Defines commodity properties.
 //
-registry = new LinkedHashMap<String,CommodityDefinition>()
+registry = new LinkedHashMap<String,Commodity>()
 provides registry named 'registry'
 
 //
