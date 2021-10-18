@@ -1,6 +1,7 @@
 id = 'market'
 
 dependsOn 'commodities'
+dependsOn 'network'
 
 i18n.addBundle 'i18n'
 
@@ -18,6 +19,14 @@ marketInterval = preferences.getFloat( 'market-interval', 5f )
 //
 incomingAsks = new LinkedList<MarketOrder>()
 incomingBids = new LinkedList<MarketOrder>()
+
+//
+// Mapping from network-ID to market-ID.
+// (May not have your network-ID; market-IDs are
+// only created when market-orders are received.)
+//
+networkToMarket = [:]
+provides networkToMarket named 'networkToMarket'
 
 //
 // Statistics by commodity-ID
