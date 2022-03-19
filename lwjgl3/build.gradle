@@ -24,10 +24,12 @@ run {
 		jvmArgs += "-XstartOnFirstThread"
 	}
 }
+
 jar {
 	archiveBaseName = appName
 	dependsOn configurations.runtimeClasspath
-	from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } } 
+	from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+	duplicatesStrategy = 'WARN' 
 	manifest {
 		attributes 'Main-Class': project.mainClassName
 	}
@@ -41,9 +43,10 @@ jar {
 // Fix for over-long CLASSPATH environment-variable in Windows start-script
 //
 task pathingJar(type: Jar) {
-	appendix = 'pathing'
-	manifest { attributes("Class-Path": configurations.runtime.collect { it.getName() }.join(' ') + ' ' + jar.archiveName ) }
+	archiveAppendix = 'pathing'
+	manifest { attributes("Class-Path": configurations.runtimeClasspath.collect { it.getName() }.join(' ') + ' ' + jar.archiveName ) }
 }
+
 startScripts {
 	doLast {
 		def winScriptFile  = file getWindowsScript()
