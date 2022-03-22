@@ -38,7 +38,7 @@ public class Configuration {
 	/**
 	 * The Gdx-managed Preferences file is named so.
 	 */
-	public static final String PREFERENCES_NAME = "jCity";
+	public static final String PREFERENCES_NAME = "citylab";
 	
 	public static final String DEFAULT_SKIN_NAME = "default";
 	

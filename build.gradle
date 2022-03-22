@@ -48,4 +48,4 @@ subprojects {
 	
 }
 
-eclipse.project.name = appName + '-root'
+//eclipse.project.name = appName + '-root'

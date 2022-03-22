@@ -1,5 +1,3 @@
-import javax.management.remote.rmi.RMIConnector.Util
-
 //
 // Here we define the terrain tools -- raise and lower, really
 //
