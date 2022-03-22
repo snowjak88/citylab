@@ -21,6 +21,8 @@ iteratingSystem 'roadTileCharacteristicsUpdatingSystem', Family.all(IsMapCell, N
 				return
 			updated.ext.road.add TileEdge.fromDelta( (int)(connectionCell.cellX - cx), (int)(connectionCell.cellY - cy) )
 		}
+	} else {
+		updated.ext.road = null
 	}
 	
 	entity.remove NeedsReplacementRoadTile
@@ -35,7 +37,7 @@ listeningSystem 'roadCellDestroyedListener', Family.all(IsRoadNetworkNode).one(C
 	//
 	// Any roads that point to this cell should no longer point to it
 	//
-	if(hasRoadMapper.has(entity) && isCellMapper.has(entity)) {
+	if(isRoadMapper.has(entity) && isCellMapper.has(entity)) {
 		final road = isRoadMapper.get(entity)
 		final thisCell = isCellMapper.get(entity)
 		final int cx = thisCell.cellX
@@ -45,7 +47,7 @@ listeningSystem 'roadCellDestroyedListener', Family.all(IsRoadNetworkNode).one(C
 			final connectionRoad = isRoadMapper.get c
 			if(!connectionRoad)
 				return
-			connectionRoad.remove entity
+			connectionRoad.connections.remove entity
 			c.add state.engine.createComponent( NeedsReplacementRoadTile )
 		}
 	}
